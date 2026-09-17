@@ -162,36 +162,6 @@
 "backup.legacy.variant.default" = "Padrão";
 
 
-/* MARK: - Calculadora de custo de produção */
-"product.form.costCalculator" = "Calcular custo de produção";
-"costCalculator.title" = "Custo de produção";
-"costCalculator.apply" = "Aplicar";
-"costCalculator.section.materials" = "Materiais";
-"costCalculator.material.name" = "Nome do material";
-"costCalculator.material.name.placeholder" = "Ex.: Embalagem";
-"costCalculator.material.quantity" = "Quantidade utilizada";
-"costCalculator.material.unitCost" = "Custo por unidade";
-"costCalculator.material.add" = "Adicionar material";
-"costCalculator.material.remove" = "Remover material";
-"costCalculator.materials.footer" = "Use a mesma unidade na quantidade e no custo. Por exemplo, 0,25 kg e o preço por kg.";
-"costCalculator.section.time" = "Tempo e produção";
-"costCalculator.time.hours" = "Tempo de produção (horas)";
-"costCalculator.time.hourlyCost" = "Custo por hora";
-"costCalculator.section.additional" = "Custos adicionais";
-"costCalculator.additional" = "Outros custos";
-"costCalculator.additional.footer" = "Inclua embalagem, etiquetas e outros custos de uma unidade.";
-"costCalculator.section.margin" = "Margem de venda";
-"costCalculator.margin" = "Margem desejada";
-"costCalculator.margin.footer" = "A margem é calculada como percentual do preço de venda.";
-"costCalculator.section.result" = "Estimativa";
-"costCalculator.result.materials" = "Materiais";
-"costCalculator.result.time" = "Tempo e produção";
-"costCalculator.result.additional" = "Outros custos";
-"costCalculator.result.totalCost" = "Custo total";
-"costCalculator.result.suggestedPrice" = "Preço sugerido";
-"costCalculator.result.expectedProfit" = "Lucro esperado";
-
-
 /* MARK: - Lojas */
 "store.default.name" = "Minha loja";
 "store.error.emptyName" = "Informe um nome para a loja.";

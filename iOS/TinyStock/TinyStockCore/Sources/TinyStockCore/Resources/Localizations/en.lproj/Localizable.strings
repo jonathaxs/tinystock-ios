@@ -162,36 +162,6 @@
 "backup.legacy.variant.default" = "Default";
 
 
-/* MARK: - Production cost calculator */
-"product.form.costCalculator" = "Calculate production cost";
-"costCalculator.title" = "Production Cost";
-"costCalculator.apply" = "Apply";
-"costCalculator.section.materials" = "Materials";
-"costCalculator.material.name" = "Material name";
-"costCalculator.material.name.placeholder" = "E.g. Packaging";
-"costCalculator.material.quantity" = "Quantity used";
-"costCalculator.material.unitCost" = "Cost per unit";
-"costCalculator.material.add" = "Add material";
-"costCalculator.material.remove" = "Remove material";
-"costCalculator.materials.footer" = "Use the same unit for quantity and cost. For example, 0.25 kg and the price per kg.";
-"costCalculator.section.time" = "Time and production";
-"costCalculator.time.hours" = "Production time (hours)";
-"costCalculator.time.hourlyCost" = "Cost per hour";
-"costCalculator.section.additional" = "Additional costs";
-"costCalculator.additional" = "Other costs";
-"costCalculator.additional.footer" = "Include packaging, labels and other costs for one unit.";
-"costCalculator.section.margin" = "Sale margin";
-"costCalculator.margin" = "Desired margin";
-"costCalculator.margin.footer" = "The margin is calculated as a percentage of the sale price.";
-"costCalculator.section.result" = "Estimate";
-"costCalculator.result.materials" = "Materials";
-"costCalculator.result.time" = "Time and production";
-"costCalculator.result.additional" = "Other costs";
-"costCalculator.result.totalCost" = "Total cost";
-"costCalculator.result.suggestedPrice" = "Suggested price";
-"costCalculator.result.expectedProfit" = "Expected profit";
-
-
 /* MARK: - Stores */
 "store.default.name" = "My store";
 "store.error.emptyName" = "Enter a name for the store.";

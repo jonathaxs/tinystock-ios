@@ -32,7 +32,6 @@ struct ProductFormView: View {
     @State private var isPresentingPhotos = false
     @State private var isPresentingCamera = false
     @State private var isLoadingPhoto = false
-    @State private var isPresentingCostCalculator = false
 
     init(storeID: UUID, product: Product? = nil) {
         self.storeID = storeID
@@ -117,12 +116,6 @@ struct ProductFormView: View {
                 }
             }
         }
-        .sheet(isPresented: $isPresentingCostCalculator) {
-            ProductionCostCalculatorView { result in
-                costPriceText = CurrencyFormatter.editableText(from: result.totalCost)
-                salePriceText = CurrencyFormatter.editableText(from: result.suggestedPrice)
-            }
-        }
         .photosPicker(isPresented: $isPresentingPhotos, selection: $pickerItem, matching: .images)
         .task(id: pickerItem) {
             guard let pickerItem else { return }
@@ -197,11 +190,6 @@ struct ProductFormView: View {
                     Text((sale - cost).currencyText)
                         .foregroundStyle(sale < cost ? Color.red : Color.primary)
                 }
-            }
-            Button {
-                isPresentingCostCalculator = true
-            } label: {
-                Label(String(localized: "product.form.costCalculator", bundle: .tinyStockCore), systemImage: "calculator")
             }
         }
     }
