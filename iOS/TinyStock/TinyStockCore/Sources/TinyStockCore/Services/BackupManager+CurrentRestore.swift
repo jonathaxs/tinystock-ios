@@ -151,6 +151,9 @@ extension BackupManager {
         value.name = snapshot.name
         value.imageData = snapshot.imageData
         value.isArchived = snapshot.isArchived
+        value.archivedAt = snapshot.archivedAt
+        value.trashedAt = snapshot.trashedAt
+        value.wasArchivedBeforeTrash = snapshot.wasArchivedBeforeTrash
         value.sortOrder = snapshot.sortOrder
         value.createdAt = snapshot.createdAt
         value.updatedAt = snapshot.updatedAt

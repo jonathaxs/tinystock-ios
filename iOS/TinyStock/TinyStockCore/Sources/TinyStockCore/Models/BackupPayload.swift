@@ -72,23 +72,32 @@ public struct BackupPayload: Codable, Equatable, Sendable {
         public let name: String
         public let imageData: Data?
         public let isArchived: Bool
+        public let archivedAt: Date?
+        public let trashedAt: Date?
+        public let wasArchivedBeforeTrash: Bool
         public let sortOrder: Int
         public let createdAt: Date
         public let updatedAt: Date
 
         public init(id: UUID, name: String, imageData: Data?, isArchived: Bool,
+                    archivedAt: Date? = nil, trashedAt: Date? = nil,
+                    wasArchivedBeforeTrash: Bool = false,
                     sortOrder: Int = 0, createdAt: Date, updatedAt: Date) {
             self.id = id
             self.name = name
             self.imageData = imageData
             self.isArchived = isArchived
+            self.archivedAt = archivedAt
+            self.trashedAt = trashedAt
+            self.wasArchivedBeforeTrash = wasArchivedBeforeTrash
             self.sortOrder = sortOrder
             self.createdAt = createdAt
             self.updatedAt = updatedAt
         }
 
         private enum CodingKeys: String, CodingKey {
-            case id, name, imageData, isArchived, sortOrder, createdAt, updatedAt
+            case id, name, imageData, isArchived, archivedAt, trashedAt
+            case wasArchivedBeforeTrash, sortOrder, createdAt, updatedAt
         }
 
         /// Backups v2 anteriores a ordenacao continuam validos com a ordem inicial.
@@ -98,6 +107,11 @@ public struct BackupPayload: Codable, Equatable, Sendable {
             name = try container.decode(String.self, forKey: .name)
             imageData = try container.decodeIfPresent(Data.self, forKey: .imageData)
             isArchived = try container.decode(Bool.self, forKey: .isArchived)
+            archivedAt = try container.decodeIfPresent(Date.self, forKey: .archivedAt)
+            trashedAt = try container.decodeIfPresent(Date.self, forKey: .trashedAt)
+            wasArchivedBeforeTrash = try container.decodeIfPresent(
+                Bool.self, forKey: .wasArchivedBeforeTrash
+            ) ?? false
             sortOrder = try container.decodeIfPresent(Int.self, forKey: .sortOrder) ?? 0
             createdAt = try container.decode(Date.self, forKey: .createdAt)
             updatedAt = try container.decode(Date.self, forKey: .updatedAt)

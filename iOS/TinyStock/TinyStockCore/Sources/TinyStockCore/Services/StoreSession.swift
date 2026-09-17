@@ -39,8 +39,11 @@ public final class StoreSession {
         defaults: UserDefaults = .standard
     ) throws -> StoreSession {
         let defaultStore = try StoreProfileService.ensureDefaultStore(in: context)
+        try StoreProfileService.purgeExpiredTrash(in: context)
         let activeStores = try context.fetch(
-            FetchDescriptor<StoreProfile>(predicate: #Predicate { !$0.isArchived })
+            FetchDescriptor<StoreProfile>(predicate: #Predicate {
+                !$0.isArchived && $0.trashedAt == nil
+            })
         )
 
         let storedID = defaults.string(forKey: selectedStoreKey).flatMap(UUID.init(uuidString:))
@@ -59,6 +62,7 @@ public final class StoreSession {
             preferredStoreID: storedID,
             in: context
         )
+        try StoreProfileService.purgeExpiredTrash(in: context)
         return StoreSession(selectedStoreID: selectedStore.id, defaults: defaults)
     }
 
@@ -68,6 +72,7 @@ public final class StoreSession {
             preferredStoreID: selectedStoreID,
             in: context
         )
+        try StoreProfileService.purgeExpiredTrash(in: context)
         guard selectedStore.id != selectedStoreID else { return }
 
         selectedStoreID = selectedStore.id
@@ -76,7 +81,7 @@ public final class StoreSession {
 
     /// Troca a seleção somente para uma loja ativa.
     public func select(_ store: StoreProfile) throws {
-        guard !store.isArchived else { throw StoreProfileError.archivedStore }
+        guard store.isActive else { throw StoreProfileError.archivedStore }
 
         selectedStoreID = store.id
         persistSelection()

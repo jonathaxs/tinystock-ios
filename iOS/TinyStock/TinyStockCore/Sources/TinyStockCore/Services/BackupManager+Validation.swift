@@ -38,14 +38,21 @@ extension BackupManager {
         }
 
         let storeIDs = Set(payload.stores.map(\.id))
-        let activeIDs = Set(payload.stores.filter { !$0.isArchived }.map(\.id))
+        let activeIDs = Set(payload.stores.filter {
+            !$0.isArchived && $0.trashedAt == nil
+        }.map(\.id))
         guard hasUniqueIDs(payload.stores.map(\.id)),
               !activeIDs.isEmpty,
               let selectedStoreID = payload.selectedStoreID,
               activeIDs.contains(selectedStoreID),
               !storeIDs.contains(StoreScope.unassignedStoreID),
               payload.stores.allSatisfy({
-                  $0.sortOrder >= 0 && valid($0.createdAt, $0.updatedAt)
+                  $0.sortOrder >= 0
+                      && valid($0.createdAt, $0.updatedAt)
+                      && $0.archivedAt?.timeIntervalSinceReferenceDate.isFinite != false
+                      && $0.trashedAt?.timeIntervalSinceReferenceDate.isFinite != false
+                      && ($0.trashedAt == nil || $0.isArchived)
+                      && ($0.trashedAt != nil || !$0.wasArchivedBeforeTrash)
               }) else {
             return false
         }

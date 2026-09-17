@@ -8,6 +8,9 @@ extension BackupManager {
             name: value.name,
             imageData: value.imageData,
             isArchived: value.isArchived,
+            archivedAt: value.archivedAt,
+            trashedAt: value.trashedAt,
+            wasArchivedBeforeTrash: value.wasArchivedBeforeTrash,
             sortOrder: value.sortOrder,
             createdAt: value.createdAt,
             updatedAt: value.updatedAt

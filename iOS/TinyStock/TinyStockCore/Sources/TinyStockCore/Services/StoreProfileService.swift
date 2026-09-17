@@ -16,6 +16,8 @@ public enum StoreProfileError: Error, Equatable, Sendable {
     case duplicateName
     case lastActiveStore
     case archivedStore
+    case trashedStore
+    case storeNotInTrash
 }
 
 public extension StoreProfileError {
@@ -30,6 +32,10 @@ public extension StoreProfileError {
             String(localized: "store.error.lastActiveStore", bundle: .tinyStockCore)
         case .archivedStore:
             String(localized: "store.error.archivedStore", bundle: .tinyStockCore)
+        case .trashedStore:
+            String(localized: "store.error.trashedStore", bundle: .tinyStockCore)
+        case .storeNotInTrash:
+            String(localized: "store.error.storeNotInTrash", bundle: .tinyStockCore)
         }
     }
 }
@@ -73,7 +79,7 @@ public enum StoreProfileService {
         in context: ModelContext
     ) throws -> StoreProfile {
         let descriptor = FetchDescriptor<StoreProfile>(
-            predicate: #Predicate { !$0.isArchived },
+            predicate: #Predicate { !$0.isArchived && $0.trashedAt == nil },
             sortBy: [
                 SortDescriptor(\StoreProfile.sortOrder),
                 SortDescriptor(\StoreProfile.createdAt)
@@ -87,15 +93,31 @@ public enum StoreProfileService {
         // Um backup inconsistente pode chegar só com lojas arquivadas. Reativar a mais
         // antiga preserva os dados e evita criar outra loja com o mesmo nome.
         var archivedDescriptor = FetchDescriptor<StoreProfile>(
-            predicate: #Predicate { $0.isArchived },
-            sortBy: [SortDescriptor(\StoreProfile.createdAt)]
+            predicate: #Predicate { $0.isArchived && $0.trashedAt == nil },
+            sortBy: [SortDescriptor(\StoreProfile.archivedAt, order: .reverse),
+                     SortDescriptor(\StoreProfile.updatedAt, order: .reverse)]
         )
         archivedDescriptor.fetchLimit = 1
 
         if let archived = try context.fetch(archivedDescriptor).first {
             archived.isArchived = false
+            archived.archivedAt = nil
             archived.updatedAt = Date()
             return archived
+        }
+
+        var trashDescriptor = FetchDescriptor<StoreProfile>(
+            predicate: #Predicate { $0.trashedAt != nil },
+            sortBy: [SortDescriptor(\StoreProfile.trashedAt, order: .reverse)]
+        )
+        trashDescriptor.fetchLimit = 1
+        if let trashed = try context.fetch(trashDescriptor).first {
+            trashed.isArchived = false
+            trashed.archivedAt = nil
+            trashed.trashedAt = nil
+            trashed.wasArchivedBeforeTrash = false
+            trashed.updatedAt = Date()
+            return trashed
         }
 
         let store = StoreProfile(
@@ -147,6 +169,9 @@ public enum StoreProfileService {
             canonical.name = newest.name
             canonical.imageData = newest.imageData
             canonical.isArchived = newest.isArchived
+            canonical.archivedAt = newest.archivedAt
+            canonical.trashedAt = newest.trashedAt
+            canonical.wasArchivedBeforeTrash = newest.wasArchivedBeforeTrash
             canonical.sortOrder = newest.sortOrder
             canonical.updatedAt = newest.updatedAt
 
@@ -165,16 +190,21 @@ public enum StoreProfileService {
         }
 
         if let preferredStoreID,
-           let preferred = stores.first(where: { $0.id == preferredStoreID && !$0.isArchived }) {
+           let preferred = stores.first(where: { $0.id == preferredStoreID && $0.isActive }) {
             return preferred
         }
-        if let active = stores.first(where: { !$0.isArchived }) {
+        if let active = stores.first(where: \.isActive) {
             return active
         }
 
-        // Mantem o app utilizavel se uma importacao remota deixar todas as lojas arquivadas.
-        let recovered = stores[0]
+        // Mantem o app utilizavel se uma importacao remota deixar todas as lojas inativas.
+        let recovered = orderedArchivedForDisplay(stores).first
+            ?? orderedTrashedForDisplay(stores).first
+            ?? stores[0]
         recovered.isArchived = false
+        recovered.archivedAt = nil
+        recovered.trashedAt = nil
+        recovered.wasArchivedBeforeTrash = false
         recovered.updatedAt = Date()
         return recovered
     }
@@ -187,6 +217,7 @@ public enum StoreProfileService {
         date: Date = Date(),
         in context: ModelContext
     ) throws {
+        guard !store.isTrashed else { throw StoreProfileError.trashedStore }
         let cleanName = sanitized(name)
         guard !cleanName.isEmpty else { throw StoreProfileError.emptyName }
         guard try !contains(name: cleanName, excluding: store.id, in: context) else {
@@ -204,14 +235,18 @@ public enum StoreProfileService {
         date: Date = Date(),
         in context: ModelContext
     ) throws {
+        guard !store.isTrashed else { throw StoreProfileError.trashedStore }
         guard !store.isArchived else { return }
 
         let activeStores = try context.fetch(
-            FetchDescriptor<StoreProfile>(predicate: #Predicate { !$0.isArchived })
+            FetchDescriptor<StoreProfile>(predicate: #Predicate {
+                !$0.isArchived && $0.trashedAt == nil
+            })
         )
         guard activeStores.count > 1 else { throw StoreProfileError.lastActiveStore }
 
         store.isArchived = true
+        store.archivedAt = date
         store.updatedAt = date
     }
 
@@ -220,9 +255,10 @@ public enum StoreProfileService {
         _ store: StoreProfile,
         date: Date = Date()
     ) {
-        guard store.isArchived else { return }
+        guard store.isArchived, !store.isTrashed else { return }
 
         store.isArchived = false
+        store.archivedAt = nil
         store.updatedAt = date
     }
 
@@ -239,12 +275,27 @@ public enum StoreProfileService {
         }
     }
 
+    /// Arquivadas e itens da lixeira usam a data da acao, sem depender da ordem manual.
+    public static func orderedArchivedForDisplay(_ stores: [StoreProfile]) -> [StoreProfile] {
+        stores.filter { $0.lifecycleState == .archived }.sorted {
+            compareNewestFirst($0.archivedAt ?? $0.updatedAt, $1.archivedAt ?? $1.updatedAt,
+                               leftID: $0.id, rightID: $1.id)
+        }
+    }
+
+    public static func orderedTrashedForDisplay(_ stores: [StoreProfile]) -> [StoreProfile] {
+        stores.filter(\.isTrashed).sorted {
+            compareNewestFirst($0.trashedAt ?? $0.updatedAt, $1.trashedAt ?? $1.updatedAt,
+                               leftID: $0.id, rightID: $1.id)
+        }
+    }
+
     /// Persiste a ordem completa recebida da interface sem alterar outros dados da loja.
     public static func setDisplayOrder(
         _ stores: [StoreProfile],
         date: Date = Date()
     ) throws {
-        guard stores.allSatisfy({ !$0.isArchived }) else {
+        guard stores.allSatisfy(\.isActive) else {
             throw StoreProfileError.archivedStore
         }
 
@@ -265,6 +316,16 @@ public enum StoreProfileService {
             return stores.count
         }
         return last + 1
+    }
+
+    private static func compareNewestFirst(
+        _ leftDate: Date,
+        _ rightDate: Date,
+        leftID: UUID,
+        rightID: UUID
+    ) -> Bool {
+        if leftDate != rightDate { return leftDate > rightDate }
+        return leftID.uuidString < rightID.uuidString
     }
 
     private static func contains(

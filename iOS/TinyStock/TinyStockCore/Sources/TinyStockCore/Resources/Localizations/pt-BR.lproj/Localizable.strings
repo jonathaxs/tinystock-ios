@@ -168,6 +168,8 @@
 "store.error.duplicateName" = "Já existe uma loja com esse nome.";
 "store.error.lastActiveStore" = "Mantenha pelo menos uma loja ativa.";
 "store.error.archivedStore" = "Escolha uma loja ativa.";
+"store.error.trashedStore" = "Restaure esta loja antes de editá-la.";
+"store.error.storeNotInTrash" = "Mova esta loja para a Lixeira antes de excluí-la permanentemente.";
 "store.error.title" = "Não foi possível salvar a loja";
 "store.switcher.accessibility" = "Escolher loja";
 "store.form.title.new" = "Nova loja";

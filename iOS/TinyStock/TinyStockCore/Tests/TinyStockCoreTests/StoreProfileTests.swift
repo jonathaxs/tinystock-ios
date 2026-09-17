@@ -157,6 +157,40 @@ struct StoreProfileTests {
         #expect(selected.createdAt == Date(timeIntervalSince1970: 100))
     }
 
+    @Test func reconciliacaoDoCloudKitPreservaCicloDeVidaMaisRecente() throws {
+        let context = try TestDatabase.makeCleanContext()
+        let trashedAt = Date(timeIntervalSince1970: 300)
+        let canonical = StoreProfile(
+            id: StoreScope.primaryStoreID, name: "Antiga",
+            createdAt: Date(timeIntervalSince1970: 100),
+            updatedAt: Date(timeIntervalSince1970: 100)
+        )
+        let remote = StoreProfile(
+            id: StoreScope.primaryStoreID, name: "Remota", isArchived: true,
+            archivedAt: Date(timeIntervalSince1970: 200), trashedAt: trashedAt,
+            wasArchivedBeforeTrash: true,
+            createdAt: Date(timeIntervalSince1970: 200), updatedAt: trashedAt
+        )
+        let active = StoreProfile(name: "Ativa")
+        context.insert(canonical)
+        context.insert(remote)
+        context.insert(active)
+
+        let selected = try StoreProfileService.reconcileCloudStores(
+            preferredStoreID: active.id, in: context
+        )
+        try context.save()
+
+        let stores = try context.fetch(FetchDescriptor<StoreProfile>())
+        let primary = try #require(stores.first { $0.id == StoreScope.primaryStoreID })
+        #expect(stores.count == 2)
+        #expect(selected.id == active.id)
+        #expect(primary.name == "Remota")
+        #expect(primary.lifecycleState == .trashed)
+        #expect(primary.trashedAt == trashedAt)
+        #expect(primary.wasArchivedBeforeTrash)
+    }
+
     @Test func edicaoPreservaDataDeCriacao() throws {
         let context = try TestDatabase.makeCleanContext()
         let createdAt = Date(timeIntervalSince1970: 1_700_000_000)
@@ -209,6 +243,8 @@ struct StoreProfileTests {
         try StoreProfileService.archive(first, date: archivedAt, in: context)
 
         #expect(first.isArchived == true)
+        #expect(first.archivedAt == archivedAt)
+        #expect(first.lifecycleState == .archived)
         #expect(first.updatedAt == archivedAt)
     }
 
@@ -219,7 +255,60 @@ struct StoreProfileTests {
         StoreProfileService.restore(store, date: restoredAt)
 
         #expect(store.isArchived == false)
+        #expect(store.archivedAt == nil)
+        #expect(store.lifecycleState == .active)
         #expect(store.updatedAt == restoredAt)
+    }
+
+    @Test func lixeiraRestauraOEstadoAnteriorSemAlterarDados() throws {
+        let context = try TestDatabase.makeCleanContext()
+        let active = try StoreProfileService.create(name: "Ativa", in: context)
+        let target = try StoreProfileService.create(name: "Temporaria", in: context)
+        let archivedAt = Date(timeIntervalSince1970: 1_800_000_000)
+        let trashedAt = archivedAt.addingTimeInterval(100)
+        let restoredAt = trashedAt.addingTimeInterval(100)
+        try StoreProfileService.archive(target, date: archivedAt, in: context)
+
+        try StoreProfileService.moveToTrash(target, date: trashedAt, in: context)
+        #expect(target.lifecycleState == .trashed)
+        #expect(target.wasArchivedBeforeTrash)
+        #expect(target.archivedAt == archivedAt)
+
+        try StoreProfileService.restoreFromTrash(target, date: restoredAt)
+        #expect(target.lifecycleState == .archived)
+        #expect(target.archivedAt == archivedAt)
+        #expect(target.trashedAt == nil)
+        #expect(!target.wasArchivedBeforeTrash)
+        #expect(active.lifecycleState == .active)
+    }
+
+    @Test func lojaAtivaVoltaAtivaDepoisDaLixeira() throws {
+        let context = try TestDatabase.makeCleanContext()
+        let target = try StoreProfileService.create(name: "Temporaria", in: context)
+        try StoreProfileService.create(name: "Mantida", in: context)
+
+        try StoreProfileService.moveToTrash(target, in: context)
+        try StoreProfileService.restoreFromTrash(target)
+
+        #expect(target.lifecycleState == .active)
+        #expect(target.archivedAt == nil)
+        #expect(target.trashedAt == nil)
+    }
+
+    @Test func arquivadasELixeiraUsamOrdemMaisRecentePrimeiro() throws {
+        let older = Date(timeIntervalSince1970: 100)
+        let newer = Date(timeIntervalSince1970: 200)
+        let firstArchived = StoreProfile(name: "A", isArchived: true, archivedAt: older)
+        let secondArchived = StoreProfile(name: "B", isArchived: true, archivedAt: newer)
+        let firstTrashed = StoreProfile(name: "C", isArchived: true, trashedAt: older)
+        let secondTrashed = StoreProfile(name: "D", isArchived: true, trashedAt: newer)
+
+        #expect(StoreProfileService.orderedArchivedForDisplay([
+            firstArchived, secondArchived, firstTrashed, secondTrashed
+        ]).map(\.id) == [secondArchived.id, firstArchived.id])
+        #expect(StoreProfileService.orderedTrashedForDisplay([
+            firstArchived, secondArchived, firstTrashed, secondTrashed
+        ]).map(\.id) == [secondTrashed.id, firstTrashed.id])
     }
 
     @Test func exclusaoPermanenteRemoveEscopoCompletoEPreservaOutraLoja() throws {
@@ -266,6 +355,8 @@ struct StoreProfileTests {
         legacyItem.sale = legacySale
         try context.save()
 
+        try StoreProfileService.moveToTrash(target, in: context)
+
         let summary = try StoreProfileService.deletionSummary(for: target, in: context)
         #expect(summary == StoreDeletionSummary(
             productCount: 1,
@@ -302,14 +393,14 @@ struct StoreProfileTests {
         #expect(try context.fetchCount(FetchDescriptor<SaleItem>()) == 0)
     }
 
-    @Test func ultimaLojaAtivaNaoPodeSerExcluida() throws {
+    @Test func ultimaLojaAtivaNaoPodeIrParaLixeira() throws {
         let context = try TestDatabase.makeCleanContext()
         let store = try StoreProfileService.create(name: "Loja principal", in: context)
 
         #expect(throws: StoreProfileError.lastActiveStore) {
-            try StoreProfileService.deletionSummary(for: store, in: context)
+            try StoreProfileService.moveToTrash(store, in: context)
         }
-        #expect(throws: StoreProfileError.lastActiveStore) {
+        #expect(throws: StoreProfileError.storeNotInTrash) {
             try StoreProfileService.deletePermanently(store, in: context)
         }
         #expect(try context.fetchCount(FetchDescriptor<StoreProfile>()) == 1)
@@ -322,6 +413,7 @@ struct StoreProfileTests {
         context.insert(active)
         context.insert(archived)
 
+        try StoreProfileService.moveToTrash(archived, in: context)
         _ = try StoreProfileService.deletePermanently(archived, in: context)
         try context.save()
 
@@ -338,6 +430,7 @@ struct StoreProfileTests {
         context.insert(replacement)
         context.insert(product)
 
+        try StoreProfileService.moveToTrash(initial, in: context)
         let selected = try StoreProfileService.deletePermanently(initial, in: context)
         try context.save()
 
@@ -347,12 +440,53 @@ struct StoreProfileTests {
         #expect(product.storeID == StoreScope.primaryStoreID)
     }
 
+    @Test func lixeiraExpiraSomenteDepoisDeTrintaDiasCompletos() throws {
+        let context = try TestDatabase.makeCleanContext()
+        let trashedAt = Date(timeIntervalSince1970: 1_800_000_000)
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let target = try StoreProfileService.create(name: "Temporaria", in: context)
+        try StoreProfileService.create(name: "Mantida", in: context)
+        try StoreProfileService.moveToTrash(target, date: trashedAt, in: context)
+        let expiration = try #require(
+            StoreProfileService.trashExpirationDate(for: target, calendar: calendar)
+        )
+
+        let beforeExpiration = expiration.addingTimeInterval(-1)
+        #expect(try StoreProfileService.purgeExpiredTrash(
+            asOf: beforeExpiration, calendar: calendar, in: context
+        ) == 0)
+        #expect(try context.fetchCount(FetchDescriptor<StoreProfile>()) == 2)
+
+        #expect(try StoreProfileService.purgeExpiredTrash(
+            asOf: expiration, calendar: calendar, in: context
+        ) == 1)
+        #expect(try context.fetchCount(FetchDescriptor<StoreProfile>()) == 1)
+    }
+
+    @Test func lojaNaLixeiraNaoPodeSerEditadaOuSelecionada() throws {
+        let context = try TestDatabase.makeCleanContext()
+        let target = try StoreProfileService.create(name: "Temporaria", in: context)
+        let active = try StoreProfileService.create(name: "Ativa", in: context)
+        try StoreProfileService.moveToTrash(target, in: context)
+
+        #expect(throws: StoreProfileError.trashedStore) {
+            try StoreProfileService.update(target, name: "Outro nome", imageData: nil, in: context)
+        }
+        let session = StoreSession(selectedStoreID: active.id, defaults: makeDefaults())
+        #expect(throws: StoreProfileError.archivedStore) {
+            try session.select(target)
+        }
+    }
+
     @Test func todoErroTemMensagemLocalizada() {
         let errors: [StoreProfileError] = [
             .emptyName,
             .duplicateName,
             .lastActiveStore,
-            .archivedStore
+            .archivedStore,
+            .trashedStore,
+            .storeNotInTrash
         ]
 
         #expect(errors.allSatisfy { !$0.localizedMessage.isEmpty })
@@ -370,6 +504,20 @@ struct StoreProfileTests {
         #expect(stores.count == 1)
         #expect(stores.first?.id == session.selectedStoreID)
         #expect(defaults.string(forKey: StoreSession.selectedStoreKey) == session.selectedStoreID.uuidString)
+    }
+
+    @Test func sessaoRemoveLixeiraVencidaAoIniciar() throws {
+        let context = try TestDatabase.makeCleanContext()
+        let defaults = makeDefaults()
+        let active = try StoreProfileService.create(name: "Ativa", in: context)
+        let target = try StoreProfileService.create(name: "Temporaria", in: context)
+        let expiredDate = Calendar.current.date(byAdding: .day, value: -31, to: Date())!
+        try StoreProfileService.moveToTrash(target, date: expiredDate, in: context)
+
+        let session = try StoreSession.bootstrap(in: context, defaults: defaults)
+
+        #expect(session.selectedStoreID == active.id)
+        #expect(try context.fetchCount(FetchDescriptor<StoreProfile>()) == 1)
     }
 
     @Test func selecaoInvalidaVoltaParaLojaAtiva() throws {

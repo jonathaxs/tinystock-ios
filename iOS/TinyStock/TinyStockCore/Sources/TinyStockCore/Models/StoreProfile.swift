@@ -23,6 +23,12 @@ public enum StoreScope {
 
 // MARK: - Loja
 
+public enum StoreLifecycleState: String, Codable, Sendable {
+    case active
+    case archived
+    case trashed
+}
+
 /// Uma loja independente dentro do TinyStock.
 ///
 /// Produtos, pedidos e relatórios usam este identificador para manter o isolamento da loja.
@@ -42,6 +48,15 @@ public final class StoreProfile {
     /// Lojas arquivadas preservam o histórico, mas não aparecem no uso cotidiano.
     public var isArchived: Bool = false
 
+    /// Data usada para ordenar as lojas arquivadas da mais recente para a mais antiga.
+    public var archivedAt: Date?
+
+    /// Data de entrada na lixeira, usada para calcular a exclusao depois de 30 dias.
+    public var trashedAt: Date?
+
+    /// Permite restaurar uma loja da lixeira para o estado que possuia antes.
+    public var wasArchivedBeforeTrash: Bool = false
+
     /// Posicao escolhida pelo usuario nas listas e no seletor rapido.
     public var sortOrder: Int = 0
 
@@ -53,6 +68,9 @@ public final class StoreProfile {
         name: String = "",
         imageData: Data? = nil,
         isArchived: Bool = false,
+        archivedAt: Date? = nil,
+        trashedAt: Date? = nil,
+        wasArchivedBeforeTrash: Bool = false,
         sortOrder: Int = 0,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
@@ -61,8 +79,20 @@ public final class StoreProfile {
         self.name = name
         self.imageData = imageData
         self.isArchived = isArchived
+        self.archivedAt = archivedAt
+        self.trashedAt = trashedAt
+        self.wasArchivedBeforeTrash = wasArchivedBeforeTrash
         self.sortOrder = sortOrder
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
+
+    @Transient
+    public var lifecycleState: StoreLifecycleState {
+        if trashedAt != nil { return .trashed }
+        return isArchived ? .archived : .active
+    }
+
+    public var isActive: Bool { lifecycleState == .active }
+    public var isTrashed: Bool { lifecycleState == .trashed }
 }

@@ -30,6 +30,7 @@ struct BackupManagerTests {
         )
         let archivedStore = StoreProfile(
             name: "Loja arquivada", imageData: Data([0x03]), isArchived: true,
+            archivedAt: reference.addingTimeInterval(2),
             sortOrder: 9,
             createdAt: reference.addingTimeInterval(2), updatedAt: reference.addingTimeInterval(3)
         )
@@ -102,6 +103,7 @@ struct BackupManagerTests {
         #expect(payload.stores.first(where: { $0.id == activeStore.id })?.imageData == Data([0x01, 0x02]))
         #expect(payload.stores.first(where: { $0.id == activeStore.id })?.sortOrder == 4)
         #expect(payload.stores.first(where: { $0.id == archivedStore.id })?.isArchived == true)
+        #expect(payload.stores.first(where: { $0.id == archivedStore.id })?.archivedAt == archivedStore.archivedAt)
         #expect(payload.products.map(\.name) == ["Produto Premium"])
         #expect(payload.products.first?.imageData == Data([0x04, 0x05]))
         #expect(payload.products.first?.costPrice == Decimal(string: "80.25"))
@@ -158,6 +160,11 @@ struct BackupManagerTests {
         #expect(try context.fetch(FetchDescriptor<StoreProfile>()).first {
             $0.id == payload.selectedStoreID
         }?.sortOrder == 2)
+        let restoredTrash = try #require(context.fetch(FetchDescriptor<StoreProfile>()).first {
+            $0.trashedAt != nil
+        })
+        #expect(restoredTrash.lifecycleState == .trashed)
+        #expect(restoredTrash.wasArchivedBeforeTrash)
     }
 
     @Test func restauracaoV2PreservaIdentidadeDeRegistrosExistentes() throws {
@@ -345,6 +352,25 @@ struct BackupManagerTests {
         #expect(decoded.variants.allSatisfy { !$0.isDefault })
     }
 
+    @Test func arquivoV2SemMetadadosDaLixeiraContinuaCompativel() throws {
+        let data = try encodeForTest(makeV2Payload())
+        var object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        var stores = try #require(object["stores"] as? [[String: Any]])
+        for index in stores.indices {
+            stores[index].removeValue(forKey: "archivedAt")
+            stores[index].removeValue(forKey: "trashedAt")
+            stores[index].removeValue(forKey: "wasArchivedBeforeTrash")
+        }
+        object["stores"] = stores
+
+        let oldData = try JSONSerialization.data(withJSONObject: object)
+        let decoded = try BackupManager.decode(oldData)
+
+        #expect(decoded.stores.allSatisfy {
+            $0.archivedAt == nil && $0.trashedAt == nil && !$0.wasArchivedBeforeTrash
+        })
+    }
+
     @Test func migracaoV1RecusaLojaAusenteOuArquivadaSemApagarDados() throws {
         let context = try makeContext()
         let archivedStore = StoreProfile(name: "Arquivada", isArchived: true)
@@ -422,7 +448,9 @@ struct BackupManagerTests {
                 ),
                 .init(
                     id: archivedStoreID, name: "Loja arquivada", imageData: nil,
-                    isArchived: true, sortOrder: 7,
+                    isArchived: true, archivedAt: reference,
+                    trashedAt: reference.addingTimeInterval(1),
+                    wasArchivedBeforeTrash: true, sortOrder: 7,
                     createdAt: reference, updatedAt: reference
                 )
             ],

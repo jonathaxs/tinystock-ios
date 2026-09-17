@@ -168,6 +168,8 @@
 "store.error.duplicateName" = "A store with this name already exists.";
 "store.error.lastActiveStore" = "Keep at least one active store.";
 "store.error.archivedStore" = "Choose an active store.";
+"store.error.trashedStore" = "Restore this store before editing it.";
+"store.error.storeNotInTrash" = "Move this store to Trash before deleting it permanently.";
 "store.error.title" = "Store could not be saved";
 "store.switcher.accessibility" = "Choose store";
 "store.form.title.new" = "New Store";

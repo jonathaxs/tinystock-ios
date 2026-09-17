@@ -44,7 +44,7 @@ public enum BackupManager {
             .sorted { $0.id.uuidString < $1.id.uuidString }
         let orders = try snapshotContext.fetch(FetchDescriptor<SalesOrder>())
             .sorted { $0.id.uuidString < $1.id.uuidString }
-        let activeStores = stores.filter { !$0.isArchived }
+        let activeStores = stores.filter(\.isActive)
         guard let selectedID = activeStores.first(where: { $0.id == selectedStoreID })?.id
             ?? activeStores.first?.id else {
             throw BackupError.invalidFile

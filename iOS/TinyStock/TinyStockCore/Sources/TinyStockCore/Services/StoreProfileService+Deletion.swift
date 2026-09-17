@@ -25,6 +25,76 @@ public struct StoreDeletionSummary: Equatable, Sendable {
 
 public extension StoreProfileService {
 
+    static var trashRetentionDays: Int { 30 }
+
+    /// Move para a lixeira sem remover os dados e guarda o estado anterior para restauracao.
+    @MainActor
+    static func moveToTrash(
+        _ store: StoreProfile,
+        date: Date = Date(),
+        in context: ModelContext
+    ) throws {
+        guard !store.isTrashed else { return }
+        if store.isActive {
+            let storeID = store.id
+            let remainingActiveCount = try context.fetchCount(
+                FetchDescriptor<StoreProfile>(predicate: #Predicate {
+                    !$0.isArchived && $0.trashedAt == nil && $0.id != storeID
+                })
+            )
+            guard remainingActiveCount > 0 else { throw StoreProfileError.lastActiveStore }
+        }
+
+        store.wasArchivedBeforeTrash = store.isArchived
+        store.isArchived = true
+        store.trashedAt = date
+        store.updatedAt = date
+    }
+
+    /// Restaura para ativa ou arquivada, conforme o estado anterior a lixeira.
+    static func restoreFromTrash(
+        _ store: StoreProfile,
+        date: Date = Date()
+    ) throws {
+        guard store.isTrashed else { throw StoreProfileError.storeNotInTrash }
+
+        let restoreAsArchived = store.wasArchivedBeforeTrash
+        store.isArchived = restoreAsArchived
+        store.archivedAt = restoreAsArchived ? (store.archivedAt ?? date) : nil
+        store.trashedAt = nil
+        store.wasArchivedBeforeTrash = false
+        store.updatedAt = date
+    }
+
+    static func trashExpirationDate(
+        for store: StoreProfile,
+        calendar: Calendar = .current
+    ) -> Date? {
+        guard let trashedAt = store.trashedAt else { return nil }
+        return calendar.date(byAdding: .day, value: trashRetentionDays, to: trashedAt)
+    }
+
+    /// Remove em lote somente lojas que completaram o prazo na lixeira.
+    @MainActor
+    @discardableResult
+    static func purgeExpiredTrash(
+        asOf date: Date = Date(),
+        calendar: Calendar = .current,
+        in context: ModelContext
+    ) throws -> Int {
+        let stores = try context.fetch(
+            FetchDescriptor<StoreProfile>(predicate: #Predicate { $0.trashedAt != nil })
+        )
+        let expired = stores.filter {
+            guard let expiration = trashExpirationDate(for: $0, calendar: calendar) else { return false }
+            return expiration <= date
+        }
+        for store in expired {
+            try deletePermanently(store, date: date, in: context)
+        }
+        return expired.count
+    }
+
     /// Calcula o impacto antes de apresentar a confirmacao ao usuario.
     @MainActor
     static func deletionSummary(
@@ -66,13 +136,12 @@ public extension StoreProfileService {
         date: Date = Date(),
         in context: ModelContext
     ) throws -> StoreProfile? {
+        guard store.isTrashed else { throw StoreProfileError.storeNotInTrash }
         let stores = try context.fetch(FetchDescriptor<StoreProfile>())
         let remainingActiveStores = orderedForDisplay(
-            stores.filter { $0.id != store.id && !$0.isArchived }
+            stores.filter { $0.id != store.id && $0.isActive }
         )
-        guard store.isArchived || !remainingActiveStores.isEmpty else {
-            throw StoreProfileError.lastActiveStore
-        }
+        guard !remainingActiveStores.isEmpty else { throw StoreProfileError.lastActiveStore }
 
         let deletedStoreID = store.id
         try deleteData(storeID: deletedStoreID, in: context)
@@ -96,11 +165,10 @@ public extension StoreProfileService {
         of store: StoreProfile,
         in context: ModelContext
     ) throws {
-        guard !store.isArchived else { return }
-        let storeID = store.id
+        guard store.isTrashed else { throw StoreProfileError.storeNotInTrash }
         let remainingActiveCount = try context.fetchCount(
             FetchDescriptor<StoreProfile>(predicate: #Predicate {
-                !$0.isArchived && $0.id != storeID
+                !$0.isArchived && $0.trashedAt == nil
             })
         )
         guard remainingActiveCount > 0 else { throw StoreProfileError.lastActiveStore }
