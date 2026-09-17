@@ -196,11 +196,14 @@
 "app.error.dataStore.message" = "Force o fechamento e reabra o app. Se continuar, reinicie o aparelho.";
 "product.form.error.title" = "Não foi possível salvar o produto";
 "product.form.error.missingVariation" = "Adicione pelo menos uma variação ao produto.";
-"product.form.variants" = "Variações";
+"product.form.error.multipleVariations" = "Um produto com várias variações não pode ocultá-las.";
 "product.form.variant.title" = "Variação";
+"product.form.variant.enabled" = "Possui variações";
 "product.form.variant.name" = "Nome da variação";
 "product.form.variant.initialStock" = "Estoque inicial";
 "product.form.variant.available" = "Estoque disponível";
+"product.form.variant.disabled.footer" = "Ative para identificar uma variação e seu estoque inicial.";
+"product.form.variant.multiple.footer" = "Variações existentes devem permanecer ativas para preservar seus estoques e históricos.";
 "product.form.photo.camera" = "Tirar foto";
 "product.form.photo.error" = "Não foi possível ler esta foto. Escolha outra imagem.";
 "product.form.photo.permission" = "O acesso à câmera está desativado. Permita o acesso nos Ajustes do iPhone para fotografar o produto.";
@@ -292,6 +295,7 @@
 "order.queue.untitled" = "Pedido sem itens";
 "order.queue.moreItems" = "%1$@ e mais %2$@";
 "order.queue.itemMetadata" = "%1$@ · %2$@ unidades";
+"order.queue.quantityMetadata" = "%@ unidades";
 "order.queue.productionDate" = "Produzir até %@";
 "order.queue.shippingDate" = "Despachar até %@";
 "order.queue.shippedDate" = "Despachado em %@";

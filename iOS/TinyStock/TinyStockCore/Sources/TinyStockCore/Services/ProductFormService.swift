@@ -9,6 +9,7 @@ import SwiftData
 
 public enum ProductFormError: Error, Equatable, Sendable {
     case missingVariation
+    case cannotDisableMultipleVariations
 }
 
 public extension ProductFormError {
@@ -16,6 +17,8 @@ public extension ProductFormError {
         switch self {
         case .missingVariation:
             String(localized: "product.form.error.missingVariation", bundle: .tinyStockCore)
+        case .cannotDisableMultipleVariations:
+            String(localized: "product.form.error.multipleVariations", bundle: .tinyStockCore)
         }
     }
 }
@@ -46,18 +49,23 @@ public enum ProductFormService {
         salePrice: Decimal,
         imageData: Data?,
         variants: [ProductVariantInput],
+        usesVariants: Bool = true,
         in context: ModelContext
     ) throws -> Product {
         if let product, product.storeID != storeID {
             throw ProductVariantError.productMismatch
         }
-        guard product != nil || !variants.isEmpty else {
+        guard product != nil || !usesVariants || !variants.isEmpty else {
             throw ProductFormError.missingVariation
         }
 
         // Valida toda a lista antes de alterar produto, nomes ou saldos.
         let existing = try product.map { try ProductVariantService.variants(for: $0, in: context) } ?? []
-        try ProductVariantService.validateEdits(variants, existing: existing)
+        if usesVariants {
+            try ProductVariantService.validateEdits(variants, existing: existing)
+        } else if existing.count > 1 {
+            throw ProductFormError.cannotDisableMultipleVariations
+        }
 
         let savedProduct: Product
         if let product {
@@ -69,7 +77,11 @@ public enum ProductFormService {
                                                      salePrice: salePrice, imageData: imageData, in: context)
         }
 
-        try ProductVariantService.applyEdits(variants, existing: existing, for: savedProduct, in: context)
+        if usesVariants {
+            try ProductVariantService.applyEdits(variants, existing: existing, for: savedProduct, in: context)
+        } else {
+            try ProductVariantService.applyDefault(existing: existing, for: savedProduct, in: context)
+        }
         return savedProduct
     }
 }

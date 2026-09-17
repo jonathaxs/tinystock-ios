@@ -36,7 +36,26 @@ struct ProductFormServiceTests {
         #expect(try reader.fetchCount(FetchDescriptor<ProductVariant>()) == 2)
     }
 
-    @Test func cadastroExigePeloMenosUmaVariacao() throws {
+    @Test func cadastroSemVariacoesCriaVariacaoInterna() throws {
+        let context = try TestDatabase.makeCleanContext()
+        let product = try ProductFormService.apply(
+            storeID: UUID(), name: "Produto", costPrice: 0, salePrice: 0,
+            imageData: nil, variants: [], usesVariants: false, in: context
+        )
+        let variant = try #require(ProductVariantService.variants(for: product, in: context).first)
+
+        #expect(variant.isDefault)
+        #expect(variant.name == ProductVariant.internalDefaultName)
+        #expect(variant.quantity == 0)
+        #expect(try context.fetchCount(FetchDescriptor<StockMovement>()) == 0)
+
+        try context.save()
+        let reader = ModelContext(TestDatabase.container)
+        let persisted = try #require(reader.fetch(FetchDescriptor<ProductVariant>()).first)
+        #expect(persisted.isDefault)
+    }
+
+    @Test func cadastroComVariacoesExigePeloMenosUmaVariacao() throws {
         let context = try TestDatabase.makeCleanContext()
         #expect(throws: ProductFormError.missingVariation) {
             try ProductFormService.apply(storeID: UUID(), name: "Produto", costPrice: 0,
@@ -45,6 +64,55 @@ struct ProductFormServiceTests {
         #expect(try context.fetchCount(FetchDescriptor<Product>()) == 0)
         #expect(try context.fetchCount(FetchDescriptor<ProductVariant>()) == 0)
         #expect(try context.fetchCount(FetchDescriptor<StockMovement>()) == 0)
+    }
+
+    @Test func ativarEDesativarVariacaoPreservaIdentidadeSaldoEHistorico() throws {
+        let context = try TestDatabase.makeCleanContext()
+        let product = try ProductFormService.apply(
+            storeID: UUID(), name: "Produto", costPrice: 0, salePrice: 0,
+            imageData: nil, variants: [], usesVariants: false, in: context
+        )
+        let variant = try #require(ProductVariantService.variants(for: product, in: context).first)
+        try StockService.registerEntry(quantity: 3, to: variant, product: product, in: context)
+
+        try ProductFormService.apply(
+            to: product, storeID: product.storeID, name: product.name,
+            costPrice: 0, salePrice: 0, imageData: nil,
+            variants: [.init(existingID: variant.id, name: "Preta", initialQuantity: 3)],
+            usesVariants: true, in: context
+        )
+        #expect(!variant.isDefault)
+        #expect(variant.name == "Preta")
+        #expect(variant.quantity == 3)
+
+        try ProductFormService.apply(
+            to: product, storeID: product.storeID, name: product.name,
+            costPrice: 0, salePrice: 0, imageData: nil,
+            variants: [], usesVariants: false, in: context
+        )
+        let stored = try ProductVariantService.variants(for: product, in: context)
+        #expect(stored.map(\.id) == [variant.id])
+        #expect(variant.isDefault)
+        #expect(variant.name == ProductVariant.internalDefaultName)
+        #expect(variant.quantity == 3)
+        #expect(try context.fetchCount(FetchDescriptor<StockMovement>()) == 1)
+    }
+
+    @Test func variasVariacoesNaoPodemSerOcultadas() throws {
+        let context = try TestDatabase.makeCleanContext()
+        let product = try ProductService.create(storeID: UUID(), name: "Produto", in: context)
+        let first = try ProductVariantService.create(for: product, name: "Preta", in: context)
+        let second = try ProductVariantService.create(for: product, name: "Branca", in: context)
+
+        #expect(throws: ProductFormError.cannotDisableMultipleVariations) {
+            try ProductFormService.apply(
+                to: product, storeID: product.storeID, name: product.name,
+                costPrice: 0, salePrice: 0, imageData: nil,
+                variants: [], usesVariants: false, in: context
+            )
+        }
+        #expect(!first.isDefault && !second.isDefault)
+        #expect(Set([first.name, second.name]) == Set(["Preta", "Branca"]))
     }
 
     @Test func variacoesInvalidasNaoCriamProdutoParcial() throws {

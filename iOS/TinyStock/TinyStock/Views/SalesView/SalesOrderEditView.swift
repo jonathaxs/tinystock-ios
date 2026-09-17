@@ -89,7 +89,9 @@ struct SalesOrderEditView: View {
                 } label: {
                     VStack(alignment: .leading) {
                         Text(item.productName)
-                        Text(item.variantName).font(.caption).foregroundStyle(.secondary)
+                        if !item.variantName.isEmpty {
+                            Text(item.variantName).font(.caption).foregroundStyle(.secondary)
+                        }
                     }
                 }
             }

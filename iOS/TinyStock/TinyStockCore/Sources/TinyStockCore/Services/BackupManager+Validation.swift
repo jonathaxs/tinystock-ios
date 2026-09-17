@@ -70,6 +70,13 @@ extension BackupManager {
         }) else {
             return false
         }
+        let variantsByProduct = Dictionary(grouping: payload.variants, by: \.productID)
+        guard variantsByProduct.values.allSatisfy({ variants in
+            let defaults = variants.filter(\.isDefault)
+            return defaults.isEmpty || (defaults.count == 1 && variants.count == 1)
+        }) else {
+            return false
+        }
 
         let movementIDs = Set(payload.stockMovements.map(\.id))
         guard movementIDs.count == payload.stockMovements.count,

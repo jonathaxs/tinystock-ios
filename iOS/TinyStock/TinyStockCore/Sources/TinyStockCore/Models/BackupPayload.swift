@@ -141,19 +141,37 @@ public struct BackupPayload: Codable, Equatable, Sendable {
         public let storeID: UUID
         public let productID: UUID
         public let name: String
+        public let isDefault: Bool
         public let quantity: Int
         public let createdAt: Date
         public let updatedAt: Date
 
-        public init(id: UUID, storeID: UUID, productID: UUID, name: String,
+        public init(id: UUID, storeID: UUID, productID: UUID, name: String, isDefault: Bool = false,
                     quantity: Int, createdAt: Date, updatedAt: Date) {
             self.id = id
             self.storeID = storeID
             self.productID = productID
             self.name = name
+            self.isDefault = isDefault
             self.quantity = quantity
             self.createdAt = createdAt
             self.updatedAt = updatedAt
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            case id, storeID, productID, name, isDefault, quantity, createdAt, updatedAt
+        }
+
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            id = try container.decode(UUID.self, forKey: .id)
+            storeID = try container.decode(UUID.self, forKey: .storeID)
+            productID = try container.decode(UUID.self, forKey: .productID)
+            name = try container.decode(String.self, forKey: .name)
+            isDefault = try container.decodeIfPresent(Bool.self, forKey: .isDefault) ?? false
+            quantity = try container.decode(Int.self, forKey: .quantity)
+            createdAt = try container.decode(Date.self, forKey: .createdAt)
+            updatedAt = try container.decode(Date.self, forKey: .updatedAt)
         }
     }
 

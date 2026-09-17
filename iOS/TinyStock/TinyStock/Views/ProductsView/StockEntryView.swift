@@ -30,6 +30,10 @@ struct StockEntryView: View {
         variants.first { $0.id == selectedVariantID }
     }
 
+    private var usesInternalVariant: Bool {
+        variants.count == 1 && variants.first?.isDefault == true
+    }
+
     private var quantity: Int? { Int(quantityText.trimmingCharacters(in: .whitespacesAndNewlines)) }
 
     private var resultingBalance: Int? {
@@ -49,16 +53,18 @@ struct StockEntryView: View {
             Form {
                 Section {
                     Text(product.name).font(.headline).fixedSize(horizontal: false, vertical: true)
-                    Picker(String(localized: "product.form.variant.title", bundle: .tinyStockCore), selection: $selectedVariantID) {
-                        ForEach(variants) { variant in
-                            Text(variant.name).tag(Optional(variant.id))
+                    if !usesInternalVariant {
+                        Picker(String(localized: "product.form.variant.title", bundle: .tinyStockCore), selection: $selectedVariantID) {
+                            ForEach(variants) { variant in
+                                Text(variant.name).tag(Optional(variant.id))
+                            }
+                            Text(String(localized: "stock.entry.newVariant", bundle: .tinyStockCore))
+                                .tag(Optional<UUID>.none)
                         }
-                        Text(String(localized: "stock.entry.newVariant", bundle: .tinyStockCore))
-                            .tag(Optional<UUID>.none)
-                    }
-                    if selectedVariantID == nil {
-                        TextField(String(localized: "product.form.variant.name", bundle: .tinyStockCore), text: $newVariantName)
-                            .textInputAutocapitalization(.words)
+                        if selectedVariantID == nil {
+                            TextField(String(localized: "product.form.variant.name", bundle: .tinyStockCore), text: $newVariantName)
+                                .textInputAutocapitalization(.words)
+                        }
                     }
                 }
                 Section {

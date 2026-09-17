@@ -63,6 +63,22 @@ struct SalesOrderTests {
         #expect(try context.fetchCount(FetchDescriptor<StockMovement>()) == 1)
     }
 
+    @Test func retratoNaoExpoeNomeDaVariacaoInterna() throws {
+        let context = try TestDatabase.makeCleanContext()
+        let product = Product(storeID: UUID(), name: "Produto", salePrice: 20)
+        let variant = ProductVariant(
+            storeID: product.storeID, productID: product.id,
+            name: ProductVariant.internalDefaultName, isDefault: true
+        )
+        context.insert(product)
+        context.insert(variant)
+
+        let item = try SalesOrderItem.snapshot(product: product, variant: variant, quantity: 1)
+
+        #expect(item.variantName.isEmpty)
+        #expect(item.variantID == variant.id)
+    }
+
     @Test func retratoNaoMudaQuandoCatalogoEhEditado() throws {
         let context = try TestDatabase.makeCleanContext()
         let (product, variant) = try makeProduct(in: context)

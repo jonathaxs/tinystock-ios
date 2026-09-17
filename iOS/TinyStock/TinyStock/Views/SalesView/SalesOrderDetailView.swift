@@ -100,7 +100,9 @@ struct SalesOrderDetailView: View {
     private func itemIdentification(_ item: SalesOrderItem) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(item.productName).fontWeight(.medium)
-            Text(item.variantName).font(.subheadline).foregroundStyle(.secondary)
+            if !item.variantName.isEmpty {
+                Text(item.variantName).font(.subheadline).foregroundStyle(.secondary)
+            }
         }
     }
 

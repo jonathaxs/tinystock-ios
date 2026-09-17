@@ -113,7 +113,7 @@ public final class Product {
     public func matches(searchText: String, variants: [ProductVariant]) -> Bool {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         return query.isEmpty || name.localizedStandardContains(query) || variants.contains {
-            $0.belongs(to: self) && $0.name.localizedStandardContains(query)
+            $0.belongs(to: self) && !$0.isDefault && $0.name.localizedStandardContains(query)
         }
     }
 }

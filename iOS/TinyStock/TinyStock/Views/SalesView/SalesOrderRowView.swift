@@ -51,10 +51,7 @@ struct SalesOrderRowView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title).font(.headline).fixedSize(horizontal: false, vertical: true)
             if let firstItem {
-                Text(String(
-                    format: String(localized: "order.queue.itemMetadata", bundle: .tinyStockCore),
-                    firstItem.variantName, order.totalQuantity.formatted()
-                ))
+                Text(itemMetadata(firstItem))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             }
@@ -69,6 +66,15 @@ struct SalesOrderRowView: View {
                     .foregroundStyle(.red)
             }
         }
+    }
+
+    private func itemMetadata(_ item: SalesOrderItem) -> String {
+        if item.variantName.isEmpty {
+            let format = String(localized: "order.queue.quantityMetadata", bundle: .tinyStockCore)
+            return String(format: format, order.totalQuantity.formatted())
+        }
+        let format = String(localized: "order.queue.itemMetadata", bundle: .tinyStockCore)
+        return String(format: format, item.variantName, order.totalQuantity.formatted())
     }
 
     private var financialInformation: some View {

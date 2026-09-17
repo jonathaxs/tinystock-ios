@@ -180,6 +180,7 @@ extension BackupManager {
         value.storeID = snapshot.storeID
         value.productID = snapshot.productID
         value.name = snapshot.name
+        value.isDefault = snapshot.isDefault
         value.quantity = snapshot.quantity
         value.createdAt = snapshot.createdAt
         value.updatedAt = snapshot.updatedAt

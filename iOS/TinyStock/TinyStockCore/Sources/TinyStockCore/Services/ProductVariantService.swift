@@ -43,22 +43,26 @@ public enum ProductVariantService {
     public static func create(
         for product: Product,
         name: String,
+        isDefault: Bool = false,
         initialQuantity: Int = 0,
         date: Date = Date(),
         in context: ModelContext
     ) throws -> ProductVariant {
         guard initialQuantity >= 0 else { throw ProductVariantError.negativeQuantity }
-        let cleanName = try validatedName(
-            name,
-            for: product,
-            excluding: nil,
-            in: context
-        )
+        let cleanName = isDefault
+            ? ProductVariant.internalDefaultName
+            : try validatedName(name, for: product, excluding: nil, in: context)
+
+        if isDefault {
+            let existing = try variants(for: product, in: context)
+            guard existing.isEmpty else { throw ProductVariantError.productMismatch }
+        }
 
         let variant = ProductVariant(
             storeID: product.storeID,
             productID: product.id,
             name: cleanName,
+            isDefault: isDefault,
             quantity: 0,
             createdAt: date,
             updatedAt: date
@@ -161,14 +165,34 @@ public enum ProductVariantService {
         for input in inputs {
             if let variant = existing.first(where: { $0.id == input.existingID }) {
                 let name = input.name.trimmingCharacters(in: .whitespacesAndNewlines)
-                if variant.name != name {
+                if variant.name != name || variant.isDefault {
                     variant.name = name
+                    variant.isDefault = false
                     variant.updatedAt = Date()
                 }
             }
         }
         for input in inputs where input.existingID == nil {
             try create(for: product, name: input.name, initialQuantity: input.initialQuantity, in: context)
+        }
+    }
+
+    /// Preserva a identidade, o saldo e o historico ao ocultar a unica variacao do produto.
+    static func applyDefault(
+        existing: [ProductVariant],
+        for product: Product,
+        in context: ModelContext
+    ) throws {
+        guard existing.count <= 1 else { throw ProductFormError.cannotDisableMultipleVariations }
+        if let variant = existing.first {
+            guard variant.belongs(to: product) else { throw ProductVariantError.productMismatch }
+            if !variant.isDefault || variant.name != ProductVariant.internalDefaultName {
+                variant.name = ProductVariant.internalDefaultName
+                variant.isDefault = true
+                variant.updatedAt = Date()
+            }
+        } else {
+            try create(for: product, name: "", isDefault: true, in: context)
         }
     }
 

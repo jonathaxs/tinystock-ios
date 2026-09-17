@@ -72,7 +72,7 @@ public final class SalesOrderItem {
               product.salePrice >= 0, product.costPrice >= 0 else { throw SalesOrderItemError.invalidPrices }
         return SalesOrderItem(
             storeID: product.storeID, productID: product.id, variantID: variant.id,
-            productName: product.name, variantName: variant.name,
+            productName: product.name, variantName: variant.isDefault ? "" : variant.name,
             unitPrice: product.salePrice, unitCost: product.costPrice,
             quantity: quantity, position: position
         )

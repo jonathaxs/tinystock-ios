@@ -40,7 +40,8 @@ struct BackupManagerTests {
             createdAt: reference.addingTimeInterval(4), updatedAt: reference.addingTimeInterval(5)
         )
         let variant = ProductVariant(
-            storeID: activeStore.id, productID: product.id, name: "Preta", quantity: 3,
+            storeID: activeStore.id, productID: product.id,
+            name: ProductVariant.internalDefaultName, isDefault: true, quantity: 3,
             createdAt: reference.addingTimeInterval(6), updatedAt: reference.addingTimeInterval(7)
         )
         let movement = StockMovement(
@@ -105,6 +106,7 @@ struct BackupManagerTests {
         #expect(payload.products.first?.imageData == Data([0x04, 0x05]))
         #expect(payload.products.first?.costPrice == Decimal(string: "80.25"))
         #expect(payload.variants.first?.quantity == 3)
+        #expect(payload.variants.first?.isDefault == true)
         #expect(payload.stockMovements.first?.kind == "futureMovement")
         #expect(payload.stockMovements.first?.referenceID == movement.referenceID)
 
@@ -326,6 +328,21 @@ struct BackupManagerTests {
         let decoded = try BackupManager.decode(oldData)
 
         #expect(decoded.stores.allSatisfy { $0.sortOrder == 0 })
+    }
+
+    @Test func arquivoV2SemMarcadorDeVariacaoContinuaCompativel() throws {
+        let data = try encodeForTest(makeV2Payload())
+        var object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        var variants = try #require(object["variants"] as? [[String: Any]])
+        for index in variants.indices {
+            variants[index].removeValue(forKey: "isDefault")
+        }
+        object["variants"] = variants
+
+        let oldData = try JSONSerialization.data(withJSONObject: object)
+        let decoded = try BackupManager.decode(oldData)
+
+        #expect(decoded.variants.allSatisfy { !$0.isDefault })
     }
 
     @Test func migracaoV1RecusaLojaAusenteOuArquivadaSemApagarDados() throws {

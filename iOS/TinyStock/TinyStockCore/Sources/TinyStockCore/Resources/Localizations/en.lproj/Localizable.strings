@@ -196,11 +196,14 @@
 "app.error.dataStore.message" = "Please force quit and reopen the app. If it keeps happening, restart your device.";
 "product.form.error.title" = "Unable to save product";
 "product.form.error.missingVariation" = "Add at least one variation to the product.";
-"product.form.variants" = "Variations";
+"product.form.error.multipleVariations" = "A product with multiple variations cannot hide them.";
 "product.form.variant.title" = "Variation";
+"product.form.variant.enabled" = "Has variations";
 "product.form.variant.name" = "Variation name";
 "product.form.variant.initialStock" = "Initial stock";
 "product.form.variant.available" = "Available stock";
+"product.form.variant.disabled.footer" = "Turn this on to identify a variation and its initial stock.";
+"product.form.variant.multiple.footer" = "Multiple existing variations must remain enabled to preserve their stock and history.";
 "product.form.photo.camera" = "Take photo";
 "product.form.photo.error" = "Unable to read this photo. Please choose another image.";
 "product.form.photo.permission" = "Camera access is disabled. Allow access in iPhone Settings to take a product photo.";
@@ -292,6 +295,7 @@
 "order.queue.untitled" = "Order without items";
 "order.queue.moreItems" = "%1$@ and %2$@ more";
 "order.queue.itemMetadata" = "%1$@ · %2$@ units";
+"order.queue.quantityMetadata" = "%@ units";
 "order.queue.productionDate" = "Produce by %@";
 "order.queue.shippingDate" = "Ship by %@";
 "order.queue.shippedDate" = "Shipped %@";

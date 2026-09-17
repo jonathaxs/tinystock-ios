@@ -22,6 +22,7 @@ struct ProductFormView: View {
     @State private var costPriceText: String
     @State private var salePriceText: String
     @State private var imageData: Data?
+    @State private var hasVariations = false
     @State private var initialVariationName = ""
     @State private var initialQuantityText = "0"
     @State private var variants: [ProductVariantInput] = []
@@ -51,19 +52,37 @@ struct ProductFormView: View {
     }
 
     private var formVariants: [ProductVariantInput] {
-        guard editingProduct == nil else { return variants }
-        guard let initialQuantity else { return [] }
-        return [ProductVariantInput(name: initialVariationName, initialQuantity: initialQuantity)]
+        guard hasVariations, let initialQuantity else { return [] }
+        if editingProduct != nil, variants.count > 1 { return variants }
+        let existingID = editingProduct == nil ? nil : variants.first?.existingID
+        return [ProductVariantInput(existingID: existingID, name: initialVariationName,
+                                    initialQuantity: initialQuantity)]
+    }
+
+    private var usesDirectVariationFields: Bool {
+        editingProduct == nil || variants.count <= 1
+    }
+
+    private var canDisableVariations: Bool {
+        editingProduct == nil || variants.count <= 1
+    }
+
+    private var canEditInitialStock: Bool {
+        editingProduct == nil && hasVariations
+    }
+
+    private var variationIsValid: Bool {
+        guard hasVariations else { return true }
+        guard usesDirectVariationFields else { return !variants.isEmpty }
+        guard let initialQuantity else { return false }
+        return !initialVariationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && initialQuantity >= 0
     }
 
     private var canSave: Bool {
         guard let cost = price(from: costPriceText), let sale = price(from: salePriceText) else { return false }
-        let hasValidInitialVariation = editingProduct != nil || (
-            !initialVariationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                && (initialQuantity ?? -1) >= 0
-        )
         return !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && cost >= 0 && sale >= 0 && hasValidInitialVariation && didLoadVariants && !isLoadingPhoto
+            && cost >= 0 && sale >= 0 && variationIsValid && didLoadVariants && !isLoadingPhoto
     }
 
     private var title: String {
@@ -81,11 +100,7 @@ struct ProductFormView: View {
                         .textInputAutocapitalization(.words)
                 }
                 pricesSection
-                if editingProduct == nil {
-                    initialVariationSection
-                } else {
-                    variantsSection
-                }
+                variationSection
             }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
@@ -203,40 +218,66 @@ struct ProductFormView: View {
         }
     }
 
-    private var variantsSection: some View {
-        Section(String(localized: "product.form.variants", bundle: .tinyStockCore)) {
-            ForEach(variants) { input in
-                Button { editingVariant = input } label: {
-                    LabeledContent(input.name) {
-                        Text(input.initialQuantity, format: .number)
-                            .foregroundStyle(.secondary)
-                    }
-                    .foregroundStyle(.primary)
+    private var variationSection: some View {
+        Section {
+            Toggle(String(localized: "product.form.variant.enabled", bundle: .tinyStockCore), isOn: $hasVariations)
+                .disabled(!canDisableVariations)
+            if usesDirectVariationFields {
+                TextField(String(localized: "product.form.variant.name", bundle: .tinyStockCore), text: $initialVariationName)
+                    .textInputAutocapitalization(.words)
+                    .disabled(!hasVariations)
+                    .foregroundStyle(hasVariations ? Color.primary : Color.secondary)
+                LabeledContent(initialStockTitle) {
+                    TextField("0", text: $initialQuantityText)
+                        .keyboardType(.numberPad)
+                        .multilineTextAlignment(.trailing)
+                        .disabled(!canEditInitialStock)
+                        .foregroundStyle(canEditInitialStock ? Color.primary : Color.secondary)
+                        .accessibilityLabel(initialStockTitle)
                 }
-                .accessibilityHint(String(localized: "product.form.variant.edit.hint", bundle: .tinyStockCore))
+            } else {
+                ForEach(variants) { input in
+                    Button { editingVariant = input } label: {
+                        LabeledContent(input.name) {
+                            Text(input.initialQuantity, format: .number)
+                                .foregroundStyle(.secondary)
+                        }
+                        .foregroundStyle(.primary)
+                    }
+                    .accessibilityHint(String(localized: "product.form.variant.edit.hint", bundle: .tinyStockCore))
+                }
+            }
+        } header: {
+            Text(String(localized: "product.form.variant.title", bundle: .tinyStockCore))
+        } footer: {
+            if !canDisableVariations {
+                Text(String(localized: "product.form.variant.multiple.footer", bundle: .tinyStockCore))
+            } else if !hasVariations {
+                Text(String(localized: "product.form.variant.disabled.footer", bundle: .tinyStockCore))
             }
         }
     }
 
-    private var initialVariationSection: some View {
-        Section(String(localized: "product.form.variant.title", bundle: .tinyStockCore)) {
-            TextField(String(localized: "product.form.variant.name", bundle: .tinyStockCore), text: $initialVariationName)
-                .textInputAutocapitalization(.words)
-            LabeledContent(String(localized: "product.form.variant.initialStock", bundle: .tinyStockCore)) {
-                TextField("0", text: $initialQuantityText)
-                    .keyboardType(.numberPad)
-                    .multilineTextAlignment(.trailing)
-                    .accessibilityLabel(String(localized: "product.form.variant.initialStock", bundle: .tinyStockCore))
-            }
-        }
+    private var initialStockTitle: String {
+        String(localized: editingProduct == nil
+               ? "product.form.variant.initialStock"
+               : "product.form.variant.available", bundle: .tinyStockCore)
     }
 
     private func loadVariants() {
         guard !didLoadVariants else { return }
         do {
             if let editingProduct {
-                variants = try ProductVariantService.variants(for: editingProduct, in: modelContext).map {
-                    ProductVariantInput(id: $0.id, existingID: $0.id, name: $0.name, initialQuantity: $0.quantity)
+                let storedVariants = try ProductVariantService.variants(for: editingProduct, in: modelContext)
+                variants = storedVariants.map {
+                    ProductVariantInput(id: $0.id, existingID: $0.id,
+                                        name: $0.isDefault ? "" : $0.name,
+                                        initialQuantity: $0.quantity)
+                }
+                hasVariations = !storedVariants.isEmpty && !storedVariants.contains(where: \.isDefault)
+                if let onlyVariant = variants.first, variants.count == 1 {
+                    initialVariationName = onlyVariant.name
+                    initialQuantityText = String(onlyVariant.initialQuantity)
                 }
             }
             didLoadVariants = true
@@ -276,7 +317,8 @@ struct ProductFormView: View {
         do {
             try ProductFormService.apply(to: editingProduct, storeID: storeID, name: name,
                                          costPrice: cost, salePrice: sale, imageData: imageData,
-                                         variants: formVariants, in: modelContext)
+                                         variants: formVariants, usesVariants: hasVariations,
+                                         in: modelContext)
             try modelContext.save()
             dismiss()
         } catch {

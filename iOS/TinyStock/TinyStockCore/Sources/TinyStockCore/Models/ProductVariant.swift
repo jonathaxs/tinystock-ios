@@ -15,6 +15,9 @@ import SwiftData
 @Model
 public final class ProductVariant {
 
+    /// Nome persistido apenas para a variacao interna que representa produtos sem opcoes.
+    public static let internalDefaultName = "__tinystock_default__"
+
     public var id: UUID = UUID()
 
     /// Loja herdada do produto para permitir consultas eficientes por escopo.
@@ -25,6 +28,9 @@ public final class ProductVariant {
 
     /// Nome livre escolhido pelo comerciante.
     public var name: String = ""
+
+    /// Distingue a variacao tecnica que nao deve aparecer na interface.
+    public var isDefault: Bool = false
 
     /// Saldo atual, alterado exclusivamente pelos serviços de estoque e pedidos.
     public var quantity: Int = 0
@@ -37,6 +43,7 @@ public final class ProductVariant {
         storeID: UUID = StoreScope.unassignedStoreID,
         productID: UUID = UUID(),
         name: String = "",
+        isDefault: Bool = false,
         quantity: Int = 0,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
@@ -45,6 +52,7 @@ public final class ProductVariant {
         self.storeID = storeID
         self.productID = productID
         self.name = name
+        self.isDefault = isDefault
         self.quantity = quantity
         self.createdAt = createdAt
         self.updatedAt = updatedAt

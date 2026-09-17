@@ -43,6 +43,10 @@ struct SalesOrderFormView: View {
         variants.first { $0.id == selectedVariantID }
     }
 
+    private var usesInternalVariant: Bool {
+        variants.count == 1 && variants.first?.isDefault == true
+    }
+
     private var channelFeePercentage: Decimal? {
         let cleanText = channelFeeText.trimmingCharacters(in: .whitespacesAndNewlines)
         return cleanText.isEmpty ? 0 : CurrencyFormatter.decimal(from: cleanText)
@@ -115,9 +119,11 @@ struct SalesOrderFormView: View {
                 Label(String(localized: "order.form.noVariants", bundle: .tinyStockCore), systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.secondary)
             } else {
-                Picker(String(localized: "product.form.variant.title", bundle: .tinyStockCore), selection: $selectedVariantID) {
-                    ForEach(variants) { variant in
-                        Text(variantLabel(variant)).tag(Optional(variant.id))
+                if !usesInternalVariant {
+                    Picker(String(localized: "product.form.variant.title", bundle: .tinyStockCore), selection: $selectedVariantID) {
+                        ForEach(variants) { variant in
+                            Text(variantLabel(variant)).tag(Optional(variant.id))
+                        }
                     }
                 }
                 Stepper(value: $quantity, in: 1...quantityLimit) {

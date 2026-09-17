@@ -38,6 +38,7 @@ extension BackupManager {
             storeID: value.storeID,
             productID: value.productID,
             name: value.name,
+            isDefault: value.isDefault,
             quantity: value.quantity,
             createdAt: value.createdAt,
             updatedAt: value.updatedAt
