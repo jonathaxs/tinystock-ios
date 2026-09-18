@@ -30,10 +30,7 @@ struct CloudSyncStatusSection: View {
         } header: {
             Text(String(localized: "settings.sync.title", bundle: .tinyStockCore))
         } footer: {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(String(localized: "settings.sync.footer", bundle: .tinyStockCore))
-                Text(String(localized: "settings.sync.backup.message", bundle: .tinyStockCore))
-            }
+            Text(String(localized: "settings.sync.footer", bundle: .tinyStockCore))
         }
         .task { await refresh() }
         .onChange(of: scenePhase) { _, phase in

@@ -13,6 +13,7 @@ import UniformTypeIdentifiers
 
 struct DataSettingsView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(StoreSession.self) private var storeSession
 
     @State private var backupCoordinator = DataBackupCoordinator()
@@ -38,7 +39,7 @@ struct DataSettingsView: View {
                 onRestore: { backupCoordinator.isConfirmingICloudRestore = true }
             )
 
-            LocalBackupSection(
+            BackupFileSection(
                 onExport: prepareExport,
                 onImport: { backupCoordinator.isImporting = true }
             )
@@ -47,6 +48,10 @@ struct DataSettingsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await backupCoordinator.refreshICloudStatus()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            Task { await backupCoordinator.refreshICloudStatus() }
         }
         .fileExporter(
             isPresented: $backupCoordinator.isExporting,

@@ -134,9 +134,9 @@
 /* MARK: - Backup */
 "backup.error.invalidFile" = "This file is not a valid TinyStock backup.";
 "backup.error.unsupportedVersion" = "This backup was created by an incompatible TinyStock version.";
-"settings.backup.section.local" = "Local backup";
-"settings.backup.export" = "Export data";
-"settings.backup.import" = "Import data";
+"settings.backup.file.section" = "Backup File";
+"settings.backup.export" = "Export Backup";
+"settings.backup.import" = "Import Backup";
 "settings.backup.section.footer" = "The JSON file includes all stores, photos, products, variations, inventory history and orders.";
 "settings.backup.import.confirm.title" = "Replace current data?";
 "settings.backup.import.confirm.message.v2" = "This backup contains %1$d stores, %2$d products, %3$d variations and %4$d orders. All current TinyStock data will be replaced.";
@@ -149,11 +149,12 @@
 "settings.backup.error.title" = "Backup failed";
 "icloud.error.unavailable" = "iCloud Drive is unavailable. Check your Apple Account and iCloud Drive settings.";
 "icloud.error.downloadTimeout" = "The iCloud backup could not be downloaded in time. Please try again.";
-"settings.backup.icloud.save" = "Save to iCloud";
-"settings.backup.icloud.restore" = "Restore from iCloud";
+"settings.backup.icloud.section" = "iCloud Drive Backup";
+"settings.backup.icloud.save" = "Back Up Now";
+"settings.backup.icloud.restore" = "Restore Backup";
 "settings.backup.icloud.unavailable" = "iCloud Drive unavailable";
 "settings.backup.icloud.unavailable.footer" = "Sign in to your Apple Account and turn on iCloud Drive to use cloud backup.";
-"settings.backup.icloud.noBackup" = "No TinyStock backup was found in iCloud Drive.";
+"settings.backup.icloud.noBackup" = "No manual backup has been saved to iCloud Drive yet.";
 "settings.backup.icloud.lastBackup" = "Last backup: %@";
 "settings.backup.icloud.restore.confirm.title" = "Restore iCloud backup?";
 "settings.backup.icloud.restore.confirm.message" = "The iCloud backup will be validated before replacing the current TinyStock data.";
@@ -409,12 +410,11 @@
 "settings.section.profile" = "Profile";
 "settings.language" = "Language";
 "settings.language.hint" = "Opens the app settings on this device.";
-"settings.data.title" = "Data and Backup";
-"settings.sync.title" = "iCloud Sync";
+"settings.data.title" = "Data and Backups";
+"settings.sync.title" = "Automatic Sync";
 "settings.sync.status" = "Apple Account";
 "settings.sync.refresh" = "Check again";
-"settings.sync.footer" = "TinyStock syncs automatically through your private iCloud database. Updates may take a few moments to appear on another device.";
-"settings.sync.backup.message" = "iCloud Drive and JSON backups are separate recovery copies that you control manually.";
+"settings.sync.footer" = "Changes sync automatically between your devices through your private iCloud database. This is separate from the manual backups below.";
 "settings.sync.status.checking" = "Checking";
 "settings.sync.status.available" = "Available";
 "settings.sync.status.noAccount" = "No account";

@@ -45,7 +45,12 @@ struct ICloudBackupSection: View {
                 .foregroundStyle(.secondary)
             }
         } header: {
-            Text("iCloud Drive")
+            Text(
+                String(
+                    localized: "settings.backup.icloud.section",
+                    bundle: .tinyStockCore
+                )
+            )
         } footer: {
             footer
         }
@@ -83,7 +88,7 @@ struct ICloudBackupSection: View {
     }
 }
 
-struct LocalBackupSection: View {
+struct BackupFileSection: View {
     let onExport: () -> Void
     let onImport: () -> Void
 
@@ -103,7 +108,7 @@ struct LocalBackupSection: View {
                 )
             }
         } header: {
-            Text(String(localized: "settings.backup.section.local", bundle: .tinyStockCore))
+            Text(String(localized: "settings.backup.file.section", bundle: .tinyStockCore))
         } footer: {
             Text(String(localized: "settings.backup.section.footer", bundle: .tinyStockCore))
         }
