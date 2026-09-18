@@ -244,42 +244,6 @@ private enum OrderDisplayMode: String {
     case day, list
 }
 
-private struct SalesOrderQueueSection: Identifiable {
-    let id: String
-    let title: String
-    let orders: [SalesOrder]
-
-    static func make(from orders: [SalesOrder]) -> [SalesOrderQueueSection] {
-        var result = SalesOrderStatus.allCases.compactMap { status -> SalesOrderQueueSection? in
-            let matches = orders.filter { $0.status == status }
-            guard !matches.isEmpty else { return nil }
-            return SalesOrderQueueSection(
-                id: status.rawValue,
-                title: status.localizedName,
-                orders: sorted(matches, terminal: status.isTerminal)
-            )
-        }
-        let unknown = orders.filter { $0.status == nil }
-        if !unknown.isEmpty {
-            result.append(SalesOrderQueueSection(
-                id: "unknown",
-                title: String(localized: "order.queue.unknown", bundle: .tinyStockCore),
-                orders: sorted(unknown, terminal: false)
-            ))
-        }
-        return result
-    }
-
-    private static func sorted(_ orders: [SalesOrder], terminal: Bool) -> [SalesOrder] {
-        orders.sorted {
-            let left = SalesOrderPresentation.queueDate(for: $0)
-            let right = SalesOrderPresentation.queueDate(for: $1)
-            if left == right { return $0.id.uuidString < $1.id.uuidString }
-            return terminal ? left > right : left < right
-        }
-    }
-}
-
 #Preview {
     let storeID = UUID()
     SalesView(storeID: storeID)

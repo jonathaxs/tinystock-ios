@@ -4,8 +4,6 @@
 //
 // Created by Jonathas Motta (@jonathaxs) on 2026-08-08.
 
-import AVFoundation
-import PhotosUI
 import SwiftData
 import SwiftUI
 import TinyStockCore
@@ -29,9 +27,6 @@ struct ProductFormView: View {
     @State private var editingVariant: ProductVariantInput?
     @State private var didLoadVariants = false
     @State private var errorMessage: String?
-    @State private var pickerItem: PhotosPickerItem?
-    @State private var isPresentingPhotos = false
-    @State private var isPresentingCamera = false
     @State private var isLoadingPhoto = false
 
     init(storeID: UUID, product: Product? = nil) {
@@ -94,7 +89,11 @@ struct ProductFormView: View {
     var body: some View {
         NavigationStack {
             Form {
-                photoSection
+                ProductPhotoEditor(
+                    imageData: $imageData,
+                    isProcessing: $isLoadingPhoto,
+                    errorMessage: $errorMessage
+                )
                 Section {
                     TextField(String(localized: "product.form.name", bundle: .tinyStockCore), text: $name)
                         .textInputAutocapitalization(.words)
@@ -130,69 +129,6 @@ struct ProductFormView: View {
                     variants.append(updated)
                 }
             }
-        }
-        .photosPicker(isPresented: $isPresentingPhotos, selection: $pickerItem, matching: .images)
-        .task(id: pickerItem) {
-            guard let pickerItem else { return }
-            isLoadingPhoto = true
-            defer { isLoadingPhoto = false }
-            do {
-                guard let data = try await pickerItem.loadTransferable(type: Data.self) else {
-                    throw ProductPhotoError.unreadable
-                }
-                try await preparePhoto(data)
-            } catch {
-                if !Task.isCancelled { showPhotoError() }
-            }
-        }
-        .fullScreenCover(isPresented: $isPresentingCamera) {
-            ProductCameraView { data in
-                isPresentingCamera = false
-                guard let data else { return }
-                Task {
-                    isLoadingPhoto = true
-                    defer { isLoadingPhoto = false }
-                    do { try await preparePhoto(data) } catch { showPhotoError() }
-                }
-            }
-            .ignoresSafeArea()
-        }
-    }
-
-    private var photoSection: some View {
-        Section {
-            Menu {
-                Button(String(localized: "product.form.photo.choose", bundle: .tinyStockCore), systemImage: "photo") {
-                    isPresentingPhotos = true
-                }
-                if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                    Button(String(localized: "product.form.photo.camera", bundle: .tinyStockCore), systemImage: "camera") {
-                        Task { await openCamera() }
-                    }
-                }
-                if imageData != nil {
-                    Button(String(localized: "product.form.photo.remove", bundle: .tinyStockCore), systemImage: "trash", role: .destructive) {
-                        pickerItem = nil
-                        imageData = nil
-                    }
-                }
-            } label: {
-                ZStack(alignment: .bottomTrailing) {
-                    ProductImageView(imageData: imageData, side: 104)
-                    Image(systemName: "camera.fill")
-                        .foregroundStyle(.white)
-                        .padding(8)
-                        .background(Color.accentColor, in: Circle())
-                        .overlay(Circle().stroke(Color(.systemBackground), lineWidth: 3))
-                }
-                .overlay { if isLoadingPhoto { ProgressView() } }
-            }
-            .buttonStyle(.plain)
-            .disabled(isLoadingPhoto)
-            .accessibilityLabel(String(localized: "product.form.photo.change", bundle: .tinyStockCore))
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .listRowBackground(Color.clear)
         }
     }
 
@@ -284,29 +220,6 @@ struct ProductFormView: View {
         } catch { errorMessage = error.localizedDescription }
     }
 
-    private func preparePhoto(_ data: Data) async throws {
-        let prepared = await Task.detached(priority: .userInitiated) {
-            ProductImageProcessor.prepared(from: data)
-        }.value
-        // A troca de selecao cancela a tarefa anterior, que nao deve sobrescrever a foto nova.
-        try Task.checkCancellation()
-        guard let prepared else { throw ProductPhotoError.unreadable }
-        imageData = prepared
-    }
-
-    private func showPhotoError() {
-        errorMessage = String(localized: "product.form.photo.error", bundle: .tinyStockCore)
-    }
-
-    private func openCamera() async {
-        let granted = await AVCaptureDevice.requestAccess(for: .video)
-        if granted {
-            isPresentingCamera = true
-        } else {
-            errorMessage = String(localized: "product.form.photo.permission", bundle: .tinyStockCore)
-        }
-    }
-
     private func save() {
         guard canSave, let cost = price(from: costPriceText), let sale = price(from: salePriceText) else { return }
         // Salva pendencias anteriores antes do lote para nao desfaze-las caso este cadastro falhe.
@@ -335,8 +248,6 @@ struct ProductFormView: View {
         }
     }
 }
-
-private enum ProductPhotoError: Error { case unreadable }
 
 #Preview {
     ProductFormView(storeID: UUID())
