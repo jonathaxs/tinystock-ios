@@ -10,6 +10,8 @@ import SwiftUI
 import TinyStockCore
 
 struct StoreManagementRow: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let store: StoreProfile
     var isSelected = false
     var detail: String?
@@ -21,7 +23,7 @@ struct StoreManagementRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(store.name)
                     .foregroundStyle(.primary)
-                    .lineLimit(2)
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
 
                 if let detail {
                     Text(detail)

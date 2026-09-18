@@ -112,9 +112,15 @@ struct SalesOrderFormView: View {
                 ProductImageView(imageData: product.imageData, side: 48)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(product.name).font(.headline)
-                    Text(product.salePrice.currencyText).foregroundStyle(.secondary)
+                    Text(product.salePrice.currencyText)
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel(
+                            String(localized: "product.form.salePrice", bundle: .tinyStockCore)
+                        )
+                        .accessibilityValue(product.salePrice.currencyText)
                 }
             }
+            .accessibilityElement(children: .combine)
             if variants.isEmpty {
                 Label(String(localized: "order.form.noVariants", bundle: .tinyStockCore), systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.secondary)

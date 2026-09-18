@@ -73,11 +73,19 @@ struct ReportDayRowView: View {
             Text(group.totals.revenue.currencyText)
                 .font(.headline)
                 .monospacedDigit()
+                .accessibilityLabel(
+                    String(localized: "reports.metric.revenue", bundle: .tinyStockCore)
+                )
+                .accessibilityValue(group.totals.revenue.currencyText)
 
             Text(profitText)
                 .font(.subheadline)
                 .foregroundStyle(group.totals.netProfit < 0 ? Color.red : Color.secondary)
                 .monospacedDigit()
+                .accessibilityLabel(
+                    String(localized: "reports.metric.netProfit", bundle: .tinyStockCore)
+                )
+                .accessibilityValue(group.totals.netProfit.currencyText)
         }
     }
 }

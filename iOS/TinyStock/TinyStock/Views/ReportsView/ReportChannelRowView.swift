@@ -47,10 +47,18 @@ struct ReportChannelRowView: View {
             Text(channel.totals.revenue.currencyText)
                 .font(.headline)
                 .monospacedDigit()
+                .accessibilityLabel(
+                    String(localized: "reports.metric.revenue", bundle: .tinyStockCore)
+                )
+                .accessibilityValue(channel.totals.revenue.currencyText)
             Text(channel.totals.netProfit.currencyText)
                 .font(.subheadline)
                 .foregroundStyle(channel.totals.netProfit < 0 ? Color.red : Color.secondary)
                 .monospacedDigit()
+                .accessibilityLabel(
+                    String(localized: "reports.metric.netProfit", bundle: .tinyStockCore)
+                )
+                .accessibilityValue(channel.totals.netProfit.currencyText)
         }
     }
 }

@@ -69,6 +69,10 @@ struct BestSellingRowView: View {
         Text(ranking.revenue.currencyText)
             .font(.headline)
             .monospacedDigit()
+            .accessibilityLabel(
+                String(localized: "reports.metric.revenue", bundle: .tinyStockCore)
+            )
+            .accessibilityValue(ranking.revenue.currencyText)
     }
 }
 

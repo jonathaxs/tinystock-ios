@@ -79,7 +79,12 @@ struct SalesOrderRowView: View {
 
     private var financialInformation: some View {
         VStack(alignment: dynamicTypeSize.isAccessibilitySize ? .leading : .trailing, spacing: 3) {
-            Text(order.total.currencyText).fontWeight(.semibold)
+            Text(order.total.currencyText)
+                .fontWeight(.semibold)
+                .accessibilityLabel(
+                    String(localized: "order.form.total", bundle: .tinyStockCore)
+                )
+                .accessibilityValue(order.total.currencyText)
             Text(order.buyerName.isEmpty ? order.channelDisplayName : order.buyerName)
                 .font(.caption)
                 .foregroundStyle(.secondary)

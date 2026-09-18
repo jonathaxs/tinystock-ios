@@ -109,7 +109,17 @@ struct SalesOrderDetailView: View {
     private func itemValues(_ item: SalesOrderItem, alignment: HorizontalAlignment) -> some View {
         VStack(alignment: alignment, spacing: 3) {
             Text(item.subtotal.currencyText)
-            Text(item.quantity, format: .number).font(.caption).foregroundStyle(.secondary)
+                .accessibilityLabel(
+                    String(localized: "order.form.total", bundle: .tinyStockCore)
+                )
+                .accessibilityValue(item.subtotal.currencyText)
+            Text(item.quantity, format: .number)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .accessibilityLabel(
+                    String(localized: "order.form.quantity", bundle: .tinyStockCore)
+                )
+                .accessibilityValue(item.quantity.formatted())
         }
     }
 

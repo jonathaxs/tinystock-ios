@@ -44,6 +44,10 @@ struct ProductRowView: View {
             Text(product.salePrice.currencyText)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .accessibilityLabel(
+                    String(localized: "product.form.salePrice", bundle: .tinyStockCore)
+                )
+                .accessibilityValue(product.salePrice.currencyText)
         }
     }
 }
