@@ -439,6 +439,7 @@
 
 /* Calendar export */
 "settings.calendar.title" = "iPhone Calendar";
+"settings.calendar.export.section" = "Event Export";
 "settings.calendar.showExport" = "Show export options";
 "settings.calendar.showExport.footer" = "When enabled, eligible orders offer production and dispatch events for export.";
 "settings.calendar.privacy" = "Privacy";

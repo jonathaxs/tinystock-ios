@@ -439,6 +439,7 @@
 
 /* Exportacao para o Calendario */
 "settings.calendar.title" = "Calendário do iPhone";
+"settings.calendar.export.section" = "Exportação de eventos";
 "settings.calendar.showExport" = "Mostrar opções de exportação";
 "settings.calendar.showExport.footer" = "Quando ativado, pedidos elegíveis oferecem eventos de produção e despacho para exportação.";
 "settings.calendar.privacy" = "Privacidade";
