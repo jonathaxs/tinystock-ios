@@ -14,6 +14,18 @@ struct StoreFormRoute: Identifiable {
     let store: StoreProfile?
 }
 
+struct StoreTrashRequest: Identifiable {
+    let id: UUID
+    let store: StoreProfile
+    let storeName: String
+
+    init(store: StoreProfile) {
+        id = store.id
+        self.store = store
+        storeName = store.name
+    }
+}
+
 struct StoreDeletionRequest: Identifiable {
     let id: UUID
     let store: StoreProfile

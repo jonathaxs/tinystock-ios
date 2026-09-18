@@ -13,7 +13,7 @@ import TinyStockCore
 struct StoreSwitcherView: View {
 
     @Environment(StoreSession.self) private var storeSession
-    @Query(filter: #Predicate<StoreProfile> { !$0.isArchived })
+    @Query(filter: #Predicate<StoreProfile> { !$0.isArchived && $0.trashedAt == nil })
     private var storedStores: [StoreProfile]
 
     private var stores: [StoreProfile] {

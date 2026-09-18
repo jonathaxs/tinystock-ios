@@ -1,7 +1,7 @@
 // ⌘
 //  TinyStock/Views/SettingsView/StoresView.swift
 //
-//  Propósito: Gerenciar, selecionar, ordenar e excluir as lojas do TinyStock.
+//  Propósito: Selecionar, ordenar e gerenciar as lojas ativas do TinyStock.
 //
 //  Created by Jonathas Motta (@jonathaxs) on 2026-08-25.
 // ⌘
@@ -17,55 +17,25 @@ struct StoresView: View {
     @Query private var stores: [StoreProfile]
 
     @State private var formRoute: StoreFormRoute?
-    @State private var deletionRequest: StoreDeletionRequest?
+    @State private var trashRequest: StoreTrashRequest?
     @State private var errorMessage: String?
 
     private var activeStores: [StoreProfile] {
-        StoreProfileService.orderedForDisplay(stores.filter { !$0.isArchived })
+        StoreProfileService.orderedForDisplay(stores.filter(\.isActive))
     }
 
-    private var archivedStores: [StoreProfile] {
-        StoreProfileService.orderedForDisplay(stores.filter(\.isArchived))
+    private var archivedStoreCount: Int {
+        stores.lazy.filter { $0.lifecycleState == .archived }.count
+    }
+
+    private var trashedStoreCount: Int {
+        stores.lazy.filter(\.isTrashed).count
     }
 
     var body: some View {
         List {
-            Section {
-                ForEach(activeStores) { store in
-                    StoreManagementRow(
-                        store: store,
-                        isSelected: store.id == storeSession.selectedStoreID,
-                        canDelete: activeStores.count > 1,
-                        onSelect: { select(store) },
-                        onEdit: { formRoute = StoreFormRoute(store: store) },
-                        onRestore: nil,
-                        onDelete: { requestDeletion(store) }
-                    )
-                }
-                .onMove(perform: moveActiveStores)
-                .onDelete { requestDeletion(from: activeStores, at: $0) }
-            } header: {
-                Text(String(localized: "stores.section.active", bundle: .tinyStockCore))
-            } footer: {
-                Text(String(localized: "stores.section.footer", bundle: .tinyStockCore))
-            }
-
-            if !archivedStores.isEmpty {
-                Section(String(localized: "stores.section.archived", bundle: .tinyStockCore)) {
-                    ForEach(archivedStores) { store in
-                        StoreManagementRow(
-                            store: store,
-                            isSelected: false,
-                            canDelete: true,
-                            onSelect: nil,
-                            onEdit: { formRoute = StoreFormRoute(store: store) },
-                            onRestore: { restore(store) },
-                            onDelete: { requestDeletion(store) }
-                        )
-                    }
-                    .onDelete { requestDeletion(from: archivedStores, at: $0) }
-                }
-            }
+            activeStoresSection
+            organizationSection
         }
         .navigationTitle(String(localized: "stores.title", bundle: .tinyStockCore))
         .toolbar {
@@ -86,36 +56,150 @@ struct StoresView: View {
             StoreFormView(store: route.store)
         }
         .alert(
-            String(localized: "stores.delete.confirm.title", bundle: .tinyStockCore),
+            String(localized: "stores.trash.confirm.title", bundle: .tinyStockCore),
             isPresented: Binding(
-                get: { deletionRequest != nil },
-                set: { if !$0 { deletionRequest = nil } }
+                get: { trashRequest != nil },
+                set: { if !$0 { trashRequest = nil } }
             ),
-            presenting: deletionRequest
+            presenting: trashRequest
         ) { request in
             Button(
-                String(localized: "common.delete", bundle: .tinyStockCore),
+                String(localized: "stores.moveToTrash", bundle: .tinyStockCore),
                 role: .destructive
             ) {
-                deletePermanently(request.store)
+                moveToTrash(request.store)
             }
             Button(String(localized: "common.cancel", bundle: .tinyStockCore), role: .cancel) {}
         } message: { request in
-            Text(deletionMessage(for: request))
-        }
-        .alert(
-            String(localized: "stores.error.title", bundle: .tinyStockCore),
-            isPresented: Binding(
-                get: { errorMessage != nil },
-                set: { if !$0 { errorMessage = nil } }
+            Text(
+                String(
+                    format: String(
+                        localized: "stores.trash.confirm.message",
+                        bundle: .tinyStockCore
+                    ),
+                    request.storeName
+                )
             )
-        ) {
-            Button(String(localized: "common.ok", bundle: .tinyStockCore)) {
-                errorMessage = nil
-            }
-        } message: {
-            Text(errorMessage ?? "")
         }
+        .storeOperationErrorAlert(message: $errorMessage)
+    }
+
+    private var activeStoresSection: some View {
+        Section {
+            ForEach(activeStores) { store in
+                activeStoreRow(store)
+                    .deleteDisabled(activeStores.count == 1)
+            }
+            .onMove(perform: moveActiveStores)
+            .onDelete { requestTrash(from: activeStores, at: $0) }
+        } header: {
+            Text(String(localized: "stores.section.active", bundle: .tinyStockCore))
+        } footer: {
+            Text(String(localized: "stores.section.footer", bundle: .tinyStockCore))
+        }
+    }
+
+    private var organizationSection: some View {
+        Section(String(localized: "stores.section.organization", bundle: .tinyStockCore)) {
+            NavigationLink {
+                ArchivedStoresView()
+            } label: {
+                managementDestinationLabel(
+                    titleKey: "stores.archived.title",
+                    systemImage: "archivebox",
+                    count: archivedStoreCount
+                )
+            }
+
+            NavigationLink {
+                TrashedStoresView()
+            } label: {
+                managementDestinationLabel(
+                    titleKey: "stores.trash.title",
+                    systemImage: "trash",
+                    count: trashedStoreCount
+                )
+            }
+        }
+    }
+
+    private func activeStoreRow(_ store: StoreProfile) -> some View {
+        HStack(spacing: 4) {
+            Button {
+                select(store)
+            } label: {
+                StoreManagementRow(
+                    store: store,
+                    isSelected: store.id == storeSession.selectedStoreID
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(String(localized: "stores.select.hint", bundle: .tinyStockCore))
+            .accessibilityAddTraits(
+                store.id == storeSession.selectedStoreID ? [.isSelected] : []
+            )
+
+            Menu {
+                Button {
+                    formRoute = StoreFormRoute(store: store)
+                } label: {
+                    Label(
+                        String(localized: "common.edit", bundle: .tinyStockCore),
+                        systemImage: "pencil"
+                    )
+                }
+
+                Button {
+                    archive(store)
+                } label: {
+                    Label(
+                        String(localized: "stores.archive", bundle: .tinyStockCore),
+                        systemImage: "archivebox"
+                    )
+                }
+                .disabled(activeStores.count == 1)
+
+                Button(role: .destructive) {
+                    trashRequest = StoreTrashRequest(store: store)
+                } label: {
+                    Label(
+                        String(localized: "stores.moveToTrash", bundle: .tinyStockCore),
+                        systemImage: "trash"
+                    )
+                }
+                .disabled(activeStores.count == 1)
+            } label: {
+                Image(systemName: "ellipsis.circle")
+                    .font(.title3)
+                    .frame(width: 44, height: 44)
+                    .contentShape(.rect)
+            }
+            .accessibilityLabel(actionsAccessibilityLabel(for: store))
+        }
+    }
+
+    private func managementDestinationLabel(
+        titleKey: String.LocalizationValue,
+        systemImage: String,
+        count: Int
+    ) -> some View {
+        Label {
+            HStack {
+                Text(String(localized: titleKey, bundle: .tinyStockCore))
+                Spacer()
+                Text(count, format: .number)
+                    .foregroundStyle(.secondary)
+            }
+        } icon: {
+            Image(systemName: systemImage)
+        }
+    }
+
+    private func actionsAccessibilityLabel(for store: StoreProfile) -> String {
+        String(
+            format: String(localized: "stores.actions.accessibility", bundle: .tinyStockCore),
+            store.name
+        )
     }
 
     private func select(_ store: StoreProfile) {
@@ -128,33 +212,33 @@ struct StoresView: View {
         }
     }
 
-    private func requestDeletion(_ store: StoreProfile) {
-        do {
-            let summary = try StoreProfileService.deletionSummary(for: store, in: modelContext)
-            deletionRequest = StoreDeletionRequest(store: store, summary: summary)
-        } catch let error as StoreProfileError {
-            errorMessage = error.localizedMessage
-        } catch {
-            errorMessage = error.localizedDescription
+    private func archive(_ store: StoreProfile) {
+        deactivate(store) {
+            try StoreProfileService.archive(store, in: modelContext)
         }
     }
 
-    private func requestDeletion(from stores: [StoreProfile], at offsets: IndexSet) {
-        guard let index = offsets.first, stores.indices.contains(index) else { return }
-        requestDeletion(stores[index])
+    private func moveToTrash(_ store: StoreProfile) {
+        deactivate(store) {
+            try StoreProfileService.moveToTrash(store, in: modelContext)
+        }
+        trashRequest = nil
     }
 
-    private func deletePermanently(_ store: StoreProfile) {
-        let isSelected = store.id == storeSession.selectedStoreID
+    private func deactivate(
+        _ store: StoreProfile,
+        operation: () throws -> Void
+    ) {
+        let wasSelected = store.id == storeSession.selectedStoreID
+        let replacement = activeStores.first { $0.id != store.id }
 
         do {
-            let replacement = try StoreProfileService.deletePermanently(store, in: modelContext)
+            try operation()
             try modelContext.save()
 
-            if isSelected, let replacement {
+            if wasSelected, let replacement {
                 try storeSession.select(replacement)
             }
-            deletionRequest = nil
         } catch let error as StoreProfileError {
             modelContext.rollback()
             errorMessage = error.localizedMessage
@@ -164,30 +248,9 @@ struct StoresView: View {
         }
     }
 
-    private func deletionMessage(for request: StoreDeletionRequest) -> String {
-        let format = String(
-            localized: "stores.delete.confirm.message",
-            bundle: .tinyStockCore
-        )
-        return String(
-            format: format,
-            locale: .autoupdatingCurrent,
-            request.storeName,
-            request.summary.productCount.formatted(),
-            request.summary.variantCount.formatted(),
-            request.summary.stockMovementCount.formatted(),
-            request.summary.orderCount.formatted()
-        )
-    }
-
-    private func restore(_ store: StoreProfile) {
-        do {
-            StoreProfileService.restore(store)
-            try modelContext.save()
-        } catch {
-            modelContext.rollback()
-            errorMessage = error.localizedDescription
-        }
+    private func requestTrash(from stores: [StoreProfile], at offsets: IndexSet) {
+        guard let index = offsets.first, stores.indices.contains(index) else { return }
+        trashRequest = StoreTrashRequest(store: stores[index])
     }
 
     private func moveActiveStores(from source: IndexSet, to destination: Int) {
