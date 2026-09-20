@@ -96,7 +96,7 @@ struct StoreFormView: View {
                             .font(.body.weight(.semibold))
                             .foregroundStyle(.white)
                             .padding(8)
-                            .background(Color.accentColor, in: Circle())
+                            .background(.tint, in: Circle())
                             .overlay(Circle().stroke(Color(.systemBackground), lineWidth: 3))
                     }
                 }

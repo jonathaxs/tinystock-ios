@@ -1,17 +1,12 @@
-// ⌘
-//  TinyStock/Views/SettingsView/DataSettingsView.swift
-//
-//  Propósito: Compor as opções de sincronização e backup.
-//
-//  Created by Jonathas Motta (@jonathaxs) on 2026-08-07.
-// ⌘
+// Proposito: Reunir backups manuais no iCloud Drive e em arquivo local.
+// Created by Jonathas Motta (@jonathaxs) on 2026-09-19.
 
 import SwiftData
 import SwiftUI
 import TinyStockCore
 import UniformTypeIdentifiers
 
-struct DataSettingsView: View {
+struct BackupSettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @Environment(StoreSession.self) private var storeSession
@@ -28,8 +23,6 @@ struct DataSettingsView: View {
         @Bindable var backupCoordinator = backupCoordinator
 
         List {
-            CloudSyncStatusSection()
-
             ICloudBackupSection(
                 isAvailable: backupCoordinator.isICloudAvailable,
                 lastBackup: backupCoordinator.iCloudLastBackup,
@@ -44,11 +37,9 @@ struct DataSettingsView: View {
                 onImport: { backupCoordinator.isImporting = true }
             )
         }
-        .navigationTitle(String(localized: "settings.data.title", bundle: .tinyStockCore))
+        .navigationTitle(String(localized: "settings.backup.title", bundle: .tinyStockCore))
         .navigationBarTitleDisplayMode(.inline)
-        .task {
-            await backupCoordinator.refreshICloudStatus()
-        }
+        .task { await backupCoordinator.refreshICloudStatus() }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             Task { await backupCoordinator.refreshICloudStatus() }
@@ -141,7 +132,7 @@ struct DataSettingsView: View {
 
 #Preview {
     let storeID = UUID()
-    DataSettingsView(storeID: storeID)
+    BackupSettingsView(storeID: storeID)
         .environment(StoreSession(selectedStoreID: storeID))
         .modelContainer(
             for: [

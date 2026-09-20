@@ -1,4 +1,4 @@
-// Proposito: Organizar lojas, sistema, dados e informacoes do aplicativo.
+// Proposito: Organizar lojas, preferencias, sistema e informacoes do aplicativo.
 // Created by Jonathas Motta (@jonathaxs) on 2026-09-08.
 
 import SwiftData
@@ -21,6 +21,17 @@ struct SettingsView: View {
             List {
                 storeSection
 
+                Section(String(localized: "settings.section.preferences", bundle: .tinyStockCore)) {
+                    NavigationLink {
+                        ColorSettingsView()
+                    } label: {
+                        Label(
+                            String(localized: "settings.color.title", bundle: .tinyStockCore),
+                            systemImage: "paintpalette"
+                        )
+                    }
+                }
+
                 Section(String(localized: "settings.section.system", bundle: .tinyStockCore)) {
                     NavigationLink {
                         NotificationSettingsView()
@@ -32,6 +43,15 @@ struct SettingsView: View {
                         CalendarExportSettingsView()
                     } label: {
                         Label(String(localized: "settings.calendar.title", bundle: .tinyStockCore), systemImage: "calendar.badge.plus")
+                    }
+
+                    NavigationLink {
+                        BackupSettingsView(storeID: storeID)
+                    } label: {
+                        Label(
+                            String(localized: "settings.backup.title", bundle: .tinyStockCore),
+                            systemImage: "externaldrive"
+                        )
                     }
 
                     Button {
@@ -50,17 +70,6 @@ struct SettingsView: View {
                     }
                     .foregroundStyle(.primary)
                     .accessibilityHint(String(localized: "settings.language.hint", bundle: .tinyStockCore))
-                }
-
-                Section(String(localized: "settings.section.data", bundle: .tinyStockCore)) {
-                    NavigationLink {
-                        DataSettingsView(storeID: storeID)
-                    } label: {
-                        Label(
-                            String(localized: "settings.data.title", bundle: .tinyStockCore),
-                            systemImage: "externaldrive.badge.icloud"
-                        )
-                    }
                 }
 
                 Section(String(localized: "settings.section.about", bundle: .tinyStockCore)) {

@@ -37,7 +37,7 @@ struct StoreManagementRow: View {
             if isSelected {
                 Image(systemName: "checkmark")
                     .font(.body.weight(.semibold))
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(.tint)
                     .accessibilityLabel(
                         String(localized: "stores.current", bundle: .tinyStockCore)
                     )

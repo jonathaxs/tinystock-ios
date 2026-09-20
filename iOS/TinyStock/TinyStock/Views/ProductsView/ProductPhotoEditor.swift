@@ -50,7 +50,7 @@ struct ProductPhotoEditor: View {
                     Image(systemName: "camera.fill")
                         .foregroundStyle(.white)
                         .padding(8)
-                        .background(Color.accentColor, in: Circle())
+                        .background(.tint, in: Circle())
                         .overlay(Circle().stroke(Color(.systemBackground), lineWidth: 3))
                 }
                 .overlay { if isProcessing { ProgressView() } }

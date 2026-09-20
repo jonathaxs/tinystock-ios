@@ -30,9 +30,14 @@ struct MainView: View {
 
     // A seleção persistida permite preservar a aba ao reabrir o aplicativo.
     @AppStorage("app.selectedTab") private var selectedTab: Int = 0
+    @AppStorage(AppAccentColor.storageKey) private var accentColorRaw = AppAccentColor.defaultColor.rawValue
     @State private var calendarFilterRequest: CalendarOrderFilter?
     @State private var reminderRoute: OrderReminderRoute?
     @State private var reminderError: String?
+
+    private var accentColor: AppAccentColor {
+        AppAccentColor(rawValue: accentColorRaw) ?? .defaultColor
+    }
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -69,6 +74,7 @@ struct MainView: View {
                 }
                 .tag(Tab.settings)
         }
+        .tint(accentColor.color)
         .onChange(of: reminderRouter.request, initial: true) { _, route in
             guard let route else { return }
             reminderRouter.request = nil

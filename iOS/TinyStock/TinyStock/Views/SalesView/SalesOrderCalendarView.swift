@@ -8,8 +8,13 @@ struct SalesOrderCalendarView: View {
     @Environment(\.calendar) private var calendar
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.locale) private var locale
+    @AppStorage(AppAccentColor.storageKey) private var accentColorRaw = AppAccentColor.defaultColor.rawValue
     @Binding var selectedDate: Date
     let countsByDay: [Date: Int]
+
+    private var accentColor: Color {
+        (AppAccentColor(rawValue: accentColorRaw) ?? .defaultColor).color
+    }
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 7)
     private var days: [Date] { SalesOrderSchedule.monthDays(containing: selectedDate, calendar: calendar) }
@@ -92,10 +97,10 @@ struct SalesOrderCalendarView: View {
             .frame(maxWidth: .infinity)
             .frame(height: dynamicTypeSize.isAccessibilitySize ? 68 : 52)
             .foregroundStyle(selected ? Color.white : (inMonth ? Color.primary : Color.secondary))
-            .background(selected ? Color.accentColor : .clear, in: RoundedRectangle(cornerRadius: 8))
+            .background(selected ? accentColor : .clear, in: RoundedRectangle(cornerRadius: 8))
             .overlay {
                 if today && !selected {
-                    RoundedRectangle(cornerRadius: 8).strokeBorder(Color.accentColor, lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 8).strokeBorder(accentColor, lineWidth: 1)
                 }
             }
             .contentShape(Rectangle())

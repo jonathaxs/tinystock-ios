@@ -134,7 +134,7 @@
 /* MARK: - Backup */
 "backup.error.invalidFile" = "This file is not a valid TinyStock backup.";
 "backup.error.unsupportedVersion" = "This backup was created by an incompatible TinyStock version.";
-"settings.backup.file.section" = "Backup File";
+"settings.backup.file.section" = "Local";
 "settings.backup.export" = "Export Backup";
 "settings.backup.import" = "Import Backup";
 "settings.backup.section.footer" = "The JSON file includes all stores, photos, products, variations, inventory history and orders.";
@@ -149,7 +149,7 @@
 "settings.backup.error.title" = "Backup failed";
 "icloud.error.unavailable" = "iCloud Drive is unavailable. Check your Apple Account and iCloud Drive settings.";
 "icloud.error.downloadTimeout" = "The iCloud backup could not be downloaded in time. Please try again.";
-"settings.backup.icloud.section" = "iCloud Drive Backup";
+"settings.backup.icloud.section" = "iCloud";
 "settings.backup.icloud.save" = "Back Up Now";
 "settings.backup.icloud.restore" = "Restore Backup";
 "settings.backup.icloud.unavailable" = "iCloud Drive unavailable";
@@ -405,22 +405,25 @@
 
 /* Settings */
 "settings.section.system" = "System";
-"settings.section.data" = "Data";
+"settings.section.preferences" = "Preferences";
 "settings.section.about" = "About";
 "settings.section.profile" = "Profile";
 "settings.language" = "Language";
 "settings.language.hint" = "Opens the app settings on this device.";
-"settings.data.title" = "Data and Backups";
-"settings.sync.title" = "Automatic Sync";
-"settings.sync.status" = "Apple Account";
-"settings.sync.refresh" = "Check again";
-"settings.sync.footer" = "Changes sync automatically between your devices through your private iCloud database. This is separate from the manual backups below.";
-"settings.sync.status.checking" = "Checking";
-"settings.sync.status.available" = "Available";
-"settings.sync.status.noAccount" = "No account";
-"settings.sync.status.restricted" = "Restricted";
-"settings.sync.status.unavailable" = "Temporarily unavailable";
-"settings.sync.status.unknown" = "Status unavailable";
+"settings.backup.title" = "Backups";
+"settings.color.title" = "Colors";
+"settings.color.section" = "Accent color used by the app";
+"settings.color.hint" = "Changes the app accent color.";
+"accessibility.selected" = "Selected";
+"accessibility.notSelected" = "Not selected";
+"color.green" = "Green";
+"color.blue" = "Blue";
+"color.purple" = "Purple";
+"color.red" = "Red";
+"color.orange" = "Orange";
+"color.yellow" = "Yellow";
+"color.cyan" = "Cyan";
+"color.pink" = "Pink";
 "settings.about.title" = "About TinyStock";
 "settings.about.description" = "TinyStock helps small sellers organize products, variations, inventory, orders, production and dispatch deadlines.";
 "settings.about.information" = "Information";

@@ -80,6 +80,7 @@ struct ProductsView: View {
                 } actions: {
                     Button(String(localized: "products.add", bundle: .tinyStockCore)) { isPresentingForm = true }
                         .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
                 }
             } else if filteredProducts.isEmpty {
                 ContentUnavailableView.search(text: searchText)
