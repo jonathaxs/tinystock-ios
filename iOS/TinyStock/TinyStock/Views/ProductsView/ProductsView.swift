@@ -22,7 +22,8 @@ struct ProductsView: View {
 
     init(storeID: UUID) {
         self.storeID = storeID
-        _products = Query(filter: #Predicate<Product> { $0.storeID == storeID }, sort: \Product.name)
+        _products = Query(filter: #Predicate<Product> { $0.storeID == storeID },
+                          sort: [SortDescriptor(\Product.sortOrder), SortDescriptor(\Product.name)])
         _variants = Query(filter: #Predicate<ProductVariant> { $0.storeID == storeID })
     }
 
@@ -53,7 +54,6 @@ struct ProductsView: View {
                 Button(String(localized: "common.ok", bundle: .tinyStockCore)) { errorMessage = nil }
             } message: { Text(errorMessage ?? "") }
         }
-        .environment(\.editMode, $editMode)
         .onChange(of: storeID) { _, _ in
             // Nao carrega a selecao ou o modo de edicao de uma loja para outra.
             editingProduct = nil
@@ -92,7 +92,9 @@ struct ProductsView: View {
                     }
                     // O menos nativo so aparece em Editar; a confirmacao usa os objetos da lista filtrada.
                     .onDelete(perform: requestDeletion)
+                    .onMove(perform: moveAction)
                 }
+                .environment(\.editMode, $editMode)
             }
         }
     }
@@ -101,12 +103,18 @@ struct ProductsView: View {
     private var productToolbar: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) { StoreSwitcherView() }
         ToolbarItemGroup(placement: .topBarTrailing) {
+            // O EditButton da barra alterava outro modo de edicao e nao alcancava a lista.
+            Button(editMode.isEditing
+                   ? String(localized: "common.done", bundle: .tinyStockCore)
+                   : String(localized: "common.edit", bundle: .tinyStockCore)) {
+                withAnimation { editMode = editMode.isEditing ? .inactive : .active }
+            }
+            .disabled(products.isEmpty)
             Button {
                 isPresentingForm = true
             } label: {
                 Label(String(localized: "products.add", bundle: .tinyStockCore), systemImage: "plus")
             }
-            EditButton().disabled(products.isEmpty)
         }
     }
 
@@ -146,6 +154,27 @@ struct ProductsView: View {
     private func requestDeletion(at offsets: IndexSet) {
         pendingDeletion = offsets.compactMap { filteredProducts.indices.contains($0) ? filteredProducts[$0] : nil }
         isConfirmingDelete = !pendingDeletion.isEmpty
+    }
+
+    /// A ordem manual so vale para o catalogo completo, em modo de edicao e sem busca ativa.
+    private var moveAction: ((IndexSet, Int) -> Void)? {
+        guard editMode.isEditing, searchText.isEmpty else { return nil }
+        return { source, destination in moveProducts(from: source, to: destination) }
+    }
+
+    private func moveProducts(from source: IndexSet, to destination: Int) {
+        // Preserva pendencias anteriores caso a gravacao da nova ordem falhe.
+        do { try modelContext.save() } catch {
+            errorMessage = error.localizedDescription
+            return
+        }
+        var ordered = products
+        ordered.move(fromOffsets: source, toOffset: destination)
+        ProductService.setDisplayOrder(ordered)
+        do { try modelContext.save() } catch {
+            modelContext.rollback()
+            errorMessage = error.localizedDescription
+        }
     }
 
     private func deleteProducts() {

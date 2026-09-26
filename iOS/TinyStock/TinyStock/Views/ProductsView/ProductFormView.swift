@@ -101,6 +101,7 @@ struct ProductFormView: View {
                 productSection
                 pricesSection
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -110,6 +111,11 @@ struct ProductFormView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(String(localized: "common.save", bundle: .tinyStockCore), action: save)
                         .disabled(!canSave)
+                }
+                // O teclado decimal dos precos nao tem tecla de retorno para ser fechado.
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button(String(localized: "common.ok", bundle: .tinyStockCore), action: dismissKeyboard)
                 }
             }
             .alert(String(localized: "product.form.error.title", bundle: .tinyStockCore), isPresented: Binding(
@@ -195,6 +201,7 @@ struct ProductFormView: View {
     private var stockRow: some View {
         if canEditInitialStock {
             Button {
+                dismissKeyboard()
                 withAnimation { isPickingStock.toggle() }
             } label: {
                 LabeledContent(initialStockTitle) {
@@ -222,6 +229,10 @@ struct ProductFormView: View {
 
     private var initialQuantitySelection: Binding<Int> {
         Binding(get: { initialQuantity ?? 0 }, set: { initialQuantityText = String($0) })
+    }
+
+    private func dismissKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 
     private var initialStockTitle: String {

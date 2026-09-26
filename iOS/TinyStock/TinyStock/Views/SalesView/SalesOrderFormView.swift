@@ -83,6 +83,7 @@ struct SalesOrderFormView: View {
                 summarySection
                 notesSection
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle(String(localized: "order.form.title", bundle: .tinyStockCore))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -92,6 +93,14 @@ struct SalesOrderFormView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(String(localized: "order.form.save", bundle: .tinyStockCore), action: save)
                         .disabled(!canSave || isSaving)
+                }
+                // O teclado decimal da taxa nao tem tecla de retorno para ser fechado.
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button(String(localized: "common.ok", bundle: .tinyStockCore)) {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                                        to: nil, from: nil, for: nil)
+                    }
                 }
             }
             .alert(String(localized: "order.form.error.title", bundle: .tinyStockCore), isPresented: Binding(

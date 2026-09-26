@@ -50,6 +50,9 @@ public final class Product {
     /// Data da última edição.
     public var updatedAt: Date = Date()
 
+    /// Posição escolhida pelo usuário no catálogo. Empates seguem a ordem alfabética.
+    public var sortOrder: Int = 0
+
     // MARK: - Inicializador
 
     public init(

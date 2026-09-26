@@ -43,6 +43,24 @@ struct ProductServiceTests {
         #expect(product.minimumStock == 0)
     }
 
+    @Test func ordemManualEhPreservadaENovoProdutoEntraNoFim() throws {
+        let context = try TestDatabase.makeCleanContext()
+        let storeID = UUID()
+        let bolsa = try ProductService.create(storeID: storeID, name: "Bolsa", in: context)
+        let tapete = try ProductService.create(storeID: storeID, name: "Tapete", in: context)
+        try context.save()
+
+        ProductService.setDisplayOrder([tapete, bolsa])
+        let touca = try ProductService.create(storeID: storeID, name: "Touca", in: context)
+        try context.save()
+
+        let ordered = try context.fetch(FetchDescriptor<Product>(
+            sortBy: [SortDescriptor(\Product.sortOrder), SortDescriptor(\Product.name)]
+        ))
+        #expect(ordered.map(\.name) == ["Tapete", "Bolsa", "Touca"])
+        #expect(touca.sortOrder == 2)
+    }
+
     @Test func nomeVazioEhRecusado() throws {
         let context = try TestDatabase.makeCleanContext()
 

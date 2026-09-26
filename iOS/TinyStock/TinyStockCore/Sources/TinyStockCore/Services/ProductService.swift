@@ -70,8 +70,20 @@ public enum ProductService {
             createdAt: date,
             updatedAt: date
         )
+        // Produtos novos entram no fim da ordem manual do catálogo.
+        let storeProducts = try context.fetch(
+            FetchDescriptor<Product>(predicate: #Predicate { $0.storeID == storeID })
+        )
+        product.sortOrder = (storeProducts.map(\.sortOrder).max() ?? -1) + 1
         context.insert(product)
         return product
+    }
+
+    /// Persiste a ordem completa recebida da interface sem alterar outros dados do produto.
+    public static func setDisplayOrder(_ products: [Product]) {
+        for (position, product) in products.enumerated() where product.sortOrder != position {
+            product.sortOrder = position
+        }
     }
 
     /// Edita os dados canônicos sem alterar a loja ou a data de criação.
