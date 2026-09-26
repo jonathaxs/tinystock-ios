@@ -157,6 +157,18 @@ struct StoreProfileTests {
         #expect(selected.createdAt == Date(timeIntervalSince1970: 100))
     }
 
+    @Test func reconciliacaoSemCopiasNaoAlteraALojaInicial() throws {
+        let context = try TestDatabase.makeCleanContext()
+        context.insert(StoreProfile(id: StoreScope.primaryStoreID, name: "Minha loja",
+                                    imageData: Data([1, 2, 3])))
+        try context.save()
+
+        _ = try StoreProfileService.reconcileCloudStores(in: context)
+
+        // Um save sem mudanca real dispararia outra notificacao remota e uma nova reconciliacao.
+        #expect(context.hasChanges == false)
+    }
+
     @Test func reconciliacaoDoCloudKitPreservaCicloDeVidaMaisRecente() throws {
         let context = try TestDatabase.makeCleanContext()
         let trashedAt = Date(timeIntervalSince1970: 300)

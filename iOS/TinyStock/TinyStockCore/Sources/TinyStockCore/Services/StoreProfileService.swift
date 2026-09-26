@@ -164,7 +164,9 @@ public enum StoreProfileService {
         )
         let primaryCopies = stores.filter { $0.id == StoreScope.primaryStoreID }
 
-        if let canonical = primaryCopies.first {
+        // Sem copias nao ha o que consolidar. Reatribuir os mesmos valores marca a loja como
+        // alterada, e o save resultante dispara outra notificacao remota, reiniciando o ciclo.
+        if primaryCopies.count > 1, let canonical = primaryCopies.first {
             let newest = primaryCopies.max { $0.updatedAt < $1.updatedAt } ?? canonical
             canonical.name = newest.name
             canonical.imageData = newest.imageData
