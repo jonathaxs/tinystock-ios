@@ -1,19 +1,7 @@
-//
-//  TinyStockTests.swift
-//  TinyStockTests
-//
-//  Created by Jonathas Motta on 20/07/26.
-//
+// Proposito: Reservar o alvo de testes do app; as regras de negocio sao testadas no TinyStockCore.
+// Created by Jonathas Motta (@jonathaxs) on 2026-07-20.
 
 import Testing
 @testable import TinyStock
 
-struct TinyStockTests {
-
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
-        // Swift Testing Documentation
-        // https://developer.apple.com/documentation/testing
-    }
-
-}
+struct TinyStockTests {}

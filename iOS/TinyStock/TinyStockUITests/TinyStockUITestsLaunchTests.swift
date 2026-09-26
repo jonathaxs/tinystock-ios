@@ -1,9 +1,5 @@
-//
-//  TinyStockUITestsLaunchTests.swift
-//  TinyStockUITests
-//
-//  Created by Jonathas Motta on 20/07/26.
-//
+// Proposito: Capturar a tela inicial em cada configuracao de aparencia e idioma do alvo.
+// Created by Jonathas Motta (@jonathaxs) on 2026-07-20.
 
 import XCTest
 
@@ -21,11 +17,6 @@ final class TinyStockUITestsLaunchTests: XCTestCase {
     func testLaunch() throws {
         let app = XCUIApplication()
         app.launch()
-
-        // Insert steps here to perform after app launch but before taking a screenshot,
-        // such as logging into a test account or navigating somewhere in the app
-        // XCUIAutomation Documentation
-        // https://developer.apple.com/documentation/xcuiautomation
 
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "Launch Screen"

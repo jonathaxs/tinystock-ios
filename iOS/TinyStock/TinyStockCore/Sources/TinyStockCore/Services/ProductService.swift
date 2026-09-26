@@ -42,7 +42,7 @@ public extension ProductError {
 public enum ProductService {
 
     /// Cria somente os dados que pertencem ao produto. Variações e estoque
-    /// serão associados em serviços próprios nas próximas etapas.
+    /// são associados pelos serviços próprios de cada responsabilidade.
     @discardableResult
     public static func create(
         storeID: UUID,

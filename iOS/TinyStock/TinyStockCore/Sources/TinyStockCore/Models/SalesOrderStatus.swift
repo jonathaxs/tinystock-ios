@@ -31,7 +31,7 @@ public enum SalesOrderStatus: String, CaseIterable, Codable, Sendable {
         case .new:
             [fulfillment.initialStatus, .cancelled]
         case .awaitingProduction:
-            // Produzido pode pular o inicio explicito da producao, como combinado para a acao rapida.
+            // A acao rapida de marcar como produzido pode pular o inicio explicito da producao.
             fulfillment == .production ? [.inProduction, .readyToShip, .cancelled] : []
         case .inProduction:
             fulfillment == .production ? [.readyToShip, .cancelled] : []
