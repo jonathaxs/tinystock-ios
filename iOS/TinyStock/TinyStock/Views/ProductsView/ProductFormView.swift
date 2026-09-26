@@ -20,9 +20,10 @@ struct ProductFormView: View {
     @State private var costPriceText: String
     @State private var salePriceText: String
     @State private var imageData: Data?
-    @State private var hasVariations = false
+    @State private var hasVariations: Bool
     @State private var initialVariationName = ""
-    @State private var initialQuantityText = "0"
+    @State private var initialQuantityText: String
+    @State private var isPickingStock = false
     @State private var variants: [ProductVariantInput] = []
     @State private var editingVariant: ProductVariantInput?
     @State private var didLoadVariants = false
@@ -36,6 +37,9 @@ struct ProductFormView: View {
         _costPriceText = State(initialValue: CurrencyFormatter.editableText(from: product?.costPrice ?? 0))
         _salePriceText = State(initialValue: CurrencyFormatter.editableText(from: product?.salePrice ?? 0))
         _imageData = State(initialValue: product?.imageData)
+        // Produto novo sempre nasce com uma variacao nomeada, o que libera o estoque inicial.
+        _hasVariations = State(initialValue: product == nil)
+        _initialQuantityText = State(initialValue: product == nil ? "1" : "0")
     }
 
     private func price(from text: String) -> Decimal? {
@@ -94,12 +98,8 @@ struct ProductFormView: View {
                     isProcessing: $isLoadingPhoto,
                     errorMessage: $errorMessage
                 )
-                Section {
-                    TextField(String(localized: "product.form.name", bundle: .tinyStockCore), text: $name)
-                        .textInputAutocapitalization(.words)
-                }
+                productSection
                 pricesSection
-                variationSection
             }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
@@ -154,23 +154,21 @@ struct ProductFormView: View {
         }
     }
 
-    private var variationSection: some View {
+    private var productSection: some View {
         Section {
-            Toggle(String(localized: "product.form.variant.enabled", bundle: .tinyStockCore), isOn: $hasVariations)
-                .disabled(!canDisableVariations)
+            TextField(String(localized: "product.form.name", bundle: .tinyStockCore), text: $name)
+                .textInputAutocapitalization(.words)
+            // A opcao de remover a variacao so existe para produtos ja cadastrados.
+            if editingProduct != nil {
+                Toggle(String(localized: "product.form.variant.enabled", bundle: .tinyStockCore), isOn: $hasVariations)
+                    .disabled(!canDisableVariations)
+            }
             if usesDirectVariationFields {
                 TextField(String(localized: "product.form.variant.name", bundle: .tinyStockCore), text: $initialVariationName)
                     .textInputAutocapitalization(.words)
                     .disabled(!hasVariations)
                     .foregroundStyle(hasVariations ? Color.primary : Color.secondary)
-                LabeledContent(initialStockTitle) {
-                    TextField("0", text: $initialQuantityText)
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.trailing)
-                        .disabled(!canEditInitialStock)
-                        .foregroundStyle(canEditInitialStock ? Color.primary : Color.secondary)
-                        .accessibilityLabel(initialStockTitle)
-                }
+                stockRow
             } else {
                 ForEach(variants) { input in
                     Button { editingVariant = input } label: {
@@ -183,8 +181,6 @@ struct ProductFormView: View {
                     .accessibilityHint(String(localized: "product.form.variant.edit.hint", bundle: .tinyStockCore))
                 }
             }
-        } header: {
-            Text(String(localized: "product.form.variant.title", bundle: .tinyStockCore))
         } footer: {
             if !canDisableVariations {
                 Text(String(localized: "product.form.variant.multiple.footer", bundle: .tinyStockCore))
@@ -192,6 +188,40 @@ struct ProductFormView: View {
                 Text(String(localized: "product.form.variant.disabled.footer", bundle: .tinyStockCore))
             }
         }
+    }
+
+    /// Na edicao o saldo so muda pela entrada de estoque, que registra a movimentacao.
+    @ViewBuilder
+    private var stockRow: some View {
+        if canEditInitialStock {
+            Button {
+                withAnimation { isPickingStock.toggle() }
+            } label: {
+                LabeledContent(initialStockTitle) {
+                    Text(initialQuantity ?? 0, format: .number)
+                        .monospacedDigit()
+                }
+            }
+            .foregroundStyle(.primary)
+            if isPickingStock {
+                Picker(initialStockTitle, selection: initialQuantitySelection) {
+                    ForEach(0...100, id: \.self) { value in
+                        Text(value, format: .number).tag(value)
+                    }
+                }
+                .pickerStyle(.wheel)
+            }
+        } else {
+            LabeledContent(initialStockTitle) {
+                Text(initialQuantityText)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var initialQuantitySelection: Binding<Int> {
+        Binding(get: { initialQuantity ?? 0 }, set: { initialQuantityText = String($0) })
     }
 
     private var initialStockTitle: String {

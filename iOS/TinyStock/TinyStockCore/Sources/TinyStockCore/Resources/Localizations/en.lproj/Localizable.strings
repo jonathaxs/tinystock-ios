@@ -34,7 +34,7 @@
 /* MARK: - Product form */
 "product.form.title.new" = "New Product";
 "product.form.section.prices" = "Prices";
-"product.form.name" = "Name";
+"product.form.name" = "Name or category";
 "product.form.costPrice" = "Cost";
 "product.form.salePrice" = "Sale price";
 "product.form.unitProfit" = "Profit per unit";
@@ -216,7 +216,7 @@
 "product.form.error.multipleVariations" = "A product with multiple variations cannot hide them.";
 "product.form.variant.title" = "Variation";
 "product.form.variant.enabled" = "Has variations";
-"product.form.variant.name" = "Variation name";
+"product.form.variant.name" = "Variation or color";
 "product.form.variant.initialStock" = "Initial stock";
 "product.form.variant.available" = "Available stock";
 "product.form.variant.disabled.footer" = "Turn this on to identify a variation and its initial stock.";
@@ -282,7 +282,7 @@
 "order.form.fulfillment.ready.footer" = "Uses available stock and leaves the order ready to ship.";
 "order.form.fulfillment.production.footer" = "Keeps current stock unchanged and adds the order to the production queue.";
 "order.form.section.customer" = "Customer";
-"order.form.buyer" = "Buyer name (optional)";
+"order.form.buyer" = "Customer name";
 "order.form.reference" = "Order reference (optional)";
 "order.form.section.dates" = "Dates";
 "order.form.orderedAt" = "Sale";

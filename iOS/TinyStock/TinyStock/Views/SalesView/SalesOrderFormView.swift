@@ -65,7 +65,8 @@ struct SalesOrderFormView: View {
     }
 
     private var canSave: Bool {
-        guard selectedVariant != nil, quantity > 0,
+        guard !buyerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              selectedVariant != nil, quantity > 0,
               let channelFeePercentage, channelFeePercentage >= 0, channelFeePercentage <= 100 else { return false }
         if fulfillment == .readyStock { return (selectedVariant?.quantity ?? 0) >= quantity }
         return true
@@ -74,9 +75,9 @@ struct SalesOrderFormView: View {
     var body: some View {
         NavigationStack {
             Form {
+                customerSection
                 productSection
                 fulfillmentSection
-                customerSection
                 datesSection
                 channelSection
                 summarySection

@@ -126,6 +126,9 @@ struct ProductsView: View {
                 Button { stockProduct = product } label: {
                     Label(String(localized: "stock.entry.title", bundle: .tinyStockCore), systemImage: "shippingbox.and.arrow.backward")
                 }
+                Button { editingProduct = product } label: {
+                    Label(String(localized: "product.form.title.edit", bundle: .tinyStockCore), systemImage: "pencil")
+                }
             } label: {
                 rowLabel(product)
             }

@@ -34,7 +34,7 @@
 /* MARK: - Formulário do produto */
 "product.form.title.new" = "Novo produto";
 "product.form.section.prices" = "Preços";
-"product.form.name" = "Nome";
+"product.form.name" = "Nome ou categoria";
 "product.form.costPrice" = "Custo";
 "product.form.salePrice" = "Preço de venda";
 "product.form.unitProfit" = "Lucro por unidade";
@@ -216,7 +216,7 @@
 "product.form.error.multipleVariations" = "Um produto com várias variações não pode ocultá-las.";
 "product.form.variant.title" = "Variação";
 "product.form.variant.enabled" = "Possui variações";
-"product.form.variant.name" = "Nome da variação";
+"product.form.variant.name" = "Variação ou cor";
 "product.form.variant.initialStock" = "Estoque inicial";
 "product.form.variant.available" = "Estoque disponível";
 "product.form.variant.disabled.footer" = "Ative para identificar uma variação e seu estoque inicial.";
@@ -282,7 +282,7 @@
 "order.form.fulfillment.ready.footer" = "Usa o estoque disponível e deixa o pedido pronto para despacho.";
 "order.form.fulfillment.production.footer" = "Mantém o estoque atual e adiciona o pedido à fila de produção.";
 "order.form.section.customer" = "Cliente";
-"order.form.buyer" = "Nome do comprador (opcional)";
+"order.form.buyer" = "Nome do cliente";
 "order.form.reference" = "Referência do pedido (opcional)";
 "order.form.section.dates" = "Datas";
 "order.form.orderedAt" = "Venda";

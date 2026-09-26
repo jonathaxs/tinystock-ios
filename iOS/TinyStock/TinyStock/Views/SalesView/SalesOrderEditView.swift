@@ -46,7 +46,8 @@ struct SalesOrderEditView: View {
         return (try? ChannelFeeCalculator.fee(on: order.total, percentage: feePercentage)) ?? 0
     }
     private var canSave: Bool {
-        guard fulfillment != nil, order.status != nil, let feePercentage else { return false }
+        guard !buyerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              fulfillment != nil, order.status != nil, let feePercentage else { return false }
         return feePercentage >= 0 && feePercentage <= 100 && SalesOrderPresentation.canEdit(order)
     }
 
