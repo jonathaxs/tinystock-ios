@@ -23,7 +23,7 @@ struct ProductFormView: View {
     @State private var hasVariations: Bool
     @State private var initialVariationName = ""
     @State private var initialQuantityText: String
-    @State private var isPickingStock = false
+    @State private var usesLegacyDefaultVariant = false
     @State private var variants: [ProductVariantInput] = []
     @State private var editingVariant: ProductVariantInput?
     @State private var didLoadVariants = false
@@ -66,8 +66,9 @@ struct ProductFormView: View {
         editingProduct == nil || variants.count <= 1
     }
 
-    private var canEditInitialStock: Bool {
-        editingProduct == nil && hasVariations
+    /// Na edicao, o saldo escolhido vira um ajuste de estoque registrado no historico.
+    private var canEditStock: Bool {
+        hasVariations
     }
 
     private var variationIsValid: Bool {
@@ -164,8 +165,8 @@ struct ProductFormView: View {
         Section {
             TextField(String(localized: "product.form.name", bundle: .tinyStockCore), text: $name)
                 .textInputAutocapitalization(.words)
-            // A opcao de remover a variacao so existe para produtos ja cadastrados.
-            if editingProduct != nil {
+            // So produtos antigos, criados sem variacao, ainda precisam ativar a opcao.
+            if usesLegacyDefaultVariant {
                 Toggle(String(localized: "product.form.variant.enabled", bundle: .tinyStockCore), isOn: $hasVariations)
                     .disabled(!canDisableVariations)
             }
@@ -196,28 +197,11 @@ struct ProductFormView: View {
         }
     }
 
-    /// Na edicao o saldo so muda pela entrada de estoque, que registra a movimentacao.
     @ViewBuilder
     private var stockRow: some View {
-        if canEditInitialStock {
-            Button {
-                dismissKeyboard()
-                withAnimation { isPickingStock.toggle() }
-            } label: {
-                LabeledContent(initialStockTitle) {
-                    Text(initialQuantity ?? 0, format: .number)
-                        .monospacedDigit()
-                }
-            }
-            .foregroundStyle(.primary)
-            if isPickingStock {
-                Picker(initialStockTitle, selection: initialQuantitySelection) {
-                    ForEach(0...100, id: \.self) { value in
-                        Text(value, format: .number).tag(value)
-                    }
-                }
-                .pickerStyle(.wheel)
-            }
+        if canEditStock {
+            StockQuantityPicker(title: initialStockTitle, quantity: initialQuantitySelection,
+                                range: 0...max(100, initialQuantity ?? 0))
         } else {
             LabeledContent(initialStockTitle) {
                 Text(initialQuantityText)
@@ -229,6 +213,17 @@ struct ProductFormView: View {
 
     private var initialQuantitySelection: Binding<Int> {
         Binding(get: { initialQuantity ?? 0 }, set: { initialQuantityText = String($0) })
+    }
+
+    /// A edicao preserva os saldos; a diferenca escolhida entra como ajuste auditavel.
+    private func adjustEditedStock(of product: Product) throws {
+        let stored = try ProductVariantService.variants(for: product, in: modelContext)
+        for input in formVariants {
+            guard let variant = stored.first(where: { $0.id == input.existingID }),
+                  variant.quantity != input.initialQuantity else { continue }
+            try StockService.registerAdjustment(newQuantity: input.initialQuantity, to: variant,
+                                                product: product, in: modelContext)
+        }
     }
 
     private func dismissKeyboard() {
@@ -252,6 +247,7 @@ struct ProductFormView: View {
                                         initialQuantity: $0.quantity)
                 }
                 hasVariations = !storedVariants.isEmpty && !storedVariants.contains(where: \.isDefault)
+                usesLegacyDefaultVariant = storedVariants.contains(where: \.isDefault)
                 if let onlyVariant = variants.first, variants.count == 1 {
                     initialVariationName = onlyVariant.name
                     initialQuantityText = String(onlyVariant.initialQuantity)
@@ -269,15 +265,18 @@ struct ProductFormView: View {
             return
         }
         do {
-            try ProductFormService.apply(to: editingProduct, storeID: storeID, name: name,
-                                         costPrice: cost, salePrice: sale, imageData: imageData,
-                                         variants: formVariants, usesVariants: hasVariations,
-                                         in: modelContext)
+            let product = try ProductFormService.apply(to: editingProduct, storeID: storeID, name: name,
+                                                       costPrice: cost, salePrice: sale, imageData: imageData,
+                                                       variants: formVariants, usesVariants: hasVariations,
+                                                       in: modelContext)
+            if editingProduct != nil { try adjustEditedStock(of: product) }
             try modelContext.save()
             dismiss()
         } catch {
             modelContext.rollback()
             if let error = error as? ProductError {
+                errorMessage = error.localizedMessage
+            } else if let error = error as? StockError {
                 errorMessage = error.localizedMessage
             } else if let error = error as? ProductFormError {
                 errorMessage = error.localizedMessage

@@ -218,7 +218,7 @@
 "product.form.variant.enabled" = "Has variations";
 "product.form.variant.name" = "Variation or color";
 "product.form.variant.initialStock" = "Initial stock";
-"product.form.variant.available" = "Available stock";
+"product.form.variant.available" = "Current stock";
 "product.form.variant.disabled.footer" = "Turn this on to identify a variation and its initial stock.";
 "product.form.variant.multiple.footer" = "Multiple existing variations must remain enabled to preserve their stock and history.";
 "product.form.photo.camera" = "Take photo";
@@ -233,7 +233,8 @@
 "products.error.title" = "Unable to delete product";
 "stock.entry.title" = "Stock entry";
 "stock.entry.newVariant" = "New variation";
-"stock.entry.quantity" = "Units received";
+"product.variant.new.defaultFooter" = "This product has no variations yet. Edit the product and turn on Has variations before adding another.";
+"stock.entry.quantity" = "Stock entry";
 "stock.entry.result" = "Stock after entry";
 "stock.entry.note" = "Note (optional)";
 "stock.entry.error" = "Unable to register stock entry";

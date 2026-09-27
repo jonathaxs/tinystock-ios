@@ -1,4 +1,4 @@
-// Proposito: Registrar recebimento de unidades em uma variacao existente ou nova.
+// Proposito: Registrar recebimento de unidades em uma variacao existente.
 // Created by Jonathas Motta (@jonathaxs) on 2026-08-31.
 
 import SwiftUI
@@ -11,8 +11,7 @@ struct StockEntryView: View {
     let product: Product
     @Query private var variants: [ProductVariant]
     @State private var selectedVariantID: UUID?
-    @State private var newVariantName = ""
-    @State private var quantityText = "1"
+    @State private var quantity = 1
     @State private var note = ""
     @State private var didSelectInitialVariant = false
     @State private var errorMessage: String?
@@ -34,18 +33,15 @@ struct StockEntryView: View {
         variants.count == 1 && variants.first?.isDefault == true
     }
 
-    private var quantity: Int? { Int(quantityText.trimmingCharacters(in: .whitespacesAndNewlines)) }
-
     private var resultingBalance: Int? {
-        guard let quantity, quantity > 0 else { return nil }
+        guard quantity > 0 else { return nil }
         let result = (selectedVariant?.quantity ?? 0).addingReportingOverflow(quantity)
         return result.overflow ? nil : result.partialValue
     }
 
+    // Variacoes novas sao cadastradas pela opcao propria do catalogo.
     private var canSave: Bool {
-        guard resultingBalance != nil else { return false }
-        if selectedVariantID != nil { return selectedVariant != nil }
-        return !newVariantName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        resultingBalance != nil && selectedVariant != nil
     }
 
     var body: some View {
@@ -58,22 +54,16 @@ struct StockEntryView: View {
                             ForEach(variants) { variant in
                                 Text(variant.name).tag(Optional(variant.id))
                             }
-                            Text(String(localized: "stock.entry.newVariant", bundle: .tinyStockCore))
-                                .tag(Optional<UUID>.none)
-                        }
-                        if selectedVariantID == nil {
-                            TextField(String(localized: "product.form.variant.name", bundle: .tinyStockCore), text: $newVariantName)
-                                .textInputAutocapitalization(.words)
                         }
                     }
+                    StockQuantityPicker(
+                        title: String(localized: "stock.entry.quantity", bundle: .tinyStockCore),
+                        quantity: $quantity,
+                        range: 1...100
+                    )
                 }
+                // Saldos somente informativos, calculados a partir da variacao escolhida.
                 Section {
-                    LabeledContent(String(localized: "stock.entry.quantity", bundle: .tinyStockCore)) {
-                        TextField("1", text: $quantityText)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
-                            .accessibilityLabel(String(localized: "stock.entry.quantity", bundle: .tinyStockCore))
-                    }
                     LabeledContent(String(localized: "product.form.variant.available", bundle: .tinyStockCore)) {
                         Text(selectedVariant?.quantity ?? 0, format: .number)
                     }
@@ -112,7 +102,7 @@ struct StockEntryView: View {
     }
 
     private func save() {
-        guard canSave, let quantity else { return }
+        guard canSave else { return }
         // O rascunho nao grava nada. Salva pendencias anteriores antes do lote de entrada.
         do { try modelContext.save() } catch {
             errorMessage = error.localizedDescription
@@ -120,7 +110,7 @@ struct StockEntryView: View {
         }
         do {
             try StockService.registerEntry(quantity: quantity, for: product, variantID: selectedVariantID,
-                                           newVariantName: newVariantName, note: note, in: modelContext)
+                                           note: note, in: modelContext)
             try modelContext.save()
             dismiss()
         } catch {

@@ -218,7 +218,7 @@
 "product.form.variant.enabled" = "Possui variações";
 "product.form.variant.name" = "Variação ou cor";
 "product.form.variant.initialStock" = "Estoque inicial";
-"product.form.variant.available" = "Estoque disponível";
+"product.form.variant.available" = "Estoque atual";
 "product.form.variant.disabled.footer" = "Ative para identificar uma variação e seu estoque inicial.";
 "product.form.variant.multiple.footer" = "Variações existentes devem permanecer ativas para preservar seus estoques e históricos.";
 "product.form.photo.camera" = "Tirar foto";
@@ -233,7 +233,8 @@
 "products.error.title" = "Não foi possível excluir o produto";
 "stock.entry.title" = "Entrada de estoque";
 "stock.entry.newVariant" = "Nova variação";
-"stock.entry.quantity" = "Unidades recebidas";
+"product.variant.new.defaultFooter" = "Este produto ainda não tem variações. Edite o produto e ative Possui variações antes de cadastrar outra.";
+"stock.entry.quantity" = "Entrada de estoque";
 "stock.entry.result" = "Estoque após a entrada";
 "stock.entry.note" = "Observação (opcional)";
 "stock.entry.error" = "Não foi possível registrar a entrada";

@@ -15,6 +15,7 @@ struct ProductsView: View {
     @State private var editingProduct: Product?
     @State private var stockProduct: Product?
     @State private var salesProduct: Product?
+    @State private var variantRequest: NewVariantRequest?
     @State private var pendingDeletion: [Product] = []
     @State private var isConfirmingDelete = false
     @State private var errorMessage: String?
@@ -41,6 +42,7 @@ struct ProductsView: View {
             .sheet(item: $editingProduct) { ProductFormView(storeID: $0.storeID, product: $0) }
             .sheet(item: $stockProduct) { StockEntryView(product: $0) }
             .sheet(item: $salesProduct) { SalesOrderFormView(product: $0) }
+            .sheet(item: $variantRequest) { NewProductVariantView(storeID: storeID, productID: $0.productID) }
             .alert(String(localized: "product.delete.confirm.title", bundle: .tinyStockCore), isPresented: $isConfirmingDelete) {
                 Button(String(localized: "common.cancel", bundle: .tinyStockCore), role: .cancel) { pendingDeletion = [] }
                 Button(String(localized: "common.delete", bundle: .tinyStockCore), role: .destructive, action: deleteProducts)
@@ -59,6 +61,7 @@ struct ProductsView: View {
             editingProduct = nil
             stockProduct = nil
             salesProduct = nil
+            variantRequest = nil
             pendingDeletion = []
             isConfirmingDelete = false
             isPresentingForm = false
@@ -110,8 +113,14 @@ struct ProductsView: View {
                 withAnimation { editMode = editMode.isEditing ? .inactive : .active }
             }
             .disabled(products.isEmpty)
-            Button {
-                isPresentingForm = true
+            Menu {
+                Button { isPresentingForm = true } label: {
+                    Label(String(localized: "product.form.title.new", bundle: .tinyStockCore), systemImage: "shippingbox")
+                }
+                Button { variantRequest = NewVariantRequest(productID: nil) } label: {
+                    Label(String(localized: "stock.entry.newVariant", bundle: .tinyStockCore), systemImage: "plus.square.on.square")
+                }
+                .disabled(products.isEmpty)
             } label: {
                 Label(String(localized: "products.add", bundle: .tinyStockCore), systemImage: "plus")
             }
@@ -133,6 +142,9 @@ struct ProductsView: View {
                 }
                 Button { stockProduct = product } label: {
                     Label(String(localized: "stock.entry.title", bundle: .tinyStockCore), systemImage: "shippingbox.and.arrow.backward")
+                }
+                Button { variantRequest = NewVariantRequest(productID: product.id) } label: {
+                    Label(String(localized: "stock.entry.newVariant", bundle: .tinyStockCore), systemImage: "plus.square.on.square")
                 }
                 Button { editingProduct = product } label: {
                     Label(String(localized: "product.form.title.edit", bundle: .tinyStockCore), systemImage: "pencil")
@@ -193,6 +205,12 @@ struct ProductsView: View {
             errorMessage = (error as? ProductError)?.localizedMessage ?? error.localizedDescription
         }
     }
+}
+
+/// Pedido de nova variacao; sem produto, a tela deixa o usuario escolher no catalogo.
+private struct NewVariantRequest: Identifiable {
+    let id = UUID()
+    let productID: UUID?
 }
 
 #Preview {
