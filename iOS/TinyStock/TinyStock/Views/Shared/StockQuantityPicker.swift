@@ -16,9 +16,16 @@ struct StockQuantityPicker: View {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
             withAnimation { isExpanded.toggle() }
         } label: {
+            // Mesmo visual dos seletores do sistema, para indicar que o valor pode ser trocado.
             LabeledContent(title) {
-                Text(quantity, format: .number)
-                    .monospacedDigit()
+                HStack(spacing: 4) {
+                    Text(quantity, format: .number)
+                        .monospacedDigit()
+                    Image(systemName: "chevron.up.chevron.down")
+                        .imageScale(.small)
+                        .accessibilityHidden(true)
+                }
+                .foregroundStyle(.tint)
             }
         }
         .foregroundStyle(.primary)

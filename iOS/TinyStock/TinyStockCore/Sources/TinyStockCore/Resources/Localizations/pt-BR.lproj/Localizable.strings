@@ -39,6 +39,13 @@
 "product.form.salePrice" = "Preço de venda";
 "product.form.unitProfit" = "Lucro por unidade";
 "product.form.title.edit" = "Editar produto";
+"products.details" = "Ver detalhes";
+"product.details.title" = "Detalhes";
+"product.details.stock" = "Estoque";
+"product.details.totalStock" = "Estoque total";
+"product.details.potentialRevenue" = "Receita se vender tudo";
+"product.details.potentialProfit" = "Lucro se vender tudo";
+"product.details.potentialFooter" = "Calculado com o estoque atual e os preços cadastrados, sem as taxas dos canais de venda.";
 "product.form.photo.choose" = "Escolher foto";
 "product.form.photo.change" = "Trocar foto";
 "product.form.photo.remove" = "Remover foto";
@@ -232,6 +239,7 @@
 "products.delete.stock.message" = "O produto, suas variações e movimentações de estoque serão excluídos. As vendas registradas serão mantidas. Esta ação não pode ser desfeita.";
 "products.error.title" = "Não foi possível excluir o produto";
 "stock.entry.title" = "Entrada de estoque";
+"stock.entry.navigationTitle" = "Entrada";
 "stock.entry.newVariant" = "Nova variação";
 "product.variant.new.defaultFooter" = "Este produto ainda não tem variações. Edite o produto e ative Possui variações antes de cadastrar outra.";
 "stock.entry.quantity" = "Entrada de estoque";

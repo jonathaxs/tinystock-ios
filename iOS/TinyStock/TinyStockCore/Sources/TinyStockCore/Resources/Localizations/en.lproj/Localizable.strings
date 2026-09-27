@@ -39,6 +39,13 @@
 "product.form.salePrice" = "Sale price";
 "product.form.unitProfit" = "Profit per unit";
 "product.form.title.edit" = "Edit Product";
+"products.details" = "View details";
+"product.details.title" = "Details";
+"product.details.stock" = "Stock";
+"product.details.totalStock" = "Total stock";
+"product.details.potentialRevenue" = "Revenue if all sold";
+"product.details.potentialProfit" = "Profit if all sold";
+"product.details.potentialFooter" = "Based on current stock and registered prices, without sales channel fees.";
 "product.form.photo.choose" = "Choose photo";
 "product.form.photo.change" = "Change photo";
 "product.form.photo.remove" = "Remove photo";
@@ -232,6 +239,7 @@
 "products.delete.stock.message" = "The product, its variations and stock movements will be deleted. Recorded sales will be kept. This cannot be undone.";
 "products.error.title" = "Unable to delete product";
 "stock.entry.title" = "Stock entry";
+"stock.entry.navigationTitle" = "Entry";
 "stock.entry.newVariant" = "New variation";
 "product.variant.new.defaultFooter" = "This product has no variations yet. Edit the product and turn on Has variations before adding another.";
 "stock.entry.quantity" = "Stock entry";

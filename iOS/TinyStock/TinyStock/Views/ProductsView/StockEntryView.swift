@@ -77,7 +77,8 @@ struct StockEntryView: View {
                     TextField(String(localized: "stock.entry.note", bundle: .tinyStockCore), text: $note, axis: .vertical)
                 }
             }
-            .navigationTitle(String(localized: "stock.entry.title", bundle: .tinyStockCore))
+            // O titulo completo nao cabe entre Cancelar e Salvar; o menu do produto mantem o nome inteiro.
+            .navigationTitle(String(localized: "stock.entry.navigationTitle", bundle: .tinyStockCore))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

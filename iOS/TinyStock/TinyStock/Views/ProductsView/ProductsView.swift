@@ -16,6 +16,7 @@ struct ProductsView: View {
     @State private var stockProduct: Product?
     @State private var salesProduct: Product?
     @State private var variantRequest: NewVariantRequest?
+    @State private var detailProduct: Product?
     @State private var pendingDeletion: [Product] = []
     @State private var isConfirmingDelete = false
     @State private var errorMessage: String?
@@ -43,6 +44,7 @@ struct ProductsView: View {
             .sheet(item: $stockProduct) { StockEntryView(product: $0) }
             .sheet(item: $salesProduct) { SalesOrderFormView(product: $0) }
             .sheet(item: $variantRequest) { NewProductVariantView(storeID: storeID, productID: $0.productID) }
+            .sheet(item: $detailProduct) { ProductDetailView(product: $0) }
             .alert(String(localized: "product.delete.confirm.title", bundle: .tinyStockCore), isPresented: $isConfirmingDelete) {
                 Button(String(localized: "common.cancel", bundle: .tinyStockCore), role: .cancel) { pendingDeletion = [] }
                 Button(String(localized: "common.delete", bundle: .tinyStockCore), role: .destructive, action: deleteProducts)
@@ -62,6 +64,7 @@ struct ProductsView: View {
             stockProduct = nil
             salesProduct = nil
             variantRequest = nil
+            detailProduct = nil
             pendingDeletion = []
             isConfirmingDelete = false
             isPresentingForm = false
@@ -137,6 +140,9 @@ struct ProductsView: View {
             .accessibilityHint(String(localized: "products.edit.hint", bundle: .tinyStockCore))
         } else {
             Menu {
+                Button { detailProduct = product } label: {
+                    Label(String(localized: "products.details", bundle: .tinyStockCore), systemImage: "info.circle")
+                }
                 Button { salesProduct = product } label: {
                     Label(String(localized: "sale.new.title", bundle: .tinyStockCore), systemImage: "cart.badge.plus")
                 }
