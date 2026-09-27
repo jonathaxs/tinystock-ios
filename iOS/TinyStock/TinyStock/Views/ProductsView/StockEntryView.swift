@@ -9,6 +9,7 @@ struct StockEntryView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     let product: Product
+    private let initialVariantID: UUID?
     @Query private var variants: [ProductVariant]
     @State private var selectedVariantID: UUID?
     @State private var quantity = 1
@@ -16,8 +17,9 @@ struct StockEntryView: View {
     @State private var didSelectInitialVariant = false
     @State private var errorMessage: String?
 
-    init(product: Product) {
+    init(product: Product, variantID: UUID? = nil) {
         self.product = product
+        initialVariantID = variantID
         let productID = product.id
         let storeID = product.storeID
         _variants = Query(filter: #Predicate<ProductVariant> {
@@ -52,7 +54,7 @@ struct StockEntryView: View {
                     if !usesInternalVariant {
                         Picker(String(localized: "product.form.variant.title", bundle: .tinyStockCore), selection: $selectedVariantID) {
                             ForEach(variants) { variant in
-                                Text(variant.name).tag(Optional(variant.id))
+                                Text(variantLabel(variant)).tag(Optional(variant.id))
                             }
                         }
                     }
@@ -97,9 +99,15 @@ struct StockEntryView: View {
         }
         .task {
             guard !didSelectInitialVariant else { return }
-            selectedVariantID = variants.first?.id
+            // Aberta pelos detalhes, a entrada ja comeca na variacao tocada.
+            selectedVariantID = initialVariantID ?? variants.first?.id
             didSelectInitialVariant = true
         }
+    }
+
+    private func variantLabel(_ variant: ProductVariant) -> String {
+        let format = String(localized: "order.form.variant.option", bundle: .tinyStockCore)
+        return String(format: format, variant.name, variant.quantity.formatted())
     }
 
     private func save() {

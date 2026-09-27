@@ -10,11 +10,18 @@ import TinyStockCore
 
 /// Mantem os campos em memoria ate a confirmacao do cadastro ou da edicao.
 struct ProductFormView: View {
+    enum PriceField: Hashable, Identifiable {
+        case sale, cost
+        var id: Self { self }
+    }
+
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
     private let editingProduct: Product?
     private let storeID: UUID
+    private let initialFocus: PriceField?
+    @FocusState private var focusedPrice: PriceField?
 
     @State private var name: String
     @State private var costPriceText: String
@@ -30,9 +37,10 @@ struct ProductFormView: View {
     @State private var errorMessage: String?
     @State private var isLoadingPhoto = false
 
-    init(storeID: UUID, product: Product? = nil) {
+    init(storeID: UUID, product: Product? = nil, initialFocus: PriceField? = nil) {
         self.storeID = storeID
         editingProduct = product
+        self.initialFocus = initialFocus
         _name = State(initialValue: product?.name ?? "")
         _costPriceText = State(initialValue: CurrencyFormatter.editableText(from: product?.costPrice ?? 0))
         _salePriceText = State(initialValue: CurrencyFormatter.editableText(from: product?.salePrice ?? 0))
@@ -127,7 +135,10 @@ struct ProductFormView: View {
                 Text(errorMessage ?? "")
             }
         }
-        .task { loadVariants() }
+        .task {
+            loadVariants()
+            await focusInitialPrice()
+        }
         .sheet(item: $editingVariant) { input in
             ProductVariantFormView(input: input) { updated in
                 if let index = variants.firstIndex(where: { $0.id == updated.id }) {
@@ -141,8 +152,8 @@ struct ProductFormView: View {
 
     private var pricesSection: some View {
         Section(String(localized: "product.form.section.prices", bundle: .tinyStockCore)) {
-            priceField(String(localized: "product.form.salePrice", bundle: .tinyStockCore), text: $salePriceText)
-            priceField(String(localized: "product.form.costPrice", bundle: .tinyStockCore), text: $costPriceText)
+            priceField(String(localized: "product.form.salePrice", bundle: .tinyStockCore), text: $salePriceText, field: .sale)
+            priceField(String(localized: "product.form.costPrice", bundle: .tinyStockCore), text: $costPriceText, field: .cost)
             if let sale = price(from: salePriceText), let cost = price(from: costPriceText) {
                 LabeledContent(String(localized: "product.form.unitProfit", bundle: .tinyStockCore)) {
                     Text((sale - cost).currencyText)
@@ -152,13 +163,25 @@ struct ProductFormView: View {
         }
     }
 
-    private func priceField(_ title: String, text: Binding<String>) -> some View {
-        LabeledContent(title) {
+    private func priceField(_ title: String, text: Binding<String>, field: PriceField) -> some View {
+        LabeledContent {
             TextField(Decimal.zero.currencyText, text: text)
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.trailing)
+                .focused($focusedPrice, equals: field)
                 .accessibilityLabel(title)
+        } label: {
+            // Precos digitados em negrito; o lucro abaixo e apenas calculado.
+            Text(title).bold()
         }
+    }
+
+    /// Aberto pelos detalhes, o formulario ja posiciona o cursor no preco tocado.
+    private func focusInitialPrice() async {
+        guard let initialFocus else { return }
+        // O foco so e aceito depois que a folha termina de aparecer.
+        try? await Task.sleep(for: .milliseconds(600))
+        focusedPrice = initialFocus
     }
 
     private var productSection: some View {

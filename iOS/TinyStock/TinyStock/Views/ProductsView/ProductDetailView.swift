@@ -9,6 +9,8 @@ struct ProductDetailView: View {
     @Environment(\.dismiss) private var dismiss
     let product: Product
     @Query private var variants: [ProductVariant]
+    @State private var entryVariant: ProductVariant?
+    @State private var editFocus: ProductFormView.PriceField?
 
     init(product: Product) {
         self.product = product
@@ -43,11 +45,17 @@ struct ProductDetailView: View {
                     .listRowBackground(Color.clear)
                 }
                 Section(String(localized: "product.details.stock", bundle: .tinyStockCore)) {
+                    // Valores na cor de destaque indicam linhas que abrem uma acao.
                     if !usesInternalVariant {
                         ForEach(variants) { variant in
-                            LabeledContent(variant.name) {
-                                Text(variant.quantity, format: .number).monospacedDigit()
+                            Button { entryVariant = variant } label: {
+                                LabeledContent(variant.name) {
+                                    Text(variant.quantity, format: .number)
+                                        .monospacedDigit()
+                                        .foregroundStyle(.tint)
+                                }
                             }
+                            .foregroundStyle(.primary)
                         }
                     }
                     LabeledContent(String(localized: "product.details.totalStock", bundle: .tinyStockCore)) {
@@ -57,10 +65,10 @@ struct ProductDetailView: View {
                     }
                 }
                 Section(String(localized: "product.form.section.prices", bundle: .tinyStockCore)) {
-                    LabeledContent(String(localized: "product.form.salePrice", bundle: .tinyStockCore),
-                                   value: product.salePrice.currencyText)
-                    LabeledContent(String(localized: "product.form.costPrice", bundle: .tinyStockCore),
-                                   value: product.costPrice.currencyText)
+                    priceRow(String(localized: "product.form.salePrice", bundle: .tinyStockCore),
+                             value: product.salePrice, field: .sale)
+                    priceRow(String(localized: "product.form.costPrice", bundle: .tinyStockCore),
+                             value: product.costPrice, field: .cost)
                     LabeledContent(String(localized: "product.form.unitProfit", bundle: .tinyStockCore)) {
                         Text(unitProfit.currencyText)
                             .foregroundStyle(unitProfit < 0 ? Color.red : Color.secondary)
@@ -85,7 +93,22 @@ struct ProductDetailView: View {
                     Button(String(localized: "common.ok", bundle: .tinyStockCore)) { dismiss() }
                 }
             }
+            .sheet(item: $entryVariant) { StockEntryView(product: product, variantID: $0.id) }
+            .sheet(item: $editFocus) {
+                ProductFormView(storeID: product.storeID, product: product, initialFocus: $0)
+            }
         }
+    }
+
+    private func priceRow(_ title: String, value: Decimal, field: ProductFormView.PriceField) -> some View {
+        Button { editFocus = field } label: {
+            LabeledContent {
+                Text(value.currencyText).foregroundStyle(.tint)
+            } label: {
+                Text(title).bold()
+            }
+        }
+        .foregroundStyle(.primary)
     }
 }
 
