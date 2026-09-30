@@ -13,6 +13,8 @@ struct NewProductVariantView: View {
     @State private var productID: UUID?
     @State private var name = ""
     @State private var quantity = 1
+    @State private var imageData: Data?
+    @State private var isLoadingPhoto = false
     @State private var errorMessage: String?
 
     init(storeID: UUID, productID: UUID? = nil) {
@@ -32,13 +34,14 @@ struct NewProductVariantView: View {
     }
 
     private var canSave: Bool {
-        selectedProduct != nil && !selectedUsesDefaultVariant
+        selectedProduct != nil && !selectedUsesDefaultVariant && !isLoadingPhoto
             && !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var body: some View {
         NavigationStack {
             Form {
+                ProductPhotoEditor(imageData: $imageData, isProcessing: $isLoadingPhoto, errorMessage: $errorMessage)
                 // Cada campo tem o proprio cabecalho para deixar claro o que pode ser tocado e alterado.
                 Section {
                     Picker(String(localized: "order.form.section.product", bundle: .tinyStockCore), selection: $productID) {
@@ -99,8 +102,9 @@ struct NewProductVariantView: View {
             return
         }
         do {
-            try ProductVariantService.create(for: selectedProduct, name: name,
-                                             initialQuantity: quantity, in: modelContext)
+            let variant = try ProductVariantService.create(for: selectedProduct, name: name,
+                                                           initialQuantity: quantity, in: modelContext)
+            variant.imageData = imageData
             try modelContext.save()
             dismiss()
         } catch {

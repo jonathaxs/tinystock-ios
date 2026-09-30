@@ -167,6 +167,37 @@ struct BackupManagerTests {
         #expect(restoredTrash.wasArchivedBeforeTrash)
     }
 
+    @Test func fotoDaVariacaoAcompanhaExportacaoERestauracao() throws {
+        let context = try makeContext()
+        let store = StoreProfile(name: "Loja")
+        let product = Product(storeID: store.id, name: "Bolsa")
+        let variant = ProductVariant(storeID: store.id, productID: product.id, name: "Azul",
+                                     quantity: 2, imageData: Data([0x0A, 0x0B]))
+        context.insert(store)
+        context.insert(product)
+        context.insert(variant)
+        try context.save()
+
+        let payload = try BackupManager.decode(
+            BackupManager.export(from: context, selectedStoreID: store.id, exportedAt: reference)
+        )
+        #expect(payload.variants.first?.imageData == Data([0x0A, 0x0B]))
+
+        let restoredContext = try makeContext()
+        _ = try BackupManager.apply(payload, into: restoredContext)
+        let restored = try #require(restoredContext.fetch(FetchDescriptor<ProductVariant>()).first)
+        #expect(restored.imageData == Data([0x0A, 0x0B]))
+    }
+
+    @Test func variacaoDeBackupAntigoSemFotoContinuaCompativel() throws {
+        let json = """
+        {"id":"\(UUID().uuidString)","storeID":"\(UUID().uuidString)","productID":"\(UUID().uuidString)",
+        "name":"Azul","quantity":1,"createdAt":0,"updatedAt":0}
+        """
+        let snapshot = try JSONDecoder().decode(BackupPayload.ProductVariantSnapshot.self, from: Data(json.utf8))
+        #expect(snapshot.imageData == nil)
+    }
+
     @Test func restauracaoV2PreservaIdentidadeDeRegistrosExistentes() throws {
         let payload = makeV2Payload()
         let context = try makeContext()

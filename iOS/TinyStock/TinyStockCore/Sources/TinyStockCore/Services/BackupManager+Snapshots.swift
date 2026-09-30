@@ -43,6 +43,7 @@ extension BackupManager {
             name: value.name,
             isDefault: value.isDefault,
             quantity: value.quantity,
+            imageData: value.imageData,
             createdAt: value.createdAt,
             updatedAt: value.updatedAt
         )

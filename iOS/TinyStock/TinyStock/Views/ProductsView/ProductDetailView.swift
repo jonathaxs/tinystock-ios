@@ -60,9 +60,13 @@ struct ProductDetailView: View {
                     if !usesInternalVariant {
                         ForEach(variants) { variant in
                             Button { editingVariant = variant } label: {
-                                LabeledContent(variant.name) {
+                                HStack(spacing: 12) {
+                                    ProductImageView(imageData: variant.imageData, side: 40)
+                                    Text(variant.name)
+                                    Spacer(minLength: 8)
                                     tappableValue(Text(variant.quantity, format: .number).monospacedDigit())
                                 }
+                                .contentShape(Rectangle())
                             }
                             .foregroundStyle(.primary)
                         }

@@ -157,23 +157,25 @@ public struct BackupPayload: Codable, Equatable, Sendable {
         public let name: String
         public let isDefault: Bool
         public let quantity: Int
+        public let imageData: Data?
         public let createdAt: Date
         public let updatedAt: Date
 
         public init(id: UUID, storeID: UUID, productID: UUID, name: String, isDefault: Bool = false,
-                    quantity: Int, createdAt: Date, updatedAt: Date) {
+                    quantity: Int, imageData: Data? = nil, createdAt: Date, updatedAt: Date) {
             self.id = id
             self.storeID = storeID
             self.productID = productID
             self.name = name
             self.isDefault = isDefault
             self.quantity = quantity
+            self.imageData = imageData
             self.createdAt = createdAt
             self.updatedAt = updatedAt
         }
 
         private enum CodingKeys: String, CodingKey {
-            case id, storeID, productID, name, isDefault, quantity, createdAt, updatedAt
+            case id, storeID, productID, name, isDefault, quantity, imageData, createdAt, updatedAt
         }
 
         public init(from decoder: Decoder) throws {
@@ -184,6 +186,8 @@ public struct BackupPayload: Codable, Equatable, Sendable {
             name = try container.decode(String.self, forKey: .name)
             isDefault = try container.decodeIfPresent(Bool.self, forKey: .isDefault) ?? false
             quantity = try container.decode(Int.self, forKey: .quantity)
+            // Backups anteriores as fotos de variacao nao trazem o campo.
+            imageData = try container.decodeIfPresent(Data.self, forKey: .imageData)
             createdAt = try container.decode(Date.self, forKey: .createdAt)
             updatedAt = try container.decode(Date.self, forKey: .updatedAt)
         }

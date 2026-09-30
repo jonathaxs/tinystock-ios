@@ -14,6 +14,8 @@ struct EditProductVariantView: View {
     @State private var selectedVariantID: UUID?
     @State private var name = ""
     @State private var quantity = 0
+    @State private var imageData: Data?
+    @State private var isLoadingPhoto = false
     @State private var didLoad = false
     @State private var errorMessage: String?
 
@@ -43,17 +45,21 @@ struct EditProductVariantView: View {
     private var hasChanges: Bool {
         guard let selectedVariant else { return false }
         let renamed = !usesInternalVariant && trimmedName != selectedVariant.name
-        return renamed || quantity != selectedVariant.quantity
+        return renamed || quantity != selectedVariant.quantity || imageData != selectedVariant.imageData
     }
 
     private var canSave: Bool {
-        hasChanges && (usesInternalVariant || !trimmedName.isEmpty)
+        hasChanges && !isLoadingPhoto && (usesInternalVariant || !trimmedName.isEmpty)
     }
 
     var body: some View {
         NavigationStack {
             Form {
                 ProductSheetHeader(product: product)
+                // A variacao interna de produtos antigos usa a foto do proprio produto.
+                if !usesInternalVariant {
+                    ProductPhotoEditor(imageData: $imageData, isProcessing: $isLoadingPhoto, errorMessage: $errorMessage)
+                }
                 // Cada campo tem o proprio cabecalho para deixar claro o que pode ser tocado e alterado.
                 if variants.count > 1 {
                     Section(String(localized: "product.form.variant.title", bundle: .tinyStockCore)) {
@@ -114,6 +120,7 @@ struct EditProductVariantView: View {
         guard let selectedVariant else { return }
         name = selectedVariant.isDefault ? "" : selectedVariant.name
         quantity = selectedVariant.quantity
+        imageData = selectedVariant.imageData
     }
 
     private func variantLabel(_ variant: ProductVariant) -> String {
@@ -131,6 +138,11 @@ struct EditProductVariantView: View {
         do {
             if !usesInternalVariant, trimmedName != selectedVariant.name {
                 try ProductVariantService.rename(selectedVariant, to: trimmedName, for: product, in: modelContext)
+            }
+            // Compara antes de atribuir: gravar o mesmo valor marcaria o registro como alterado.
+            if !usesInternalVariant, imageData != selectedVariant.imageData {
+                selectedVariant.imageData = imageData
+                selectedVariant.updatedAt = Date()
             }
             if quantity != selectedVariant.quantity {
                 try StockService.registerAdjustment(newQuantity: quantity, to: selectedVariant,

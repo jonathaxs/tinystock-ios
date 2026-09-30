@@ -35,6 +35,9 @@ public final class ProductVariant {
     /// Saldo atual, alterado exclusivamente pelos serviços de estoque e pedidos.
     public var quantity: Int = 0
 
+    /// Foto propria da variacao, como a cor ou o modelo; sem ela, a interface mostra o espaco vazio.
+    @Attribute(.externalStorage) public var imageData: Data?
+
     public var createdAt: Date = Date()
     public var updatedAt: Date = Date()
 
@@ -45,6 +48,7 @@ public final class ProductVariant {
         name: String = "",
         isDefault: Bool = false,
         quantity: Int = 0,
+        imageData: Data? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
@@ -54,6 +58,7 @@ public final class ProductVariant {
         self.name = name
         self.isDefault = isDefault
         self.quantity = quantity
+        self.imageData = imageData
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
