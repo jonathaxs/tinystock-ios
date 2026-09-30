@@ -17,12 +17,12 @@ struct ProductActionsSheet: View {
         BottomActionSheet {
             ProductRowView(product: product, quantity: quantity)
                 .padding(.bottom, 4)
-            button(.details, "products.details", "info.circle")
             button(.sale, "sale.new.title", "cart.badge.plus")
             button(.stockEntry, "stock.entry.new", "shippingbox.and.arrow.backward")
             button(.newVariant, "stock.entry.newVariant", "plus.square.on.square")
             button(.editVariant, "product.variant.edit.title", "square.and.pencil")
             button(.edit, "product.form.title.edit", "pencil")
+            button(.details, "products.details", "info.circle")
         }
     }
 

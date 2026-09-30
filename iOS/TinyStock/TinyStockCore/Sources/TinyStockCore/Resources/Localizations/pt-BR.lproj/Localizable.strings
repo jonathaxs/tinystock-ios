@@ -233,7 +233,6 @@
 "product.form.photo.permission" = "O acesso à câmera está desativado. Permita o acesso nos Ajustes do iPhone para fotografar o produto.";
 "products.catalog.search" = "Buscar produto ou variação";
 "products.catalog.quantity" = "%@ em estoque";
-"products.actions.hint" = "Abre as ações do produto.";
 "products.edit.hint" = "Abre o editor do produto.";
 "product.form.variant.edit.hint" = "Abre o editor da variação.";
 "products.delete.stock.message" = "O produto, suas variações e movimentações de estoque serão excluídos. As vendas registradas serão mantidas. Esta ação não pode ser desfeita.";
@@ -487,3 +486,4 @@
 "products.mode.products" = "Produtos";
 "products.mode.variants" = "Variações";
 "products.variants.noVariation" = "Sem variação";
+"products.actions" = "Ações do produto";

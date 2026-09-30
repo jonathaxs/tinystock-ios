@@ -233,7 +233,6 @@
 "product.form.photo.permission" = "Camera access is disabled. Allow access in iPhone Settings to take a product photo.";
 "products.catalog.search" = "Search by product or variation";
 "products.catalog.quantity" = "%@ in stock";
-"products.actions.hint" = "Opens product actions.";
 "products.edit.hint" = "Opens the product editor.";
 "product.form.variant.edit.hint" = "Opens the variation editor.";
 "products.delete.stock.message" = "The product, its variations and stock movements will be deleted. Recorded sales will be kept. This cannot be undone.";
@@ -487,3 +486,4 @@
 "products.mode.products" = "Products";
 "products.mode.variants" = "Variations";
 "products.variants.noVariation" = "No variation";
+"products.actions" = "Product actions";

@@ -193,15 +193,16 @@ struct ProductsView: View {
                 Section(product.name) {
                     ForEach(variants(of: product)) { variant in
                         Button { variantEdit = VariantEditRequest(product: product, variantID: variant.id) } label: {
-                            LabeledContent(variant.isDefault
-                                           ? String(localized: "products.variants.noVariation", bundle: .tinyStockCore)
-                                           : variant.name) {
-                                HStack(spacing: 6) {
-                                    Text(variant.quantity, format: .number)
-                                        .monospacedDigit()
-                                        .foregroundStyle(.tint)
-                                    chevron
-                                }
+                            HStack(spacing: 12) {
+                                ProductImageView(imageData: variant.imageData, side: 44)
+                                Text(variant.isDefault
+                                     ? String(localized: "products.variants.noVariation", bundle: .tinyStockCore)
+                                     : variant.name)
+                                Spacer(minLength: 8)
+                                Text(variant.quantity, format: .number)
+                                    .monospacedDigit()
+                                    .foregroundStyle(.tint)
+                                chevron
                             }
                             .contentShape(Rectangle())
                         }
@@ -251,21 +252,31 @@ struct ProductsView: View {
             .buttonStyle(.plain)
             .accessibilityHint(String(localized: "products.edit.hint", bundle: .tinyStockCore))
         } else {
-            Button { actionProduct = product } label: {
-                rowLabel(product)
+            // Botoes separados deixam claro o que cada toque faz; a linha em si nao reage.
+            HStack(spacing: 4) {
+                ProductRowView(product: product, quantity: quantity(of: product))
+                rowButton("info.circle", "products.details") { detailProduct = product }
+                rowButton("gearshape", "products.actions") { actionProduct = product }
             }
-            .buttonStyle(.plain)
-            .accessibilityHint(String(localized: "products.actions.hint", bundle: .tinyStockCore))
         }
     }
 
-    private func rowLabel(_ product: Product) -> some View {
-        HStack(spacing: 8) {
-            ProductRowView(product: product, quantity: quantity(of: product))
-            if !editMode.isEditing { chevron }
+    private func rowButton(_ systemImage: String, _ labelKey: String,
+                           action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.title2)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(Rectangle())
+        .buttonStyle(.borderless)
+        .accessibilityLabel(String(localized: String.LocalizationValue(labelKey), bundle: .tinyStockCore))
+    }
+
+    private func rowLabel(_ product: Product) -> some View {
+        ProductRowView(product: product, quantity: quantity(of: product))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
     }
 
     private func quantity(of product: Product) -> Decimal {
