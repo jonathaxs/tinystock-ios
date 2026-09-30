@@ -35,27 +35,25 @@ struct ProductDetailView: View {
     var body: some View {
         NavigationStack {
             List {
+                // Foto e nome lado a lado; a linha inteira abre a edicao, onde fica o seletor de foto.
                 Section {
-                    VStack(spacing: 12) {
-                        // A foto abre a edicao do produto, onde fica o seletor de imagem.
-                        Button { isEditingProduct = true } label: {
-                            ProductImageView(imageData: product.imageData, side: 160)
-                                .overlay(alignment: .bottomTrailing) {
-                                    Image(systemName: "pencil.circle.fill")
-                                        .font(.title)
-                                        .symbolRenderingMode(.multicolor)
-                                        .foregroundStyle(.white, .tint)
-                                        .offset(x: 6, y: 6)
-                                }
+                    Button { isEditingProduct = true } label: {
+                        HStack(spacing: 16) {
+                            ProductImageView(imageData: product.imageData, side: 80)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(product.name)
+                                    .font(.title3.bold())
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Text(String(localized: "product.form.title.edit", bundle: .tinyStockCore))
+                                    .font(.subheadline)
+                                    .foregroundStyle(.tint)
+                            }
+                            Spacer(minLength: 0)
+                            chevron
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(String(localized: "product.form.title.edit", bundle: .tinyStockCore))
-                        Text(product.name)
-                            .font(.title2.bold())
-                            .multilineTextAlignment(.center)
+                        .contentShape(Rectangle())
                     }
-                    .frame(maxWidth: .infinity)
-                    .listRowBackground(Color.clear)
+                    .foregroundStyle(.primary)
                 }
                 Section(String(localized: "product.details.stock", bundle: .tinyStockCore)) {
                     // Valores na cor de destaque e seta indicam linhas que abrem uma acao.
@@ -93,6 +91,8 @@ struct ProductDetailView: View {
                             .fontWeight(.semibold)
                             .foregroundStyle(unitProfit < 0 ? Color.red : Color.primary)
                     }
+                } header: {
+                    Text(String(localized: "product.details.potential", bundle: .tinyStockCore))
                 } footer: {
                     Text(String(localized: "product.details.potentialFooter", bundle: .tinyStockCore))
                 }
@@ -126,11 +126,15 @@ struct ProductDetailView: View {
     private func tappableValue(_ value: Text) -> some View {
         HStack(spacing: 6) {
             value.foregroundStyle(.tint)
-            Image(systemName: "chevron.right")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.tertiary)
-                .accessibilityHidden(true)
+            chevron
         }
+    }
+
+    private var chevron: some View {
+        Image(systemName: "chevron.right")
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(.tertiary)
+            .accessibilityHidden(true)
     }
 }
 
