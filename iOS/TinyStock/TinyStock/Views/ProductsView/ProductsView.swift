@@ -17,6 +17,8 @@ struct ProductsView: View {
     @State private var salesProduct: Product?
     @State private var variantRequest: NewVariantRequest?
     @State private var detailProduct: Product?
+    @State private var actionProduct: Product?
+    @State private var pendingAction: (ProductActionsSheet.Action, Product)?
     @State private var pendingDeletion: [Product] = []
     @State private var isConfirmingDelete = false
     @State private var errorMessage: String?
@@ -45,6 +47,12 @@ struct ProductsView: View {
             .sheet(item: $salesProduct) { SalesOrderFormView(product: $0) }
             .sheet(item: $variantRequest) { NewProductVariantView(storeID: storeID, productID: $0.productID) }
             .sheet(item: $detailProduct) { ProductDetailView(product: $0) }
+            .sheet(item: $actionProduct, onDismiss: runPendingAction) { product in
+                ProductActionsSheet(product: product, quantity: quantity(of: product)) { action in
+                    pendingAction = (action, product)
+                    actionProduct = nil
+                }
+            }
             .alert(String(localized: "product.delete.confirm.title", bundle: .tinyStockCore), isPresented: $isConfirmingDelete) {
                 Button(String(localized: "common.cancel", bundle: .tinyStockCore), role: .cancel) { pendingDeletion = [] }
                 Button(String(localized: "common.delete", bundle: .tinyStockCore), role: .destructive, action: deleteProducts)
@@ -65,6 +73,8 @@ struct ProductsView: View {
             salesProduct = nil
             variantRequest = nil
             detailProduct = nil
+            actionProduct = nil
+            pendingAction = nil
             pendingDeletion = []
             isConfirmingDelete = false
             isPresentingForm = false
@@ -139,23 +149,7 @@ struct ProductsView: View {
             .buttonStyle(.plain)
             .accessibilityHint(String(localized: "products.edit.hint", bundle: .tinyStockCore))
         } else {
-            Menu {
-                Button { detailProduct = product } label: {
-                    Label(String(localized: "products.details", bundle: .tinyStockCore), systemImage: "info.circle")
-                }
-                Button { salesProduct = product } label: {
-                    Label(String(localized: "sale.new.title", bundle: .tinyStockCore), systemImage: "cart.badge.plus")
-                }
-                Button { stockProduct = product } label: {
-                    Label(String(localized: "stock.entry.title", bundle: .tinyStockCore), systemImage: "shippingbox.and.arrow.backward")
-                }
-                Button { variantRequest = NewVariantRequest(productID: product.id) } label: {
-                    Label(String(localized: "stock.entry.newVariant", bundle: .tinyStockCore), systemImage: "plus.square.on.square")
-                }
-                Button { editingProduct = product } label: {
-                    Label(String(localized: "product.form.title.edit", bundle: .tinyStockCore), systemImage: "pencil")
-                }
-            } label: {
+            Button { actionProduct = product } label: {
                 rowLabel(product)
             }
             .buttonStyle(.plain)
@@ -164,9 +158,26 @@ struct ProductsView: View {
     }
 
     private func rowLabel(_ product: Product) -> some View {
-        ProductRowView(product: product, quantity: ProductVariantService.displayedQuantity(for: product, among: variants))
+        ProductRowView(product: product, quantity: quantity(of: product))
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
+    }
+
+    private func quantity(of product: Product) -> Decimal {
+        ProductVariantService.displayedQuantity(for: product, among: variants)
+    }
+
+    /// Uma folha so abre depois que a anterior termina de fechar.
+    private func runPendingAction() {
+        guard let (action, product) = pendingAction else { return }
+        pendingAction = nil
+        switch action {
+        case .details: detailProduct = product
+        case .sale: salesProduct = product
+        case .stockEntry: stockProduct = product
+        case .newVariant: variantRequest = NewVariantRequest(productID: product.id)
+        case .edit: editingProduct = product
+        }
     }
 
     private func requestDeletion(at offsets: IndexSet) {
