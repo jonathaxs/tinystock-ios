@@ -241,6 +241,7 @@
 "stock.entry.title" = "Stock entry";
 "stock.entry.navigationTitle" = "Entry";
 "stock.entry.newVariant" = "New variation";
+"stock.entry.new" = "New stock";
 "product.variant.new.defaultFooter" = "This product has no variations yet. Edit the product and turn on Has variations before adding another.";
 "stock.entry.quantity" = "Stock entry";
 "stock.entry.result" = "Stock after entry";

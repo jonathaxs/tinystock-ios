@@ -11,6 +11,7 @@ struct ProductDetailView: View {
     @Query private var variants: [ProductVariant]
     @State private var entryVariant: ProductVariant?
     @State private var editFocus: ProductFormView.PriceField?
+    @State private var isEditingProduct = false
 
     init(product: Product) {
         self.product = product
@@ -36,7 +37,19 @@ struct ProductDetailView: View {
             List {
                 Section {
                     VStack(spacing: 12) {
-                        ProductImageView(imageData: product.imageData, side: 160)
+                        // A foto abre a edicao do produto, onde fica o seletor de imagem.
+                        Button { isEditingProduct = true } label: {
+                            ProductImageView(imageData: product.imageData, side: 160)
+                                .overlay(alignment: .bottomTrailing) {
+                                    Image(systemName: "pencil.circle.fill")
+                                        .font(.title)
+                                        .symbolRenderingMode(.multicolor)
+                                        .foregroundStyle(.white, .tint)
+                                        .offset(x: 6, y: 6)
+                                }
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(String(localized: "product.form.title.edit", bundle: .tinyStockCore))
                         Text(product.name)
                             .font(.title2.bold())
                             .multilineTextAlignment(.center)
@@ -45,14 +58,12 @@ struct ProductDetailView: View {
                     .listRowBackground(Color.clear)
                 }
                 Section(String(localized: "product.details.stock", bundle: .tinyStockCore)) {
-                    // Valores na cor de destaque indicam linhas que abrem uma acao.
+                    // Valores na cor de destaque e seta indicam linhas que abrem uma acao.
                     if !usesInternalVariant {
                         ForEach(variants) { variant in
                             Button { entryVariant = variant } label: {
                                 LabeledContent(variant.name) {
-                                    Text(variant.quantity, format: .number)
-                                        .monospacedDigit()
-                                        .foregroundStyle(.tint)
+                                    tappableValue(Text(variant.quantity, format: .number).monospacedDigit())
                                 }
                             }
                             .foregroundStyle(.primary)
@@ -94,6 +105,7 @@ struct ProductDetailView: View {
                 }
             }
             .sheet(item: $entryVariant) { StockEntryView(product: product, variantID: $0.id) }
+            .sheet(isPresented: $isEditingProduct) { ProductFormView(storeID: product.storeID, product: product) }
             .sheet(item: $editFocus) {
                 ProductFormView(storeID: product.storeID, product: product, initialFocus: $0)
             }
@@ -103,12 +115,22 @@ struct ProductDetailView: View {
     private func priceRow(_ title: String, value: Decimal, field: ProductFormView.PriceField) -> some View {
         Button { editFocus = field } label: {
             LabeledContent {
-                Text(value.currencyText).foregroundStyle(.tint)
+                tappableValue(Text(value.currencyText))
             } label: {
                 Text(title).bold()
             }
         }
         .foregroundStyle(.primary)
+    }
+
+    private func tappableValue(_ value: Text) -> some View {
+        HStack(spacing: 6) {
+            value.foregroundStyle(.tint)
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.tertiary)
+                .accessibilityHidden(true)
+        }
     }
 }
 

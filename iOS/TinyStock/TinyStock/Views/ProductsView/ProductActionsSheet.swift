@@ -20,10 +20,9 @@ struct ProductActionsSheet: View {
             VStack(spacing: 12) {
                 ProductRowView(product: product, quantity: quantity)
                     .padding(.bottom, 4)
-                // Nova venda e a acao mais usada, por isso fica destacada no topo.
-                actionButton(.sale, "sale.new.title", "cart.badge.plus", prominent: true)
-                actionButton(.stockEntry, "stock.entry.title", "shippingbox.and.arrow.backward")
                 actionButton(.details, "products.details", "info.circle")
+                actionButton(.sale, "sale.new.title", "cart.badge.plus")
+                actionButton(.stockEntry, "stock.entry.new", "shippingbox.and.arrow.backward")
                 actionButton(.newVariant, "stock.entry.newVariant", "plus.square.on.square")
                 actionButton(.edit, "product.form.title.edit", "pencil")
                 Button(String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
@@ -41,8 +40,7 @@ struct ProductActionsSheet: View {
         .presentationDragIndicator(.visible)
     }
 
-    private func actionButton(_ action: Action, _ titleKey: String, _ systemImage: String,
-                              prominent: Bool = false) -> some View {
+    private func actionButton(_ action: Action, _ titleKey: String, _ systemImage: String) -> some View {
         Button {
             onSelect(action)
         } label: {
@@ -52,21 +50,18 @@ struct ProductActionsSheet: View {
                 .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                 .padding(.horizontal, 4)
         }
-        .buttonStyle(ActionButtonStyle(prominent: prominent))
+        .buttonStyle(ActionButtonStyle())
     }
 }
 
 /// Fundo em bloco com cantos arredondados, no padrao das folhas de acao do sistema.
 private struct ActionButtonStyle: ButtonStyle {
-    let prominent: Bool
-
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
-            .foregroundStyle(prominent ? AnyShapeStyle(.white) : AnyShapeStyle(.tint))
-            .background(prominent ? AnyShapeStyle(.tint) : AnyShapeStyle(.fill.tertiary),
-                        in: .rect(cornerRadius: 16))
+            .foregroundStyle(.tint)
+            .background(.fill.tertiary, in: .rect(cornerRadius: 16))
             .opacity(configuration.isPressed ? 0.6 : 1)
             .contentShape(.rect(cornerRadius: 16))
     }
