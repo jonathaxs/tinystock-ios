@@ -9,7 +9,7 @@
 
 
 /* MARK: - Tabs */
-"tab.products" = "Products";
+"tab.products" = "Packages";
 "tab.sales" = "Calendar";
 "tab.reports" = "Reports";
 "tab.settings" = "Settings";
@@ -43,8 +43,8 @@
 "product.details.title" = "Details";
 "product.details.stock" = "Stock";
 "product.details.totalStock" = "Total stock";
-"product.details.potentialRevenue" = "Revenue if all sold";
-"product.details.potentialProfit" = "Profit if all sold";
+"product.details.potentialRevenue" = "Revenue";
+"product.details.potentialProfit" = "Profit";
 "product.details.potentialFooter" = "Based on current stock and registered prices, without sales channel fees.";
 "product.form.photo.choose" = "Choose photo";
 "product.form.photo.change" = "Change photo";
@@ -248,7 +248,7 @@
 "product.variant.new.defaultFooter" = "This product has no variations yet. Edit the product and turn on Has variations before adding another.";
 "stock.entry.quantity" = "Stock entry";
 "stock.entry.result" = "Stock after entry";
-"stock.entry.note" = "Note (optional)";
+"stock.entry.note" = "Note";
 "stock.entry.error" = "Unable to register stock entry";
 "order.channel.direct" = "Direct sale";
 "order.channel.shopee" = "Shopee";
@@ -472,3 +472,18 @@
 "calendar.export.notes.reference" = "Reference: %@";
 "calendar.export.notes.channel" = "Sales channel: %@";
 "calendar.export.open.hint" = "Opens the Calendar editor.";
+"stock.entry.notePlaceholder" = "Optional";
+"stock.entry.currentSummary" = "Current stock: %@";
+"stock.entry.resultSummary" = "Stock after entry: %@";
+"product.form.unitProfitSummary" = "Profit per unit: %@";
+"product.form.variants" = "Variations";
+"order.form.section.reference" = "Order reference";
+"order.form.optional" = "Optional";
+"order.form.orderedAtTitle" = "Sale date";
+"order.form.productionDueAtTitle" = "Produce by";
+"order.form.shippingDueAtTitle" = "Ship by";
+"product.details.potential" = "If all stock sells";
+"products.mode" = "View";
+"products.mode.products" = "Products";
+"products.mode.variants" = "Variations";
+"products.variants.noVariation" = "No variation";

@@ -53,13 +53,7 @@ struct EditProductVariantView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    Text(product.name)
-                        .font(.title2.bold())
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
-                        .listRowBackground(Color.clear)
-                }
+                ProductSheetHeader(product: product)
                 // Cada campo tem o proprio cabecalho para deixar claro o que pode ser tocado e alterado.
                 if variants.count > 1 {
                     Section(String(localized: "product.form.variant.title", bundle: .tinyStockCore)) {

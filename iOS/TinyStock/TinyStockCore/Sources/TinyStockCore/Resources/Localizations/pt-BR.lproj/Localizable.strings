@@ -9,7 +9,7 @@
 
 
 /* MARK: - Abas */
-"tab.products" = "Produtos";
+"tab.products" = "Pacotes";
 "tab.sales" = "Calendário";
 "tab.reports" = "Relatórios";
 "tab.settings" = "Ajustes";
@@ -43,8 +43,8 @@
 "product.details.title" = "Detalhes";
 "product.details.stock" = "Estoque";
 "product.details.totalStock" = "Estoque total";
-"product.details.potentialRevenue" = "Receita se vender tudo";
-"product.details.potentialProfit" = "Lucro se vender tudo";
+"product.details.potentialRevenue" = "Receita";
+"product.details.potentialProfit" = "Lucro";
 "product.details.potentialFooter" = "Calculado com o estoque atual e os preços cadastrados, sem as taxas dos canais de venda.";
 "product.form.photo.choose" = "Escolher foto";
 "product.form.photo.change" = "Trocar foto";
@@ -248,7 +248,7 @@
 "product.variant.new.defaultFooter" = "Este produto ainda não tem variações. Edite o produto e ative Possui variações antes de cadastrar outra.";
 "stock.entry.quantity" = "Entrada de estoque";
 "stock.entry.result" = "Estoque após a entrada";
-"stock.entry.note" = "Observação (opcional)";
+"stock.entry.note" = "Observação";
 "stock.entry.error" = "Não foi possível registrar a entrada";
 "order.channel.direct" = "Venda direta";
 "order.channel.shopee" = "Shopee";
@@ -472,3 +472,18 @@
 "calendar.export.notes.reference" = "Referência: %@";
 "calendar.export.notes.channel" = "Canal de venda: %@";
 "calendar.export.open.hint" = "Abre o editor do Calendário.";
+"stock.entry.notePlaceholder" = "Opcional";
+"stock.entry.currentSummary" = "Estoque atual: %@";
+"stock.entry.resultSummary" = "Estoque após a entrada: %@";
+"product.form.unitProfitSummary" = "Lucro por unidade: %@";
+"product.form.variants" = "Variações";
+"order.form.section.reference" = "Referência do pedido";
+"order.form.optional" = "Opcional";
+"order.form.orderedAtTitle" = "Data da venda";
+"order.form.productionDueAtTitle" = "Produzir até";
+"order.form.shippingDueAtTitle" = "Despachar até";
+"product.details.potential" = "Se vender todo o estoque";
+"products.mode" = "Visualização";
+"products.mode.products" = "Produtos";
+"products.mode.variants" = "Variações";
+"products.variants.noVariation" = "Sem variação";

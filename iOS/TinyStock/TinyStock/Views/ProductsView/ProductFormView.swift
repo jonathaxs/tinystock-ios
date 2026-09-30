@@ -150,30 +150,30 @@ struct ProductFormView: View {
         }
     }
 
+    // Cada preco tem o proprio cabecalho; o lucro calculado fica no rodape do custo.
+    @ViewBuilder
     private var pricesSection: some View {
-        Section(String(localized: "product.form.section.prices", bundle: .tinyStockCore)) {
+        Section(String(localized: "product.form.salePrice", bundle: .tinyStockCore)) {
             priceField(String(localized: "product.form.salePrice", bundle: .tinyStockCore), text: $salePriceText, field: .sale)
+        }
+        Section {
             priceField(String(localized: "product.form.costPrice", bundle: .tinyStockCore), text: $costPriceText, field: .cost)
+        } header: {
+            Text(String(localized: "product.form.costPrice", bundle: .tinyStockCore))
+        } footer: {
             if let sale = price(from: salePriceText), let cost = price(from: costPriceText) {
-                LabeledContent(String(localized: "product.form.unitProfit", bundle: .tinyStockCore)) {
-                    Text((sale - cost).currencyText)
-                        .foregroundStyle(sale < cost ? Color.red : Color.primary)
-                }
+                Text(String(format: String(localized: "product.form.unitProfitSummary", bundle: .tinyStockCore),
+                            (sale - cost).currencyText))
+                    .foregroundStyle(sale < cost ? Color.red : Color.secondary)
             }
         }
     }
 
     private func priceField(_ title: String, text: Binding<String>, field: PriceField) -> some View {
-        LabeledContent {
-            TextField(Decimal.zero.currencyText, text: text)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .focused($focusedPrice, equals: field)
-                .accessibilityLabel(title)
-        } label: {
-            // Precos digitados em negrito; o lucro abaixo e apenas calculado.
-            Text(title).bold()
-        }
+        TextField(Decimal.zero.currencyText, text: text)
+            .keyboardType(.decimalPad)
+            .focused($focusedPrice, equals: field)
+            .accessibilityLabel(title)
     }
 
     /// Aberto pelos detalhes, o formulario ja posiciona o cursor no preco tocado.
@@ -184,38 +184,55 @@ struct ProductFormView: View {
         focusedPrice = initialFocus
     }
 
+    // Cada campo tem o proprio cabecalho para deixar claro o que pode ser tocado e alterado.
+    @ViewBuilder
     private var productSection: some View {
-        Section {
+        Section(String(localized: "product.variant.edit.name", bundle: .tinyStockCore)) {
             TextField(String(localized: "product.form.name", bundle: .tinyStockCore), text: $name)
                 .textInputAutocapitalization(.words)
-            // So produtos antigos, criados sem variacao, ainda precisam ativar a opcao.
-            if usesLegacyDefaultVariant {
+        }
+        // So produtos antigos, criados sem variacao, ainda precisam ativar a opcao.
+        if usesLegacyDefaultVariant {
+            Section {
                 Toggle(String(localized: "product.form.variant.enabled", bundle: .tinyStockCore), isOn: $hasVariations)
                     .disabled(!canDisableVariations)
+            } footer: {
+                if !hasVariations {
+                    Text(String(localized: "product.form.variant.disabled.footer", bundle: .tinyStockCore))
+                }
             }
-            if usesDirectVariationFields {
+        }
+        if usesDirectVariationFields {
+            Section(String(localized: "product.form.variant.title", bundle: .tinyStockCore)) {
                 TextField(String(localized: "product.form.variant.name", bundle: .tinyStockCore), text: $initialVariationName)
                     .textInputAutocapitalization(.words)
                     .disabled(!hasVariations)
                     .foregroundStyle(hasVariations ? Color.primary : Color.secondary)
-                stockRow
-            } else {
+            }
+            Section(initialStockTitle) { stockRow }
+        } else {
+            Section {
                 ForEach(variants) { input in
                     Button { editingVariant = input } label: {
                         LabeledContent(input.name) {
-                            Text(input.initialQuantity, format: .number)
-                                .foregroundStyle(.secondary)
+                            HStack(spacing: 6) {
+                                Text(input.initialQuantity, format: .number)
+                                    .monospacedDigit()
+                                    .foregroundStyle(.tint)
+                                Image(systemName: "chevron.right")
+                                    .font(.footnote.weight(.semibold))
+                                    .foregroundStyle(.tertiary)
+                                    .accessibilityHidden(true)
+                            }
                         }
                         .foregroundStyle(.primary)
                     }
                     .accessibilityHint(String(localized: "product.form.variant.edit.hint", bundle: .tinyStockCore))
                 }
-            }
-        } footer: {
-            if !canDisableVariations {
+            } header: {
+                Text(String(localized: "product.form.variants", bundle: .tinyStockCore))
+            } footer: {
                 Text(String(localized: "product.form.variant.multiple.footer", bundle: .tinyStockCore))
-            } else if !hasVariations {
-                Text(String(localized: "product.form.variant.disabled.footer", bundle: .tinyStockCore))
             }
         }
     }
@@ -224,13 +241,12 @@ struct ProductFormView: View {
     private var stockRow: some View {
         if canEditStock {
             StockQuantityPicker(title: initialStockTitle, quantity: initialQuantitySelection,
-                                range: 0...max(100, initialQuantity ?? 0))
+                                range: 0...max(100, initialQuantity ?? 0), showsTitle: false)
         } else {
-            LabeledContent(initialStockTitle) {
-                Text(initialQuantityText)
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
-            }
+            Text(initialQuantityText)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+                .accessibilityLabel(initialStockTitle)
         }
     }
 

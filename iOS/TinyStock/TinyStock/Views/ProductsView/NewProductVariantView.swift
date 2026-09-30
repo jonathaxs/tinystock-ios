@@ -39,23 +39,32 @@ struct NewProductVariantView: View {
     var body: some View {
         NavigationStack {
             Form {
+                // Cada campo tem o proprio cabecalho para deixar claro o que pode ser tocado e alterado.
                 Section {
                     Picker(String(localized: "order.form.section.product", bundle: .tinyStockCore), selection: $productID) {
                         ForEach(products) { product in
                             Text(product.name).tag(Optional(product.id))
                         }
                     }
-                    TextField(String(localized: "product.form.variant.name", bundle: .tinyStockCore), text: $name)
-                        .textInputAutocapitalization(.words)
-                        .submitLabel(.done)
-                    StockQuantityPicker(
-                        title: String(localized: "product.form.variant.initialStock", bundle: .tinyStockCore),
-                        quantity: $quantity
-                    )
+                    .labelsHidden()
+                } header: {
+                    Text(String(localized: "order.form.section.product", bundle: .tinyStockCore))
                 } footer: {
                     if selectedUsesDefaultVariant {
                         Text(String(localized: "product.variant.new.defaultFooter", bundle: .tinyStockCore))
                     }
+                }
+                Section(String(localized: "product.variant.edit.name", bundle: .tinyStockCore)) {
+                    TextField(String(localized: "product.form.variant.name", bundle: .tinyStockCore), text: $name)
+                        .textInputAutocapitalization(.words)
+                        .submitLabel(.done)
+                }
+                Section(String(localized: "product.form.variant.initialStock", bundle: .tinyStockCore)) {
+                    StockQuantityPicker(
+                        title: String(localized: "product.form.variant.initialStock", bundle: .tinyStockCore),
+                        quantity: $quantity,
+                        showsTitle: false
+                    )
                 }
             }
             .scrollDismissesKeyboard(.interactively)

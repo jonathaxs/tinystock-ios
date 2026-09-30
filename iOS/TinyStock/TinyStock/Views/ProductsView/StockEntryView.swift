@@ -49,34 +49,34 @@ struct StockEntryView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    Text(product.name).font(.headline).fixedSize(horizontal: false, vertical: true)
-                    if !usesInternalVariant {
+                ProductSheetHeader(product: product)
+                // Cada campo tem o proprio cabecalho para deixar claro o que pode ser tocado e alterado.
+                if !usesInternalVariant {
+                    Section(String(localized: "product.form.variant.title", bundle: .tinyStockCore)) {
                         Picker(String(localized: "product.form.variant.title", bundle: .tinyStockCore), selection: $selectedVariantID) {
                             ForEach(variants) { variant in
                                 Text(variantLabel(variant)).tag(Optional(variant.id))
                             }
                         }
+                        .labelsHidden()
                     }
+                }
+                Section {
                     StockQuantityPicker(
                         title: String(localized: "stock.entry.quantity", bundle: .tinyStockCore),
                         quantity: $quantity,
-                        range: 1...100
+                        range: 1...100,
+                        showsTitle: false
                     )
+                } header: {
+                    Text(String(localized: "stock.entry.quantity", bundle: .tinyStockCore))
+                } footer: {
+                    // Saldos somente informativos, calculados a partir da variacao escolhida.
+                    Text(balanceSummary)
                 }
-                // Saldos somente informativos, calculados a partir da variacao escolhida.
-                Section {
-                    LabeledContent(String(localized: "product.form.variant.available", bundle: .tinyStockCore)) {
-                        Text(selectedVariant?.quantity ?? 0, format: .number)
-                    }
-                    if let resultingBalance {
-                        LabeledContent(String(localized: "stock.entry.result", bundle: .tinyStockCore)) {
-                            Text(resultingBalance, format: .number)
-                        }
-                    }
-                }
-                Section {
-                    TextField(String(localized: "stock.entry.note", bundle: .tinyStockCore), text: $note, axis: .vertical)
+                Section(String(localized: "stock.entry.note", bundle: .tinyStockCore)) {
+                    TextField(String(localized: "stock.entry.notePlaceholder", bundle: .tinyStockCore),
+                              text: $note, axis: .vertical)
                 }
             }
             // O titulo completo nao cabe entre Cancelar e Salvar; o menu do produto mantem o nome inteiro.
@@ -103,6 +103,15 @@ struct StockEntryView: View {
             selectedVariantID = initialVariantID ?? variants.first?.id
             didSelectInitialVariant = true
         }
+    }
+
+    private var balanceSummary: String {
+        let current = String(format: String(localized: "stock.entry.currentSummary", bundle: .tinyStockCore),
+                             (selectedVariant?.quantity ?? 0).formatted())
+        guard let resultingBalance else { return current }
+        let result = String(format: String(localized: "stock.entry.resultSummary", bundle: .tinyStockCore),
+                            resultingBalance.formatted())
+        return current + "\n" + result
     }
 
     private func variantLabel(_ variant: ProductVariant) -> String {

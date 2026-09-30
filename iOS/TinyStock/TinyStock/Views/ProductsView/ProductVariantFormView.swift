@@ -31,12 +31,14 @@ struct ProductVariantFormView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section {
+                Section(String(localized: "product.variant.edit.name", bundle: .tinyStockCore)) {
                     TextField(String(localized: "product.form.variant.name", bundle: .tinyStockCore), text: $input.name)
                         .submitLabel(.done)
-                    // Em uma variacao existente, o formulario do produto grava a diferenca como ajuste.
+                }
+                // Em uma variacao existente, o formulario do produto grava a diferenca como ajuste.
+                Section(stockTitle) {
                     StockQuantityPicker(title: stockTitle, quantity: $input.initialQuantity,
-                                        range: 0...max(100, input.initialQuantity))
+                                        range: 0...max(100, input.initialQuantity), showsTitle: false)
                 }
             }
             .scrollDismissesKeyboard(.interactively)
