@@ -6,7 +6,7 @@ import Testing
 
 struct AppAccentColorTests {
     @Test func verdePermaneceComoCorPadrao() {
-        #expect(AppAccentColor.defaultColor == .green)
+        #expect(AppAccentColor.defaultColor == .cyan)
     }
 
     @Test func todasAsCoresPossuemNomeLocalizado() {

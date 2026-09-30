@@ -1,7 +1,7 @@
 // ⌘
 //  TinyStock/Views/MainView.swift
 //
-//  Propósito: Hospeda o TabView principal e roteia pras telas de Produtos, Calendário, Relatórios e Ajustes.
+//  Propósito: Hospeda o TabView principal e roteia pras telas de Produtos, Relatórios, Calendário e Ajustes.
 //
 //  Created by Jonathas Motta (@jonathaxs) on 2026-08-07.
 // ⌘
@@ -14,6 +14,7 @@ import TinyStockCore
 // Constantes centralizadas para evitar números mágicos na navegação entre abas.
 extension MainView {
     enum Tab {
+        // Identificam a aba salva; a ordem visual segue a declaração no TabView.
         static let products = 0
         static let sales    = 1
         static let reports  = 2
@@ -48,6 +49,15 @@ struct MainView: View {
                 }
                 .tag(Tab.products)
 
+            ReportsView(storeID: storeSession.selectedStoreID) { filter in
+                calendarFilterRequest = filter
+                selectedTab = Tab.sales
+            }
+                .tabItem {
+                    Label(String(localized: "tab.reports", bundle: .tinyStockCore), systemImage: "chart.bar.fill")
+                }
+                .tag(Tab.reports)
+
             SalesView(
                 storeID: storeSession.selectedStoreID,
                 filterRequest: $calendarFilterRequest,
@@ -58,15 +68,6 @@ struct MainView: View {
                     Label(String(localized: "tab.sales", bundle: .tinyStockCore), systemImage: "calendar")
                 }
                 .tag(Tab.sales)
-
-            ReportsView(storeID: storeSession.selectedStoreID) { filter in
-                calendarFilterRequest = filter
-                selectedTab = Tab.sales
-            }
-                .tabItem {
-                    Label(String(localized: "tab.reports", bundle: .tinyStockCore), systemImage: "chart.bar.fill")
-                }
-                .tag(Tab.reports)
 
             SettingsView(storeID: storeSession.selectedStoreID)
                 .tabItem {

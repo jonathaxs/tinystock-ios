@@ -4,17 +4,17 @@
 import Foundation
 
 public enum AppAccentColor: String, CaseIterable, Sendable {
+    case cyan
     case green
     case blue
     case purple
     case red
     case orange
     case yellow
-    case cyan
     case pink
 
     public static let storageKey = "app.accentColor"
-    public static let defaultColor: AppAccentColor = .green
+    public static let defaultColor: AppAccentColor = .cyan
 
     public var localizedName: String {
         switch self {
