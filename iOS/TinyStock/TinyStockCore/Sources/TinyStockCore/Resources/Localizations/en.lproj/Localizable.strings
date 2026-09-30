@@ -487,3 +487,5 @@
 "products.mode.variants" = "Variations";
 "products.variants.noVariation" = "No variation";
 "products.actions" = "Product actions";
+"store.switcher.current" = "Current store";
+"store.switcher.others" = "Switch store";

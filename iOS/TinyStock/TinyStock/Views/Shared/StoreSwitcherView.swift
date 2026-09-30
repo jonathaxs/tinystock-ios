@@ -15,8 +15,6 @@ struct StoreSwitcherView: View {
     @Environment(StoreSession.self) private var storeSession
     @Query(filter: #Predicate<StoreProfile> { !$0.isArchived && $0.trashedAt == nil })
     private var storedStores: [StoreProfile]
-    @State private var isPresentingStores = false
-    @State private var pendingEdit: StoreProfile?
     @State private var editingStore: StoreProfile?
 
     private var stores: [StoreProfile] {
@@ -27,8 +25,29 @@ struct StoreSwitcherView: View {
         stores.first { $0.id == storeSession.selectedStoreID }
     }
 
+    private var otherStores: [StoreProfile] {
+        stores.filter { $0.id != storeSession.selectedStoreID }
+    }
+
     var body: some View {
-        Button { isPresentingStores = true } label: {
+        Menu {
+            // A loja atual fica no topo com o lapis; tocar nela abre a mesma edicao de Ajustes.
+            if let selectedStore {
+                Section(String(localized: "store.switcher.current", bundle: .tinyStockCore)) {
+                    Button { editingStore = selectedStore } label: {
+                        Label(selectedStore.name, systemImage: "pencil")
+                    }
+                    .accessibilityHint(String(localized: "store.form.title.edit", bundle: .tinyStockCore))
+                }
+            }
+            if !otherStores.isEmpty {
+                Section(String(localized: "store.switcher.others", bundle: .tinyStockCore)) {
+                    ForEach(otherStores) { store in
+                        Button(store.name) { try? storeSession.select(store) }
+                    }
+                }
+            }
+        } label: {
             Label(
                 selectedStore?.name ?? StoreProfileService.localizedDefaultName,
                 systemImage: "storefront"
@@ -39,38 +58,6 @@ struct StoreSwitcherView: View {
             String(localized: "store.switcher.accessibility", bundle: .tinyStockCore)
         )
         .accessibilityValue(selectedStore?.name ?? StoreProfileService.localizedDefaultName)
-        // A edicao so abre depois que a folha de lojas termina de fechar.
-        .sheet(isPresented: $isPresentingStores, onDismiss: {
-            editingStore = pendingEdit
-            pendingEdit = nil
-        }) { storesSheet }
         .sheet(item: $editingStore) { StoreFormView(store: $0) }
-    }
-
-    private var storesSheet: some View {
-        BottomActionSheet {
-            BottomActionSheetTitle(title: String(localized: "stores.title", bundle: .tinyStockCore))
-            ForEach(stores) { store in
-                HStack(spacing: 8) {
-                    SheetActionButton(title: store.name, systemImage: "storefront",
-                                      isSelected: store.id == storeSession.selectedStoreID) {
-                        try? storeSession.select(store)
-                        isPresentingStores = false
-                    }
-                    // Abre a mesma edicao disponivel em Ajustes, sem trocar de aba.
-                    Button {
-                        pendingEdit = store
-                        isPresentingStores = false
-                    } label: {
-                        Image(systemName: "pencil")
-                            .font(.title3.weight(.semibold))
-                            .frame(width: 44, height: 44)
-                    }
-                    .buttonStyle(SheetActionButtonStyle())
-                    .accessibilityLabel(String(localized: "store.form.title.edit", bundle: .tinyStockCore))
-                    .accessibilityValue(store.name)
-                }
-            }
-        }
     }
 }

@@ -487,3 +487,5 @@
 "products.mode.variants" = "Variações";
 "products.variants.noVariation" = "Sem variação";
 "products.actions" = "Ações do produto";
+"store.switcher.current" = "Loja atual";
+"store.switcher.others" = "Trocar de loja";
