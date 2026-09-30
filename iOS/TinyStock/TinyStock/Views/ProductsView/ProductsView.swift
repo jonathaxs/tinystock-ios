@@ -17,6 +17,7 @@ struct ProductsView: View {
     @State private var salesProduct: Product?
     @State private var variantRequest: NewVariantRequest?
     @State private var detailProduct: Product?
+    @State private var variantEditProduct: Product?
     @State private var actionProduct: Product?
     @State private var pendingAction: (ProductActionsSheet.Action, Product)?
     @State private var pendingDeletion: [Product] = []
@@ -47,6 +48,7 @@ struct ProductsView: View {
             .sheet(item: $salesProduct) { SalesOrderFormView(product: $0) }
             .sheet(item: $variantRequest) { NewProductVariantView(storeID: storeID, productID: $0.productID) }
             .sheet(item: $detailProduct) { ProductDetailView(product: $0) }
+            .sheet(item: $variantEditProduct) { EditProductVariantView(product: $0) }
             .sheet(item: $actionProduct, onDismiss: runPendingAction) { product in
                 ProductActionsSheet(product: product, quantity: quantity(of: product)) { action in
                     pendingAction = (action, product)
@@ -73,6 +75,7 @@ struct ProductsView: View {
             salesProduct = nil
             variantRequest = nil
             detailProduct = nil
+            variantEditProduct = nil
             actionProduct = nil
             pendingAction = nil
             pendingDeletion = []
@@ -176,6 +179,7 @@ struct ProductsView: View {
         case .sale: salesProduct = product
         case .stockEntry: stockProduct = product
         case .newVariant: variantRequest = NewVariantRequest(productID: product.id)
+        case .editVariant: variantEditProduct = product
         case .edit: editingProduct = product
         }
     }

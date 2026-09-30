@@ -242,6 +242,9 @@
 "stock.entry.navigationTitle" = "Entrada";
 "stock.entry.newVariant" = "Nova variação";
 "stock.entry.new" = "Novo estoque";
+"product.variant.edit.title" = "Editar variação";
+"product.variant.edit.name" = "Nome";
+"product.variant.edit.stock" = "Estoque";
 "product.variant.new.defaultFooter" = "Este produto ainda não tem variações. Edite o produto e ative Possui variações antes de cadastrar outra.";
 "stock.entry.quantity" = "Entrada de estoque";
 "stock.entry.result" = "Estoque após a entrada";

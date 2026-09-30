@@ -8,6 +8,8 @@ struct StockQuantityPicker: View {
     let title: String
     @Binding var quantity: Int
     var range: ClosedRange<Int> = 0...100
+    /// Falso quando o titulo ja aparece no cabecalho da secao; segue valendo para o VoiceOver.
+    var showsTitle = true
     @State private var isExpanded = false
 
     var body: some View {
@@ -17,15 +19,14 @@ struct StockQuantityPicker: View {
             withAnimation { isExpanded.toggle() }
         } label: {
             // Mesmo visual dos seletores do sistema, para indicar que o valor pode ser trocado.
-            LabeledContent(title) {
-                HStack(spacing: 4) {
-                    Text(quantity, format: .number)
-                        .monospacedDigit()
-                    Image(systemName: "chevron.up.chevron.down")
-                        .imageScale(.small)
-                        .accessibilityHidden(true)
-                }
-                .foregroundStyle(.tint)
+            if showsTitle {
+                LabeledContent(title) { value }
+            } else {
+                value
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                    .accessibilityLabel(title)
+                    .accessibilityValue(Text(quantity, format: .number))
             }
         }
         .foregroundStyle(.primary)
@@ -37,5 +38,16 @@ struct StockQuantityPicker: View {
             }
             .pickerStyle(.wheel)
         }
+    }
+
+    private var value: some View {
+        HStack(spacing: 4) {
+            Text(quantity, format: .number)
+                .monospacedDigit()
+            Image(systemName: "chevron.up.chevron.down")
+                .imageScale(.small)
+                .accessibilityHidden(true)
+        }
+        .foregroundStyle(.tint)
     }
 }

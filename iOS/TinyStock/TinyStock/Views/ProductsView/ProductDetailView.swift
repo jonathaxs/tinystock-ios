@@ -9,7 +9,7 @@ struct ProductDetailView: View {
     @Environment(\.dismiss) private var dismiss
     let product: Product
     @Query private var variants: [ProductVariant]
-    @State private var entryVariant: ProductVariant?
+    @State private var editingVariant: ProductVariant?
     @State private var editFocus: ProductFormView.PriceField?
     @State private var isEditingProduct = false
 
@@ -61,7 +61,7 @@ struct ProductDetailView: View {
                     // Valores na cor de destaque e seta indicam linhas que abrem uma acao.
                     if !usesInternalVariant {
                         ForEach(variants) { variant in
-                            Button { entryVariant = variant } label: {
+                            Button { editingVariant = variant } label: {
                                 LabeledContent(variant.name) {
                                     tappableValue(Text(variant.quantity, format: .number).monospacedDigit())
                                 }
@@ -104,7 +104,7 @@ struct ProductDetailView: View {
                     Button(String(localized: "common.ok", bundle: .tinyStockCore)) { dismiss() }
                 }
             }
-            .sheet(item: $entryVariant) { StockEntryView(product: product, variantID: $0.id) }
+            .sheet(item: $editingVariant) { EditProductVariantView(product: product, variantID: $0.id) }
             .sheet(isPresented: $isEditingProduct) { ProductFormView(storeID: product.storeID, product: product) }
             .sheet(item: $editFocus) {
                 ProductFormView(storeID: product.storeID, product: product, initialFocus: $0)

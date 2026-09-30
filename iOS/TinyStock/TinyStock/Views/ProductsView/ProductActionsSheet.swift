@@ -6,7 +6,7 @@ import TinyStockCore
 
 struct ProductActionsSheet: View {
     enum Action {
-        case details, sale, stockEntry, newVariant, edit
+        case details, sale, stockEntry, newVariant, editVariant, edit
     }
 
     @Environment(\.dismiss) private var dismiss
@@ -24,6 +24,7 @@ struct ProductActionsSheet: View {
                 actionButton(.sale, "sale.new.title", "cart.badge.plus")
                 actionButton(.stockEntry, "stock.entry.new", "shippingbox.and.arrow.backward")
                 actionButton(.newVariant, "stock.entry.newVariant", "plus.square.on.square")
+                actionButton(.editVariant, "product.variant.edit.title", "square.and.pencil")
                 actionButton(.edit, "product.form.title.edit", "pencil")
                 Button(String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
                     .font(.body.weight(.semibold))
