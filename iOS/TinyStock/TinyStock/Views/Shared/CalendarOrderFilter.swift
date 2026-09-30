@@ -23,6 +23,29 @@ enum CalendarOrderFilter: Hashable {
         }
     }
 
+    /// Ordem das opcoes na folha de filtros do calendario.
+    static var allOptions: [CalendarOrderFilter] {
+        [.all, .overdue, .production] + SalesOrderStatus.allCases.map { .status($0) }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .all: "tray.full"
+        case .overdue: "exclamationmark.triangle"
+        case .production: "hammer"
+        case .status(let status):
+            switch status {
+            case .new: "sparkles"
+            case .awaitingProduction: "clock"
+            case .inProduction: "hammer.circle"
+            case .readyToShip: "shippingbox"
+            case .shipped: "shippingbox.and.arrow.forward"
+            case .completed: "checkmark.seal"
+            case .cancelled: "xmark.circle"
+            }
+        }
+    }
+
     func includes(_ order: SalesOrder, now: Date, calendar: Calendar) -> Bool {
         switch self {
         case .all:

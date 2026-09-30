@@ -18,6 +18,7 @@ struct SalesView: View {
     @AppStorage("orders.displayMode") private var displayMode: OrderDisplayMode = .day
     @State private var selectedDate = Date()
     @State private var filter: CalendarOrderFilter = .all
+    @State private var isPresentingFilterSheet = false
 
     init(
         storeID: UUID, filterRequest: Binding<CalendarOrderFilter?> = .constant(nil),
@@ -49,24 +50,7 @@ struct SalesView: View {
             .navigationDestination(item: scopedReminderRoute) { route in
                 ReminderOrderDestination(route: route)
             }
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) { StoreSwitcherView() }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Picker(String(localized: "order.calendar.filter", bundle: .tinyStockCore), selection: $filter) {
-                            Text(String(localized: "order.calendar.allStatuses", bundle: .tinyStockCore)).tag(CalendarOrderFilter.all)
-                            Text(String(localized: "order.calendar.overdue", bundle: .tinyStockCore)).tag(CalendarOrderFilter.overdue)
-                            Text(String(localized: "reports.operation.toProduce", bundle: .tinyStockCore)).tag(CalendarOrderFilter.production)
-                            ForEach(SalesOrderStatus.allCases, id: \.self) { status in
-                                Text(status.localizedName).tag(CalendarOrderFilter.status(status))
-                            }
-                        }
-                    } label: {
-                        Label(String(localized: "order.calendar.filter", bundle: .tinyStockCore),
-                              systemImage: filter == .all ? "line.3.horizontal.decrease" : "line.3.horizontal.decrease.circle.fill")
-                    }
-                }
-            }
+            .sheet(isPresented: $isPresentingFilterSheet) { filterSheet }
             .alert(String(localized: "order.cancel.title", bundle: .tinyStockCore), isPresented: Binding(
                 get: { pendingCancellation != nil },
                 set: { if !$0 { clearCancellation() } }
@@ -86,6 +70,7 @@ struct SalesView: View {
         .onChange(of: storeID) { _, _ in
             clearCancellation()
             errorMessage = nil
+            isPresentingFilterSheet = false
             filter = .all
             selectedDate = Date()
         }
@@ -120,6 +105,8 @@ struct SalesView: View {
         let sections = SalesOrderQueueSection.make(from: visible)
         return List {
             Section {
+                // O filtro ativo fica sob o titulo e abre a folha de troca.
+                TitleSelectorButton(title: filter.title) { isPresentingFilterSheet = true }
                 Picker(String(localized: "order.calendar.mode", bundle: .tinyStockCore), selection: $displayMode) {
                     Text(String(localized: "order.calendar.day", bundle: .tinyStockCore)).tag(OrderDisplayMode.day)
                     Text(String(localized: "order.calendar.list", bundle: .tinyStockCore)).tag(OrderDisplayMode.list)
@@ -149,22 +136,17 @@ struct SalesView: View {
                     }
                 }
             } header: {
-                HStack {
-                    Spacer()
-
-                    VStack(spacing: 4) {
-                        if displayMode == .day {
-                            Text(selectedDate, format: .dateTime.weekday(.wide).day().month(.wide).year())
-                        }
-                        Text(filter.title)
+                if displayMode == .day {
+                    HStack {
+                        Spacer()
+                        Text(selectedDate, format: .dateTime.weekday(.wide).day().month(.wide).year())
+                            .multilineTextAlignment(.center)
+                        Spacer()
                     }
-                    .multilineTextAlignment(.center)
-
-                    Spacer()
+                    .font(.subheadline)
+                    .textCase(nil)
+                    .fixedSize(horizontal: false, vertical: true)
                 }
-                .font(.subheadline)
-                .textCase(nil)
-                .fixedSize(horizontal: false, vertical: true)
             }
             ForEach(sections) { section in
                 Section {
@@ -205,6 +187,19 @@ struct SalesView: View {
             }
         }
         .listStyle(.insetGrouped)
+    }
+
+    private var filterSheet: some View {
+        BottomActionSheet {
+            BottomActionSheetTitle(title: String(localized: "order.calendar.filter", bundle: .tinyStockCore))
+            ForEach(CalendarOrderFilter.allOptions, id: \.self) { option in
+                SheetActionButton(title: option.title, systemImage: option.systemImage,
+                                  isSelected: option == filter) {
+                    filter = option
+                    isPresentingFilterSheet = false
+                }
+            }
+        }
     }
 
     private var emptyState: some View {
