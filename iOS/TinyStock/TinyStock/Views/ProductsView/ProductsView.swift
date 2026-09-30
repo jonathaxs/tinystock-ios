@@ -1,4 +1,4 @@
-// Proposito: Catalogo por loja com menu operacional e modo de edicao.
+// Proposito: Catalogo por loja, por produto ou por variacao, com acoes e modo de edicao.
 // Created by Jonathas Motta (@jonathaxs) on 2026-08-07.
 
 import SwiftUI
@@ -20,10 +20,16 @@ struct ProductsView: View {
     @State private var variantEditProduct: Product?
     @State private var actionProduct: Product?
     @State private var pendingAction: (ProductActionsSheet.Action, Product)?
+    @State private var isPresentingAddSheet = false
+    @State private var pendingAdd: AddAction?
+    @State private var isPresentingModeSheet = false
     @State private var pendingDeletion: [Product] = []
     @State private var isConfirmingDelete = false
     @State private var errorMessage: String?
     @State private var searchText = ""
+    @State private var isPresentingSale = false
+    @State private var variantEdit: VariantEditRequest?
+    @AppStorage("products.catalogMode") private var catalogMode: CatalogMode = .products
 
     init(storeID: UUID) {
         self.storeID = storeID
@@ -43,12 +49,16 @@ struct ProductsView: View {
             .toolbar { productToolbar }
             .searchable(text: $searchText, prompt: Text(String(localized: "products.catalog.search", bundle: .tinyStockCore)))
             .sheet(isPresented: $isPresentingForm) { ProductFormView(storeID: storeID) }
+            .sheet(isPresented: $isPresentingSale) { SalesOrderFormView(storeID: storeID) }
+            .sheet(item: $variantEdit) { EditProductVariantView(product: $0.product, variantID: $0.variantID) }
             .sheet(item: $editingProduct) { ProductFormView(storeID: $0.storeID, product: $0) }
             .sheet(item: $stockProduct) { StockEntryView(product: $0) }
-            .sheet(item: $salesProduct) { SalesOrderFormView(product: $0) }
+            .sheet(item: $salesProduct) { SalesOrderFormView(storeID: $0.storeID, product: $0) }
             .sheet(item: $variantRequest) { NewProductVariantView(storeID: storeID, productID: $0.productID) }
             .sheet(item: $detailProduct) { ProductDetailView(product: $0) }
             .sheet(item: $variantEditProduct) { EditProductVariantView(product: $0) }
+            .sheet(isPresented: $isPresentingAddSheet, onDismiss: runPendingAdd) { addSheet }
+            .sheet(isPresented: $isPresentingModeSheet) { modeSheet }
             .sheet(item: $actionProduct, onDismiss: runPendingAction) { product in
                 ProductActionsSheet(product: product, quantity: quantity(of: product)) { action in
                     pendingAction = (action, product)
@@ -81,12 +91,18 @@ struct ProductsView: View {
             pendingDeletion = []
             isConfirmingDelete = false
             isPresentingForm = false
+            isPresentingSale = false
+            isPresentingAddSheet = false
+            isPresentingModeSheet = false
+            pendingAdd = nil
+            variantEdit = nil
             editMode = .inactive
             searchText = ""
         }
         .onChange(of: products.isEmpty) { _, empty in
             if empty { editMode = .inactive }
         }
+        .onChange(of: catalogMode) { _, _ in editMode = .inactive }
     }
 
     private var catalogContent: some View {
@@ -103,8 +119,11 @@ struct ProductsView: View {
                 }
             } else if filteredProducts.isEmpty {
                 ContentUnavailableView.search(text: searchText)
+            } else if catalogMode == .variants {
+                variantList
             } else {
                 List {
+                    modeSelector
                     ForEach(filteredProducts) { product in
                         productRow(product)
                             .deleteDisabled(!editMode.isEditing)
@@ -118,26 +137,106 @@ struct ProductsView: View {
         }
     }
 
+    /// Abaixo do titulo, alterna entre produtos e variacoes agrupadas por produto.
+    private var modeSelector: some View {
+        TitleSelectorButton(title: catalogMode.title) { isPresentingModeSheet = true }
+            .moveDisabled(true)
+            .deleteDisabled(true)
+    }
+
+    private var modeSheet: some View {
+        BottomActionSheet {
+            BottomActionSheetTitle(title: String(localized: "products.mode", bundle: .tinyStockCore))
+            ForEach(CatalogMode.allCases, id: \.self) { mode in
+                SheetActionButton(title: mode.title, systemImage: mode.systemImage,
+                                  isSelected: mode == catalogMode) {
+                    catalogMode = mode
+                    isPresentingModeSheet = false
+                }
+            }
+        }
+    }
+
+    private var addSheet: some View {
+        BottomActionSheet {
+            SheetActionButton(title: String(localized: "product.form.title.new", bundle: .tinyStockCore),
+                              systemImage: "shippingbox") { chooseAdd(.product) }
+            SheetActionButton(title: String(localized: "stock.entry.newVariant", bundle: .tinyStockCore),
+                              systemImage: "plus.square.on.square") { chooseAdd(.variant) }
+                .disabled(products.isEmpty)
+            SheetActionButton(title: String(localized: "sale.new.title", bundle: .tinyStockCore),
+                              systemImage: "cart.badge.plus") { chooseAdd(.sale) }
+                .disabled(products.isEmpty)
+        }
+    }
+
+    private func chooseAdd(_ action: AddAction) {
+        pendingAdd = action
+        isPresentingAddSheet = false
+    }
+
+    /// Uma folha so abre depois que a anterior termina de fechar.
+    private func runPendingAdd() {
+        guard let action = pendingAdd else { return }
+        pendingAdd = nil
+        switch action {
+        case .product: isPresentingForm = true
+        case .variant: variantRequest = NewVariantRequest(productID: nil)
+        case .sale: isPresentingSale = true
+        }
+    }
+
+    private var variantList: some View {
+        List {
+            modeSelector
+            ForEach(filteredProducts) { product in
+                Section(product.name) {
+                    ForEach(variants(of: product)) { variant in
+                        Button { variantEdit = VariantEditRequest(product: product, variantID: variant.id) } label: {
+                            LabeledContent(variant.isDefault
+                                           ? String(localized: "products.variants.noVariation", bundle: .tinyStockCore)
+                                           : variant.name) {
+                                HStack(spacing: 6) {
+                                    Text(variant.quantity, format: .number)
+                                        .monospacedDigit()
+                                        .foregroundStyle(.tint)
+                                    chevron
+                                }
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .foregroundStyle(.primary)
+                    }
+                }
+            }
+        }
+    }
+
+    private func variants(of product: Product) -> [ProductVariant] {
+        variants.filter { $0.productID == product.id }.sorted { $0.name < $1.name }
+    }
+
+    private var chevron: some View {
+        Image(systemName: "chevron.right")
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(.tertiary)
+            .accessibilityHidden(true)
+    }
+
     @ToolbarContentBuilder
     private var productToolbar: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) { StoreSwitcherView() }
         ToolbarItemGroup(placement: .topBarTrailing) {
             // O EditButton da barra alterava outro modo de edicao e nao alcancava a lista.
-            Button(editMode.isEditing
-                   ? String(localized: "common.done", bundle: .tinyStockCore)
-                   : String(localized: "common.edit", bundle: .tinyStockCore)) {
-                withAnimation { editMode = editMode.isEditing ? .inactive : .active }
-            }
-            .disabled(products.isEmpty)
-            Menu {
-                Button { isPresentingForm = true } label: {
-                    Label(String(localized: "product.form.title.new", bundle: .tinyStockCore), systemImage: "shippingbox")
-                }
-                Button { variantRequest = NewVariantRequest(productID: nil) } label: {
-                    Label(String(localized: "stock.entry.newVariant", bundle: .tinyStockCore), systemImage: "plus.square.on.square")
+            if catalogMode == .products {
+                Button(editMode.isEditing
+                       ? String(localized: "common.done", bundle: .tinyStockCore)
+                       : String(localized: "common.edit", bundle: .tinyStockCore)) {
+                    withAnimation { editMode = editMode.isEditing ? .inactive : .active }
                 }
                 .disabled(products.isEmpty)
-            } label: {
+            }
+            Button { isPresentingAddSheet = true } label: {
                 Label(String(localized: "products.add", bundle: .tinyStockCore), systemImage: "plus")
             }
         }
@@ -161,9 +260,12 @@ struct ProductsView: View {
     }
 
     private func rowLabel(_ product: Product) -> some View {
-        ProductRowView(product: product, quantity: quantity(of: product))
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
+        HStack(spacing: 8) {
+            ProductRowView(product: product, quantity: quantity(of: product))
+            if !editMode.isEditing { chevron }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
     }
 
     private func quantity(of product: Product) -> Decimal {
@@ -226,6 +328,35 @@ struct ProductsView: View {
             errorMessage = (error as? ProductError)?.localizedMessage ?? error.localizedDescription
         }
     }
+}
+
+/// Forma de exibir o catalogo, lembrada entre aberturas do aplicativo.
+private enum CatalogMode: String, CaseIterable {
+    case products, variants
+
+    var title: String {
+        switch self {
+        case .products: String(localized: "products.mode.products", bundle: .tinyStockCore)
+        case .variants: String(localized: "products.mode.variants", bundle: .tinyStockCore)
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .products: "shippingbox"
+        case .variants: "square.stack.3d.up"
+        }
+    }
+}
+
+private enum AddAction {
+    case product, variant, sale
+}
+
+private struct VariantEditRequest: Identifiable {
+    let product: Product
+    let variantID: UUID
+    var id: UUID { variantID }
 }
 
 /// Pedido de nova variacao; sem produto, a tela deixa o usuario escolher no catalogo.

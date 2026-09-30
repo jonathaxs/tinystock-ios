@@ -1,4 +1,4 @@
-// Proposito: Registrar um pedido de um produto e uma variacao pelo catalogo.
+// Proposito: Registrar um pedido de um produto e uma variacao, escolhidos no catalogo ou no proprio formulario.
 // Created by Jonathas Motta (@jonathaxs) on 2026-09-01.
 
 import SwiftUI
@@ -9,10 +9,14 @@ struct SalesOrderFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
-    let product: Product
+    private let storeID: UUID
+    /// Aberto pelo produto da lista, o formulario nao oferece a troca de produto.
+    private let fixedProduct: Product?
     // O mesmo ID acompanha todas as tentativas deste rascunho e impede uma segunda baixa.
     @State private var draftID = UUID()
-    @Query private var variants: [ProductVariant]
+    @Query private var products: [Product]
+    @Query private var storeVariants: [ProductVariant]
+    @State private var productID: UUID?
 
     @State private var selectedVariantID: UUID?
     @State private var fulfillment: OrderFulfillment = .readyStock
@@ -30,13 +34,26 @@ struct SalesOrderFormView: View {
     @State private var isSaving = false
     @State private var errorMessage: String?
 
-    init(product: Product) {
-        self.product = product
-        let productID = product.id
-        let storeID = product.storeID
-        _variants = Query(filter: #Predicate<ProductVariant> {
-            $0.productID == productID && $0.storeID == storeID
-        }, sort: \ProductVariant.name)
+    init(storeID: UUID, product: Product? = nil) {
+        self.storeID = storeID
+        fixedProduct = product
+        _productID = State(initialValue: product?.id)
+        _products = Query(filter: #Predicate<Product> { $0.storeID == storeID },
+                          sort: [SortDescriptor(\Product.sortOrder), SortDescriptor(\Product.name)])
+        _storeVariants = Query(filter: #Predicate<ProductVariant> { $0.storeID == storeID },
+                               sort: \ProductVariant.name)
+    }
+
+    private var product: Product? {
+        fixedProduct ?? products.first { $0.id == productID }
+    }
+
+    private var variants: [ProductVariant] {
+        storeVariants.filter { $0.productID == productID }
+    }
+
+    private var hasStock: Bool {
+        variants.contains { $0.quantity > 0 }
     }
 
     private var selectedVariant: ProductVariant? {
@@ -52,8 +69,8 @@ struct SalesOrderFormView: View {
         return cleanText.isEmpty ? 0 : CurrencyFormatter.decimal(from: cleanText)
     }
 
-    private var subtotal: Decimal { product.salePrice * Decimal(quantity) }
-    private var grossProfit: Decimal { (product.salePrice - product.costPrice) * Decimal(quantity) }
+    private var subtotal: Decimal { (product?.salePrice ?? 0) * Decimal(quantity) }
+    private var grossProfit: Decimal { ((product?.salePrice ?? 0) - (product?.costPrice ?? 0)) * Decimal(quantity) }
     private var channelFee: Decimal {
         guard let channelFeePercentage else { return 0 }
         return (try? ChannelFeeCalculator.fee(on: subtotal, percentage: channelFeePercentage)) ?? 0
@@ -66,7 +83,7 @@ struct SalesOrderFormView: View {
 
     private var canSave: Bool {
         guard !buyerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              selectedVariant != nil, quantity > 0,
+              product != nil, selectedVariant != nil, quantity > 0,
               let channelFeePercentage, channelFeePercentage >= 0, channelFeePercentage <= 100 else { return false }
         if fulfillment == .readyStock { return (selectedVariant?.quantity ?? 0) >= quantity }
         return true
@@ -111,46 +128,61 @@ struct SalesOrderFormView: View {
         }
         .task { prepareDraftIfNeeded() }
         .onChange(of: fulfillment) { _, _ in adjustSelectionForFulfillment() }
-        .onChange(of: selectedVariantID) { _, _ in clampQuantity() }
+        .onChange(of: productID) { _, _ in selectInitialVariant() }
+        .onChange(of: selectedVariantID) { _, _ in
+            // Uma variacao sem estoque so pode ser atendida por producao.
+            if fulfillment == .readyStock, (selectedVariant?.quantity ?? 0) == 0 { fulfillment = .production }
+            clampQuantity()
+        }
         .onChange(of: orderedAt) { _, _ in clampDeadlines() }
         .onChange(of: shippingDueAt) { _, _ in clampDeadlines() }
     }
 
+    // Cada campo tem o proprio cabecalho para deixar claro o que pode ser tocado e alterado.
+    @ViewBuilder
     private var productSection: some View {
-        Section(String(localized: "order.form.section.product", bundle: .tinyStockCore)) {
-            HStack(spacing: 12) {
-                ProductImageView(imageData: product.imageData, side: 48)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(product.name).font(.headline)
-                    Text(product.salePrice.currencyText)
-                        .foregroundStyle(.secondary)
-                        .accessibilityLabel(
-                            String(localized: "product.form.salePrice", bundle: .tinyStockCore)
-                        )
-                        .accessibilityValue(product.salePrice.currencyText)
+        if let fixedProduct {
+            ProductSheetHeader(product: fixedProduct)
+        } else {
+            Section(String(localized: "order.form.section.product", bundle: .tinyStockCore)) {
+                Picker(String(localized: "order.form.section.product", bundle: .tinyStockCore), selection: $productID) {
+                    ForEach(products) { product in
+                        Text(product.name).tag(Optional(product.id))
+                    }
                 }
+                .labelsHidden()
             }
-            .accessibilityElement(children: .combine)
-            if variants.isEmpty {
+        }
+        if product != nil, variants.isEmpty {
+            Section {
                 Label(String(localized: "order.form.noVariants", bundle: .tinyStockCore), systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.secondary)
-            } else {
-                if !usesInternalVariant {
+            }
+        } else if product != nil {
+            if !usesInternalVariant {
+                Section(String(localized: "product.form.variant.title", bundle: .tinyStockCore)) {
                     Picker(String(localized: "product.form.variant.title", bundle: .tinyStockCore), selection: $selectedVariantID) {
                         ForEach(variants) { variant in
                             Text(variantLabel(variant)).tag(Optional(variant.id))
                         }
                     }
+                    .labelsHidden()
                 }
+            }
+            Section {
                 Stepper(value: $quantity, in: 1...quantityLimit) {
-                    LabeledContent(String(localized: "order.form.quantity", bundle: .tinyStockCore)) {
-                        Text(quantity, format: .number).monospacedDigit()
-                    }
+                    Text(quantity, format: .number)
+                        .monospacedDigit()
+                        .foregroundStyle(.tint)
                 }
+                .accessibilityLabel(String(localized: "order.form.quantity", bundle: .tinyStockCore))
+                .accessibilityValue(Text(quantity, format: .number))
+            } header: {
+                Text(String(localized: "order.form.quantity", bundle: .tinyStockCore))
+            } footer: {
                 if let selectedVariant {
-                    LabeledContent(String(localized: "product.form.variant.available", bundle: .tinyStockCore)) {
-                        Text(selectedVariant.quantity, format: .number).monospacedDigit()
-                    }
+                    Text(String(format: String(localized: "products.catalog.quantity", bundle: .tinyStockCore),
+                                selectedVariant.quantity.formatted()))
                 }
             }
         }
@@ -165,33 +197,52 @@ struct SalesOrderFormView: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+        } header: {
+            Text(String(localized: "order.form.fulfillment", bundle: .tinyStockCore))
         } footer: {
             Text(String(localized: fulfillment == .readyStock ? "order.form.fulfillment.ready.footer" : "order.form.fulfillment.production.footer", bundle: .tinyStockCore))
         }
     }
 
+    @ViewBuilder
     private var customerSection: some View {
         Section(String(localized: "order.form.section.customer", bundle: .tinyStockCore)) {
             TextField(String(localized: "order.form.buyer", bundle: .tinyStockCore), text: $buyerName)
                 .textInputAutocapitalization(.words)
-            TextField(String(localized: "order.form.reference", bundle: .tinyStockCore), text: $externalReference)
+        }
+        Section(String(localized: "order.form.section.reference", bundle: .tinyStockCore)) {
+            TextField(String(localized: "order.form.optional", bundle: .tinyStockCore), text: $externalReference)
                 .textInputAutocapitalization(.never)
         }
     }
 
+    @ViewBuilder
     private var datesSection: some View {
-        Section(String(localized: "order.form.section.dates", bundle: .tinyStockCore)) {
-            DatePicker(String(localized: "order.form.orderedAt", bundle: .tinyStockCore), selection: $orderedAt,
+        dateSection("order.form.orderedAtTitle") {
+            DatePicker(String(localized: "order.form.orderedAtTitle", bundle: .tinyStockCore), selection: $orderedAt,
                        in: ...Date(), displayedComponents: .date)
-            if fulfillment == .production {
-                DatePicker(String(localized: "order.form.productionDueAt", bundle: .tinyStockCore), selection: $productionDueAt,
+        }
+        if fulfillment == .production {
+            dateSection("order.form.productionDueAtTitle") {
+                DatePicker(String(localized: "order.form.productionDueAtTitle", bundle: .tinyStockCore), selection: $productionDueAt,
                            in: startOfOrderDay...safeEndOfShippingDay, displayedComponents: .date)
             }
-            DatePicker(String(localized: "order.form.shippingDueAt", bundle: .tinyStockCore), selection: $shippingDueAt,
+        }
+        dateSection("order.form.shippingDueAtTitle") {
+            DatePicker(String(localized: "order.form.shippingDueAtTitle", bundle: .tinyStockCore), selection: $shippingDueAt,
                        in: startOfOrderDay..., displayedComponents: .date)
         }
     }
 
+    private func dateSection(_ titleKey: String, @ViewBuilder picker: () -> some View) -> some View {
+        Section(String(localized: String.LocalizationValue(titleKey), bundle: .tinyStockCore)) {
+            picker()
+                .labelsHidden()
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    @ViewBuilder
     private var channelSection: some View {
         Section(String(localized: "order.form.section.channel", bundle: .tinyStockCore)) {
             Picker(String(localized: "order.form.channel", bundle: .tinyStockCore), selection: $channel) {
@@ -199,17 +250,17 @@ struct SalesOrderFormView: View {
                     Text(option.localizedName).tag(option)
                 }
             }
+            .labelsHidden()
             if channel == .other {
                 TextField(String(localized: "order.form.customChannel", bundle: .tinyStockCore), text: $customChannelName)
             }
-            LabeledContent(String(localized: "order.form.channelFee", bundle: .tinyStockCore)) {
-                HStack(spacing: 4) {
-                    TextField("0", text: $channelFeeText)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                        .frame(minWidth: 72)
-                    Text(verbatim: "%").foregroundStyle(.secondary)
-                }
+        }
+        Section(String(localized: "order.form.channelFee", bundle: .tinyStockCore)) {
+            HStack(spacing: 4) {
+                TextField("0", text: $channelFeeText)
+                    .keyboardType(.decimalPad)
+                    .accessibilityLabel(String(localized: "order.form.channelFee", bundle: .tinyStockCore))
+                Text(verbatim: "%").foregroundStyle(.secondary)
             }
         }
     }
@@ -226,7 +277,7 @@ struct SalesOrderFormView: View {
 
     private var notesSection: some View {
         Section(String(localized: "order.form.section.notes", bundle: .tinyStockCore)) {
-            TextField(String(localized: "order.form.note", bundle: .tinyStockCore), text: $note, axis: .vertical)
+            TextField(String(localized: "order.form.optional", bundle: .tinyStockCore), text: $note, axis: .vertical)
                 .lineLimit(2...5)
         }
     }
@@ -248,13 +299,26 @@ struct SalesOrderFormView: View {
         let calendar = Calendar.current
         productionDueAt = calendar.date(byAdding: .day, value: 1, to: orderedAt) ?? orderedAt
         shippingDueAt = calendar.date(byAdding: .day, value: 2, to: orderedAt) ?? orderedAt
-        selectedVariantID = variants.first(where: { $0.quantity > 0 })?.id ?? variants.first?.id
+        // Aberto pelo botao de adicionar, o formulario comeca pelo primeiro produto do catalogo.
+        if productID == nil { productID = products.first?.id }
+        selectInitialVariant()
         didPrepareDraft = true
+    }
+
+    /// Sem estoque em nenhuma variacao, a venda so pode ser atendida por producao.
+    private func selectInitialVariant() {
+        selectedVariantID = variants.first(where: { $0.quantity > 0 })?.id ?? variants.first?.id
+        if !hasStock { fulfillment = .production }
+        clampQuantity()
     }
 
     private func adjustSelectionForFulfillment() {
         if fulfillment == .readyStock, (selectedVariant?.quantity ?? 0) == 0 {
-            selectedVariantID = variants.first(where: { $0.quantity > 0 })?.id ?? selectedVariantID
+            if hasStock {
+                selectedVariantID = variants.first(where: { $0.quantity > 0 })?.id
+            } else {
+                fulfillment = .production
+            }
         }
         clampQuantity()
     }
@@ -269,12 +333,12 @@ struct SalesOrderFormView: View {
     }
 
     private func save() {
-        guard canSave, let selectedVariant, let channelFeePercentage else { return }
+        guard canSave, let product, let selectedVariant, let channelFeePercentage else { return }
         isSaving = true
         do {
             try SalesOrderService.register(
                 id: draftID,
-                storeID: product.storeID,
+                storeID: storeID,
                 lines: [SalesOrderLine(productID: product.id, variantID: selectedVariant.id, quantity: quantity)],
                 fulfillment: fulfillment,
                 channel: channel,
@@ -297,6 +361,6 @@ struct SalesOrderFormView: View {
 }
 
 #Preview {
-    SalesOrderFormView(product: Product(name: "Caneca", costPrice: 12, salePrice: 35))
+    SalesOrderFormView(storeID: UUID())
         .modelContainer(for: [StoreProfile.self, Product.self, ProductVariant.self, StockMovement.self, SalesOrder.self, SalesOrderItem.self], inMemory: true)
 }
