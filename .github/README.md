@@ -1,10 +1,17 @@
-# <img src="appicons/tinystock-tinted-rounded.png" width="56" align="absmiddle" alt="Ícone do TinyStock">&nbsp;&nbsp;TinyStock
+# <img src="appicons/tinystock-tinted-rounded.png" width="56" align="absmiddle" alt="Ícone do TinyStock">&nbsp;&nbsp;TinyStock&nbsp;<img src="appicons/apple.svg" width="28" height="28" align="absmiddle" alt="Apple">
 
-App para pequenos empreendedores organizarem produtos, estoque e pedidos em um só lugar, sem depender de planilhas.
+_Organize estoque de produtos, pedidos e vendas de um pequeno negócio._
 
-O TinyStock tem o ciclo operacional completo de uma pequena loja: cadastro de produtos com variações, controle de estoque auditável, pedidos de pronta entrega ou sob encomenda, prazos de produção e despacho no calendário e relatórios financeiros por período.
+O TinyStock foi criado para pequenos negócios feitos à mão, como o crochê da minha mãe e meus produtos impressos em 3D, cujo estoque já não cabia numa planilha.
+
+Cadastre seus produtos com custo de produção e preço. Cada venda vai para um calendário, e os relatórios mostram quantas vendas você fez e quanto lucrou.
+
+Dá para ter mais de uma loja, cada uma com seus produtos, e as notificações avisam o que precisa de atenção.
+
+O app tem o ciclo operacional completo de uma pequena loja: cadastro de produtos com variações, controle de estoque auditável, pedidos de pronta entrega ou sob encomenda, prazos de produção e despacho no calendário e relatórios financeiros por período.
 
 ## Funcionalidades
+_(O app ainda está nos testes finais, algumas funcionalidades podem ser removidas ou novas serem adicionadas até a versão final. Qualquer dúvida ou sugestão entre em [contato comigo](https://jonathasmotta.com).)_
 
 **Lojas**
 - Várias lojas independentes, com troca rápida entre elas.
