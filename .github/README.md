@@ -1,4 +1,4 @@
-# TinyStock
+# <img src="appicons/tinystock-tinted-rounded.png" width="56" align="absmiddle" alt="Ícone do TinyStock">&nbsp;&nbsp;TinyStock
 
 App para pequenos empreendedores organizarem produtos, estoque e pedidos em um só lugar, sem depender de planilhas.
 
