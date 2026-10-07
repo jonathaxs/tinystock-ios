@@ -11,7 +11,7 @@ Dá para ter mais de uma loja, cada uma com seus produtos, e as notificações a
 O app tem o ciclo operacional completo de uma pequena loja: cadastro de produtos com variações, controle de estoque auditável, pedidos de pronta entrega ou sob encomenda, prazos de produção e despacho no calendário e relatórios financeiros por período.
 
 ## Funcionalidades
-_(O app ainda está nos testes finais, algumas funcionalidades podem ser removidas ou novas serem adicionadas até a versão final. Qualquer dúvida ou sugestão entre em [contato comigo](https://jonathasmotta.com).)_
+_(O app está nos testes finais, algumas funcionalidades podem ser removidas ou novas serem adicionadas até a versão final. Qualquer dúvida ou sugestão, entre em [contato comigo](https://jonathasmotta.com).)_
 
 **Lojas**
 - Várias lojas independentes, com troca rápida entre elas.
