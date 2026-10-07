@@ -1,6 +1,6 @@
 # <img src="appicons/tinystock-tinted-rounded.png" width="56" align="absmiddle" alt="Ícone do TinyStock">&nbsp;&nbsp;TinyStock&nbsp;<img src="appicons/apple.svg" width="28" height="28" align="absmiddle" alt="Apple">
 
-_Organize estoque de produtos, pedidos e vendas de um pequeno negócio._
+_Organize estoque de produtos, pedidos e vendas do seu pequeno negócio._
 
 O TinyStock foi criado para pequenos negócios feitos à mão, como o crochê da minha mãe e meus produtos impressos em 3D, cujo estoque já não cabia numa planilha.
 
