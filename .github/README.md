@@ -1,5 +1,7 @@
 # <img src="appicons/tinystock-tinted-rounded.png" width="56" align="absmiddle" alt="Ícone do TinyStock">&nbsp;&nbsp;TinyStock&nbsp;<img src="appicons/apple.svg" width="28" height="28" align="absmiddle" alt="Apple">
 
+**[Read in English](#en-tinystock)**
+
 _Organize estoque de produtos, pedidos e vendas do seu pequeno negócio._
 
 O TinyStock foi criado para pequenos negócios feitos à mão, como o crochê da minha mãe e meus produtos impressos em 3D, cujo estoque já não cabia numa planilha.
@@ -128,3 +130,137 @@ O TinyStock não exige cadastro e não envia dados ao desenvolvedor. As informa�
 ## Autor
 
 Desenvolvido por **Jonathas Motta** ([@jonathaxs](https://github.com/jonathaxs)).
+
+---
+
+# <img src="appicons/tinystock-tinted-rounded.png" width="56" align="absmiddle" alt="TinyStock icon">&nbsp;&nbsp;(EN) TinyStock&nbsp;<img src="appicons/apple.svg" width="28" height="28" align="absmiddle" alt="Apple">
+
+**[Leia em português](#tinystock)**
+
+_Organize product stock, orders and sales for your small business._
+
+TinyStock was created for small handmade businesses, like my mom's crochet and my 3D printed products, whose stock no longer fit in a spreadsheet.
+
+Add your products with their production cost and price. Each sale goes on a calendar, and the reports show how many sales you made and how much profit you earned.
+
+You can have more than one store, each with its own products, and notifications let you know what needs attention.
+
+The app covers the full operating cycle of a small store: a product catalog with variants, auditable stock control, ready-to-ship or made-to-order orders, production and shipping deadlines on the calendar and financial reports by period.
+
+## Features
+_(The app is in final testing, so some features may be removed or new ones added before the final version. For questions or suggestions, [get in touch](https://jonathasmotta.com).)_
+
+**Stores**
+- Multiple independent stores, with quick switching between them.
+- Archive and trash, with restore for 30 days.
+
+**Products and stock**
+- Products with a photo, sale price, cost and profit per unit.
+- Optional variants (color, size, model), each with its own stock count.
+- Every stock change creates a logged movement, so incoming, outgoing and adjustments can be audited.
+
+**Orders**
+- Ready-to-ship or made-to-order orders.
+- Sales channels: direct sale, Shopee, Mercado Livre or a custom channel, with fee calculation.
+- Status flow: new, waiting for production, in production, ready to ship, shipped, completed or canceled.
+- Automatic stock deduction and a financial snapshot of each order (price, cost and fee at the time of sale).
+
+**Calendar and reminders**
+- Built-in calendar with production and shipping deadlines, filters and shortcuts.
+- Local notifications for production and shipping.
+- Export of events to the iPhone Calendar app.
+
+**Reports**
+- Revenue, costs, fees and net profit by store and period.
+- Performance by sales channel and best-selling products.
+
+**Data and personalization**
+- Automatic, private sync through iCloud (CloudKit).
+- JSON backup to export and import, plus a manual copy to iCloud Drive.
+- Configurable accent colors.
+- Interface in Brazilian Portuguese and English, following the iPhone's language.
+- Support for VoiceOver, Dynamic Type, light mode and dark mode.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph App["TinyStock (iOS app)"]
+        Views["SwiftUI views"]
+        Notif["Notifications and Calendar integration"]
+    end
+
+    subgraph Core["TinyStockCore (Swift Package)"]
+        Models["SwiftData models"]
+        Services["Services and business rules"]
+        Loc["Localization en / pt-BR"]
+    end
+
+    Views --> Services
+    Notif --> Services
+    Services --> Models
+    Models --> Store[("SwiftData")]
+    Store <--> CloudKit[("Private iCloud")]
+    Services --> Backup["JSON backup and iCloud Drive"]
+```
+
+- **SwiftUI** for the whole interface.
+- **SwiftData** for local persistence, synced through **CloudKit** in the user's private database.
+- **TinyStockCore**: a local Swift Package that holds the models, business rules, services, localization and tests. The app only handles the interface and system integration, which keeps the Core testable and reusable in future extensions, such as widgets.
+- **Decimal** for every money value, avoiding rounding errors.
+- **Swift Testing** for the Core's automated tests.
+- No external dependencies: only Apple's native frameworks.
+
+### Order lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> New
+    New --> WaitingForProduction: made to order
+    WaitingForProduction --> InProduction
+    WaitingForProduction --> ReadyToShip: marked as produced
+    InProduction --> ReadyToShip
+    New --> ReadyToShip: ready to ship
+    ReadyToShip --> Shipped
+    Shipped --> Completed
+    New --> Canceled
+    WaitingForProduction --> Canceled
+    InProduction --> Canceled
+    ReadyToShip --> Canceled
+    Completed --> [*]
+    Canceled --> [*]
+```
+
+## Repository structure
+
+```text
+iOS/TinyStock/
+├── TinyStock/                 iOS app
+│   ├── Views/                 Screens by area: Products, Calendar, Reports and Settings
+│   ├── Notifications/         Local reminders and navigation from notifications
+│   └── Resources/             Info.plist and localized system strings
+├── TinyStockCore/             Swift Package with the app's domain
+│   ├── Sources/TinyStockCore/
+│   │   ├── Models/            Stores, products, variants, stock and orders
+│   │   ├── Services/          Stock, order, report, reminder and backup rules
+│   │   ├── Persistence/       SwiftData and CloudKit setup
+│   │   └── Resources/         en and pt-BR localization
+│   └── Tests/                 Core automated tests
+└── TinyStock.xcodeproj
+```
+
+## Requirements
+
+- iOS 26 or later.
+- Xcode 27 or later.
+- Swift 6.
+
+To run it on an iPhone with sync, select your Team and set up the iCloud container in **Signing & Capabilities**.
+
+## Privacy
+
+TinyStock requires no sign-up and sends no data to the developer. Information stays on the device and, when sync is on, in the user's private iCloud account. There are no servers of its own, no analytics and no ads.
+
+## Author
+
+Developed by **Jonathas Motta** ([@jonathaxs](https://github.com/jonathaxs)).
