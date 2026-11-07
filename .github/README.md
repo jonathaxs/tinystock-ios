@@ -99,7 +99,7 @@ stateDiagram-v2
 ## Estrutura do repositório
 
 ```text
-iOS/TinyStock/
+TinyStock/
 ├── TinyStock/                 App iOS
 │   ├── Views/                 Telas por área: Produtos, Calendário, Relatórios e Ajustes
 │   ├── Notifications/         Lembretes locais e navegação a partir das notificações
@@ -234,7 +234,7 @@ stateDiagram-v2
 ## Repository structure
 
 ```text
-iOS/TinyStock/
+TinyStock/
 ├── TinyStock/                 iOS app
 │   ├── Views/                 Screens by area: Products, Calendar, Reports and Settings
 │   ├── Notifications/         Local reminders and navigation from notifications
