@@ -41,32 +41,30 @@ struct SalesView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            // Recalcula atrasos e o destaque de hoje quando a tela cruza a meia-noite.
-            TimelineView(.periodic(from: .now, by: 60)) { context in
-                orderList(now: context.date)
-            }
-            .navigationTitle(String(localized: "tab.sales", bundle: .tinyStockCore))
-            .navigationDestination(item: scopedReminderRoute) { route in
-                ReminderOrderDestination(route: route)
-            }
-            .sheet(isPresented: $isPresentingFilterSheet) { filterSheet }
-            .alert(String(localized: "order.cancel.title", bundle: .tinyStockCore), isPresented: Binding(
-                get: { pendingCancellation != nil },
-                set: { if !$0 { clearCancellation() } }
-            )) {
-                TextField(String(localized: "order.cancel.reason", bundle: .tinyStockCore), text: $cancellationReason)
-                Button(String(localized: "common.cancel", bundle: .tinyStockCore), role: .cancel, action: clearCancellation)
-                Button(String(localized: "order.action.cancel", bundle: .tinyStockCore), role: .destructive, action: cancelOrder)
-            } message: {
-                Text(String(localized: "order.cancel.message", bundle: .tinyStockCore))
-            }
-            .alert(String(localized: "order.operation.error.title", bundle: .tinyStockCore), isPresented: Binding(
-                get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } }
-            )) {
-                Button(String(localized: "common.ok", bundle: .tinyStockCore)) { errorMessage = nil }
-            } message: { Text(errorMessage ?? "") }
+        // Recalcula atrasos e o destaque de hoje quando a tela cruza a meia-noite.
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            orderList(now: context.date)
         }
+        .navigationTitle(String(localized: "tab.sales", bundle: .tinyStockCore))
+        .navigationDestination(item: scopedReminderRoute) { route in
+            ReminderOrderDestination(route: route)
+        }
+        .sheet(isPresented: $isPresentingFilterSheet) { filterSheet }
+        .alert(String(localized: "order.cancel.title", bundle: .tinyStockCore), isPresented: Binding(
+            get: { pendingCancellation != nil },
+            set: { if !$0 { clearCancellation() } }
+        )) {
+            TextField(String(localized: "order.cancel.reason", bundle: .tinyStockCore), text: $cancellationReason)
+            Button(String(localized: "common.cancel", bundle: .tinyStockCore), role: .cancel, action: clearCancellation)
+            Button(String(localized: "order.action.cancel", bundle: .tinyStockCore), role: .destructive, action: cancelOrder)
+        } message: {
+            Text(String(localized: "order.cancel.message", bundle: .tinyStockCore))
+        }
+        .alert(String(localized: "order.operation.error.title", bundle: .tinyStockCore), isPresented: Binding(
+            get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } }
+        )) {
+            Button(String(localized: "common.ok", bundle: .tinyStockCore)) { errorMessage = nil }
+        } message: { Text(errorMessage ?? "") }
         .onChange(of: storeID) { _, _ in
             clearCancellation()
             errorMessage = nil
@@ -241,7 +239,7 @@ private enum OrderDisplayMode: String {
 
 #Preview {
     let storeID = UUID()
-    SalesView(storeID: storeID)
+    NavigationStack { SalesView(storeID: storeID) }
         .environment(StoreSession(selectedStoreID: storeID))
         .modelContainer(for: [StoreProfile.self, Product.self, ProductVariant.self, StockMovement.self, SalesOrder.self, SalesOrderItem.self], inMemory: true)
 }

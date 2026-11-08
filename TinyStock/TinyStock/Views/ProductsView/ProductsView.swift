@@ -43,41 +43,39 @@ struct ProductsView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            catalogContent
-            .navigationTitle(String(localized: "tab.products", bundle: .tinyStockCore))
-            .toolbar { productToolbar }
-            .searchable(text: $searchText, prompt: Text(String(localized: "products.catalog.search", bundle: .tinyStockCore)))
-            .sheet(isPresented: $isPresentingForm) { ProductFormView(storeID: storeID) }
-            .sheet(isPresented: $isPresentingSale) { SalesOrderFormView(storeID: storeID) }
-            .sheet(item: $variantEdit) { EditProductVariantView(product: $0.product, variantID: $0.variantID) }
-            .sheet(item: $editingProduct) { ProductFormView(storeID: $0.storeID, product: $0) }
-            .sheet(item: $stockProduct) { StockEntryView(product: $0) }
-            .sheet(item: $salesProduct) { SalesOrderFormView(storeID: $0.storeID, product: $0) }
-            .sheet(item: $variantRequest) { NewProductVariantView(storeID: storeID, productID: $0.productID) }
-            .sheet(item: $detailProduct) { ProductDetailView(product: $0) }
-            .sheet(item: $variantEditProduct) { EditProductVariantView(product: $0) }
-            .sheet(isPresented: $isPresentingAddSheet, onDismiss: runPendingAdd) { addSheet }
-            .sheet(isPresented: $isPresentingModeSheet) { modeSheet }
-            .sheet(item: $actionProduct, onDismiss: runPendingAction) { product in
-                ProductActionsSheet(product: product, quantity: quantity(of: product)) { action in
-                    pendingAction = (action, product)
-                    actionProduct = nil
-                }
+        catalogContent
+        .navigationTitle(String(localized: "tab.products", bundle: .tinyStockCore))
+        .toolbar { productToolbar }
+        .searchable(text: $searchText, prompt: Text(String(localized: "products.catalog.search", bundle: .tinyStockCore)))
+        .sheet(isPresented: $isPresentingForm) { ProductFormView(storeID: storeID) }
+        .sheet(isPresented: $isPresentingSale) { SalesOrderFormView(storeID: storeID) }
+        .sheet(item: $variantEdit) { EditProductVariantView(product: $0.product, variantID: $0.variantID) }
+        .sheet(item: $editingProduct) { ProductFormView(storeID: $0.storeID, product: $0) }
+        .sheet(item: $stockProduct) { StockEntryView(product: $0) }
+        .sheet(item: $salesProduct) { SalesOrderFormView(storeID: $0.storeID, product: $0) }
+        .sheet(item: $variantRequest) { NewProductVariantView(storeID: storeID, productID: $0.productID) }
+        .sheet(item: $detailProduct) { ProductDetailView(product: $0) }
+        .sheet(item: $variantEditProduct) { EditProductVariantView(product: $0) }
+        .sheet(isPresented: $isPresentingAddSheet, onDismiss: runPendingAdd) { addSheet }
+        .sheet(isPresented: $isPresentingModeSheet) { modeSheet }
+        .sheet(item: $actionProduct, onDismiss: runPendingAction) { product in
+            ProductActionsSheet(product: product, quantity: quantity(of: product)) { action in
+                pendingAction = (action, product)
+                actionProduct = nil
             }
-            .alert(String(localized: "product.delete.confirm.title", bundle: .tinyStockCore), isPresented: $isConfirmingDelete) {
-                Button(String(localized: "common.cancel", bundle: .tinyStockCore), role: .cancel) { pendingDeletion = [] }
-                Button(String(localized: "common.delete", bundle: .tinyStockCore), role: .destructive, action: deleteProducts)
-            } message: {
-                Text(pendingDeletion.map(\.name).joined(separator: ", ") + "\n\n"
-                     + String(localized: "products.delete.stock.message", bundle: .tinyStockCore))
-            }
-            .alert(String(localized: "products.error.title", bundle: .tinyStockCore), isPresented: Binding(
-                get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } }
-            )) {
-                Button(String(localized: "common.ok", bundle: .tinyStockCore)) { errorMessage = nil }
-            } message: { Text(errorMessage ?? "") }
         }
+        .alert(String(localized: "product.delete.confirm.title", bundle: .tinyStockCore), isPresented: $isConfirmingDelete) {
+            Button(String(localized: "common.cancel", bundle: .tinyStockCore), role: .cancel) { pendingDeletion = [] }
+            Button(String(localized: "common.delete", bundle: .tinyStockCore), role: .destructive, action: deleteProducts)
+        } message: {
+            Text(pendingDeletion.map(\.name).joined(separator: ", ") + "\n\n"
+                 + String(localized: "products.delete.stock.message", bundle: .tinyStockCore))
+        }
+        .alert(String(localized: "products.error.title", bundle: .tinyStockCore), isPresented: Binding(
+            get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } }
+        )) {
+            Button(String(localized: "common.ok", bundle: .tinyStockCore)) { errorMessage = nil }
+        } message: { Text(errorMessage ?? "") }
         .onChange(of: storeID) { _, _ in
             // Nao carrega a selecao ou o modo de edicao de uma loja para outra.
             editingProduct = nil
@@ -108,14 +106,10 @@ struct ProductsView: View {
     private var catalogContent: some View {
         Group {
             if products.isEmpty {
-                ContentUnavailableView {
-                    Label(String(localized: "products.empty.title", bundle: .tinyStockCore), systemImage: "shippingbox")
-                } description: {
-                    Text(String(localized: "products.empty.message", bundle: .tinyStockCore))
-                } actions: {
-                    Button(String(localized: "products.add", bundle: .tinyStockCore)) { isPresentingForm = true }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
+                VStack(spacing: 0) {
+                    HomePageButtons()
+                        .padding(.top, 8)
+                    emptyCatalog
                 }
             } else if filteredProducts.isEmpty {
                 ContentUnavailableView.search(text: searchText)
@@ -123,6 +117,7 @@ struct ProductsView: View {
                 variantList
             } else {
                 List {
+                    navigationButtons
                     modeSelector
                     ForEach(filteredProducts) { product in
                         productRow(product)
@@ -135,6 +130,28 @@ struct ProductsView: View {
                 .environment(\.editMode, $editMode)
             }
         }
+    }
+
+    private var emptyCatalog: some View {
+        ContentUnavailableView {
+            Label(String(localized: "products.empty.title", bundle: .tinyStockCore), systemImage: "shippingbox")
+        } description: {
+            Text(String(localized: "products.empty.message", bundle: .tinyStockCore))
+        } actions: {
+            Button(String(localized: "products.add", bundle: .tinyStockCore)) { isPresentingForm = true }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+        }
+    }
+
+    /// Botoes redondos da Inicio (Relatorios, Calendario e Ajustes), fora da edicao do catalogo.
+    private var navigationButtons: some View {
+        HomePageButtons()
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+            .moveDisabled(true)
+            .deleteDisabled(true)
     }
 
     /// Abaixo do titulo, alterna entre produtos e variacoes agrupadas por produto.
@@ -188,6 +205,7 @@ struct ProductsView: View {
 
     private var variantList: some View {
         List {
+            navigationButtons
             modeSelector
             ForEach(filteredProducts) { product in
                 Section(product.name) {
@@ -378,7 +396,8 @@ private struct NewVariantRequest: Identifiable {
 
 #Preview {
     let storeID = UUID()
-    ProductsView(storeID: storeID)
+    NavigationStack { ProductsView(storeID: storeID) }
         .environment(StoreSession(selectedStoreID: storeID))
+        .environment(AppRouter())
         .modelContainer(for: [StoreProfile.self, Product.self, ProductVariant.self, StockMovement.self, SalesOrder.self, SalesOrderItem.self], inMemory: true)
 }

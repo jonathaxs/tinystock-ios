@@ -1,7 +1,9 @@
 // ⌘
 //  TinyStock/Views/MainView.swift
 //
-//  Propósito: Hospeda o TabView principal e roteia pras telas de Produtos, Relatórios, Calendário e Ajustes.
+//  Propósito: Hospeda o NavigationStack raiz, com a Início de raiz, e roteia pelo AppRouter:
+//             Relatórios e Calendário em sheet, Ajustes como página. Inclui a abertura de pedidos
+//             pelas notificações.
 //
 //  Created by Jonathas Motta (@jonathaxs) on 2026-08-07.
 // ⌘
@@ -10,18 +12,6 @@ import SwiftUI
 import SwiftData
 import TinyStockCore
 
-// MARK: - Índices das abas
-// Constantes centralizadas para evitar números mágicos na navegação entre abas.
-extension MainView {
-    enum Tab {
-        // Identificam a aba salva; a ordem visual segue a declaração no TabView.
-        static let products = 0
-        static let sales    = 1
-        static let reports  = 2
-        static let settings = 3
-    }
-}
-
 // MARK: - Tela principal
 struct MainView: View {
 
@@ -29,52 +19,45 @@ struct MainView: View {
     @Environment(OrderReminderRouter.self) private var reminderRouter
     @Environment(\.modelContext) private var modelContext
 
-    // A seleção persistida permite preservar a aba ao reabrir o aplicativo.
-    @AppStorage("app.selectedTab") private var selectedTab: Int = 0
     @AppStorage(AppAccentColor.storageKey) private var accentColorRaw = AppAccentColor.defaultColor.rawValue
-    @State private var calendarFilterRequest: CalendarOrderFilter?
-    @State private var reminderRoute: OrderReminderRoute?
+    @Query private var stores: [StoreProfile]
+    @State private var router = AppRouter()
     @State private var reminderError: String?
 
     private var accentColor: AppAccentColor {
         AppAccentColor(rawValue: accentColorRaw) ?? .defaultColor
     }
 
+    private var storeName: String {
+        stores.first { $0.id == storeSession.selectedStoreID }?.name ?? StoreProfileService.localizedDefaultName
+    }
+
     var body: some View {
-        TabView(selection: $selectedTab) {
-
+        @Bindable var router = router
+        NavigationStack(path: $router.path) {
             ProductsView(storeID: storeSession.selectedStoreID)
-                .tabItem {
-                    Label(String(localized: "tab.products", bundle: .tinyStockCore), systemImage: "shippingbox.fill")
+                .navigationDestination(for: AppRoute.self) { route in
+                    switch route {
+                    case .settings: SettingsView(storeID: storeSession.selectedStoreID)
+                    }
                 }
-                .tag(Tab.products)
-
-            ReportsView(storeID: storeSession.selectedStoreID) { filter in
-                calendarFilterRequest = filter
-                selectedTab = Tab.sales
-            }
-                .tabItem {
-                    Label(String(localized: "tab.reports", bundle: .tinyStockCore), systemImage: "chart.bar.fill")
-                }
-                .tag(Tab.reports)
-
-            SalesView(
-                storeID: storeSession.selectedStoreID,
-                filterRequest: $calendarFilterRequest,
-                reminderRoute: $reminderRoute
-            )
-                .id(storeSession.selectedStoreID)
-                .tabItem {
-                    Label(String(localized: "tab.sales", bundle: .tinyStockCore), systemImage: "calendar")
-                }
-                .tag(Tab.sales)
-
-            SettingsView(storeID: storeSession.selectedStoreID)
-                .tabItem {
-                    Label(String(localized: "tab.settings", bundle: .tinyStockCore), systemImage: "gearshape.fill")
-                }
-                .tag(Tab.settings)
         }
+        // Relatórios e Calendário: cada sheet tem seu próprio stack (Calendário → pedido).
+        .sheet(item: $router.sheet) { sheet in
+            NavigationStack {
+                sheetRoot(sheet)
+                    // A loja atual fica visível, já que a troca de loja acontece na Início.
+                    .navigationSubtitle(storeName)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            SheetCloseButton { router.sheet = nil }
+                        }
+                    }
+            }
+            .environment(router)
+            .tint(accentColor.color)
+        }
+        .environment(router)
         .tint(accentColor.color)
         .onChange(of: reminderRouter.request, initial: true) { _, route in
             guard let route else { return }
@@ -85,21 +68,39 @@ struct MainView: View {
                     return
                 }
                 try storeSession.select(destination.store)
-                calendarFilterRequest = .all
-                selectedTab = Tab.sales
-                reminderRoute = route
+                router.openOrder(route)
             } catch {
                 reminderError = String(localized: "notifications.order.error", bundle: .tinyStockCore)
             }
         }
         .onChange(of: storeSession.selectedStoreID) { _, storeID in
-            if reminderRoute?.storeID != storeID { reminderRoute = nil }
+            if router.reminderRoute?.storeID != storeID { router.reminderRoute = nil }
         }
         .alert(String(localized: "notifications.title", bundle: .tinyStockCore), isPresented: Binding(
             get: { reminderError != nil }, set: { if !$0 { reminderError = nil } }
         )) {
             Button(String(localized: "common.ok", bundle: .tinyStockCore)) { reminderError = nil }
         } message: { Text(reminderError ?? "") }
+    }
+
+    // MARK: - Destinos
+
+    @ViewBuilder
+    private func sheetRoot(_ sheet: AppSheet) -> some View {
+        @Bindable var router = router
+        switch sheet {
+        case .reports:
+            ReportsView(storeID: storeSession.selectedStoreID) { filter in
+                router.openCalendar(filter: filter)
+            }
+        case .calendar:
+            SalesView(
+                storeID: storeSession.selectedStoreID,
+                filterRequest: $router.calendarFilterRequest,
+                reminderRoute: $router.reminderRoute
+            )
+            .id(storeSession.selectedStoreID)
+        }
     }
 }
 

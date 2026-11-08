@@ -23,6 +23,7 @@
 "common.edit" = "Editar";
 "common.delete" = "Excluir";
 "common.ok" = "OK";
+"common.close" = "Fechar";
 
 
 /* MARK: - Produtos */

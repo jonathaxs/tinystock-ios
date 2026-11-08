@@ -42,20 +42,15 @@ struct ReportsView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            TimelineView(.periodic(from: .now, by: 60)) { context in
-                reportBody(now: context.date)
-            }
-            .navigationTitle(String(localized: "tab.reports", bundle: .tinyStockCore))
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) { StoreSwitcherView() }
-            }
-            .sheet(isPresented: $showsCustomPeriod) {
-                ReportCustomPeriodView(initialStart: customStart, initialEnd: customEnd) { start, end in
-                    customStart = start
-                    customEnd = end
-                    usesCustomPeriod = true
-                }
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            reportBody(now: context.date)
+        }
+        .navigationTitle(String(localized: "tab.reports", bundle: .tinyStockCore))
+        .sheet(isPresented: $showsCustomPeriod) {
+            ReportCustomPeriodView(initialStart: customStart, initialEnd: customEnd) { start, end in
+                customStart = start
+                customEnd = end
+                usesCustomPeriod = true
             }
         }
         .onChange(of: storeID) { _, _ in
@@ -157,7 +152,7 @@ struct ReportsView: View {
 
 #Preview {
     let storeID = UUID()
-    ReportsView(storeID: storeID)
+    NavigationStack { ReportsView(storeID: storeID) }
         .environment(StoreSession(selectedStoreID: storeID))
         .modelContainer(for: [StoreProfile.self, Product.self, ProductVariant.self, StockMovement.self, SalesOrder.self, SalesOrderItem.self], inMemory: true)
 }
