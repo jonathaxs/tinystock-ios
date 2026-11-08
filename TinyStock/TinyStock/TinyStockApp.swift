@@ -20,6 +20,7 @@ struct TinyStockApp: App {
     private let sharedModelContainer: ModelContainer
     private let storeSession: StoreSession
     private let reminderCoordinator: OrderReminderCoordinator
+    @AppStorage(WelcomeStorage.didCompleteKey) private var didCompleteWelcome = false
 
     init() {
         let schema = TinyStockPersistence.schema
@@ -29,6 +30,7 @@ struct TinyStockApp: App {
             let context = ModelContext(container)
             let session = try StoreSession.bootstrapForCloudSync(in: context)
             try context.save()
+            WelcomeStorage.markCompletedIfHasData(in: context)
 
             sharedModelContainer = container
             storeSession = session
@@ -58,11 +60,14 @@ struct TinyStockApp: App {
             Group {
                 if containerInitFailed {
                     DataStoreErrorView()
-                } else {
+                } else if didCompleteWelcome {
                     MainView()
                         .modifier(OrderReminderLifecycle(coordinator: reminderCoordinator))
+                } else {
+                    WelcomeView { didCompleteWelcome = true }
                 }
             }
+            .animation(.easeInOut(duration: 0.5), value: didCompleteWelcome)
             .environment(storeSession)
             .environment(reminderCoordinator)
             .environment(appDelegate.reminderRouter)

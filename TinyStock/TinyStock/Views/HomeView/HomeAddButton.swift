@@ -29,12 +29,18 @@ struct HomeAddButton: View {
 
     var body: some View {
         Button { showsOptions = true } label: {
-            Label(String(localized: "home.add", bundle: .tinyStockCore), systemImage: "plus")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.white)
-                .lineLimit(1)
+            HStack(spacing: 6) {
+                Image(systemName: "plus")
+                    .accessibilityHidden(true)
+                Text(String(localized: "home.add", bundle: .tinyStockCore))
+            }
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(accentColor)
+            .lineLimit(1)
         }
-        .appProminentButton(accentColor, size: .regular)
+        // Vidro neutro com o texto na cor de destaque, como os botões redondos logo acima.
+        .appSecondaryButton(accentColor)
+        .controlSize(.regular)
         .adaptivePopover(isPresented: $showsOptions) {
             HomeAddPopover(accentColor: accentColor, hasProducts: hasProducts) { action in
                 showsOptions = false

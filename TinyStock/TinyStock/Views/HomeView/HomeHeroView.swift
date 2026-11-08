@@ -143,48 +143,60 @@ struct HomeHeroView: View {
 
 // MARK: - Balão explicativo
 
-/// Explica cada número da caixa, com a cor de cada parte.
+/// Explica cada número da caixa na mesma disposição dela: os pedidos das barras em cima e o catálogo
+/// dos lados embaixo (produtos à esquerda, estoque à direita).
 private struct HomeBoxInfoPopover: View {
 
     let summary: HomeSummary
     let graphite: StockBoxView.BarPalette
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             Text(String(localized: "home.box.info.title", bundle: .tinyStockCore))
                 .font(.headline)
                 .frame(maxWidth: .infinity)
                 .accessibilityAddTraits(.isHeader)
 
-            VStack(spacing: 10) {
-                row(StockBoxView.leftLegend, "home.box.info.products", summary.products)
-                row(StockBoxView.rightLegend, "home.box.info.units", summary.units)
-                row(StockBoxView.tealPalette.right, "home.box.info.production", summary.production)
-                row(graphite.right, "home.box.info.ready", summary.readyToShip)
-                row(StockBoxView.deepTealPalette.right, "home.box.info.shipped", summary.shipped)
+            AppSectionLabel(text: String(localized: "home.box.info.orders", bundle: .tinyStockCore))
+            HStack(spacing: 8) {
+                tile(StockBoxView.tealPalette.right, "home.box.info.production", summary.production)
+                tile(graphite.right, "home.box.info.ready", summary.readyToShip)
+                tile(StockBoxView.deepTealPalette.right, "home.box.info.shipped", summary.shipped)
             }
 
-            Text(String(localized: "home.box.info.footer", bundle: .tinyStockCore))
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            AppSectionLabel(text: String(localized: "home.box.info.catalog", bundle: .tinyStockCore))
+            HStack(spacing: 8) {
+                tile(StockBoxView.leftLegend, "home.box.info.products", summary.products)
+                tile(StockBoxView.rightLegend, "home.box.info.units", summary.units)
+            }
         }
         .padding(16)
-        .frame(width: 300)
+        .frame(width: 320)
     }
 
-    private func row(_ color: Color, _ titleKey: String, _ value: Int) -> some View {
-        HStack(spacing: 12) {
-            RoundedRectangle(cornerRadius: 4, style: .continuous)
-                .fill(color)
-                .frame(width: 16, height: 16)
+    private func tile(_ color: Color, _ titleKey: String, _ value: Int) -> some View {
+        VStack(spacing: 6) {
+            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .fill(color.gradient)
+                .frame(width: 22, height: 8)
                 .accessibilityHidden(true)
-            Text(String(localized: String.LocalizationValue(titleKey), bundle: .tinyStockCore))
-            Spacer(minLength: 8)
             Text(value, format: .number)
-                .font(.body.weight(.semibold))
+                .font(.title2.weight(.bold))
+                .fontDesign(.rounded)
                 .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            Text(String(localized: String.LocalizationValue(titleKey), bundle: .tinyStockCore))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
         }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 4)
+        .background(Color(.secondarySystemGroupedBackground),
+                    in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 }

@@ -27,6 +27,8 @@ final class DataBackupCoordinator {
     var isSavingToICloud = false
     var isRestoringFromICloud = false
     var isConfirmingICloudRestore = false
+    /// Sobe a cada restauração concluída, para quem precisa reagir a ela (ex.: a apresentação inicial).
+    private(set) var completedRestores = 0
 
     func refreshICloudStatus() async {
         isICloudAvailable = ICloudBackupManager.isSignedIn
@@ -89,6 +91,7 @@ final class DataBackupCoordinator {
             )
             try selectRestoredStore(result.selectedStoreID, in: context, storeSession: storeSession)
             self.pendingPayload = nil
+            completedRestores += 1
             showMessage(
                 titleKey: "settings.backup.success.title",
                 messageKey: result.migratedLegacyBackup
@@ -140,6 +143,7 @@ final class DataBackupCoordinator {
             let payload = try BackupManager.decode(data)
             let result = try BackupManager.apply(payload, into: context, storeID: storeID)
             try selectRestoredStore(result.selectedStoreID, in: context, storeSession: storeSession)
+            completedRestores += 1
             await refreshICloudStatus()
             showMessage(
                 titleKey: "settings.backup.success.title",
