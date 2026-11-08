@@ -157,8 +157,8 @@ private struct HomeBoxInfoPopover: View {
                 .accessibilityAddTraits(.isHeader)
 
             VStack(spacing: 10) {
-                row(Color(red: 0.894, green: 0.404, blue: 0.235), "home.box.info.products", summary.products)
-                row(Color(red: 0.980, green: 0.514, blue: 0.318), "home.box.info.units", summary.units)
+                row(StockBoxView.leftLegend, "home.box.info.products", summary.products)
+                row(StockBoxView.rightLegend, "home.box.info.units", summary.units)
                 row(StockBoxView.tealPalette.right, "home.box.info.production", summary.production)
                 row(graphite.right, "home.box.info.ready", summary.readyToShip)
                 row(StockBoxView.deepTealPalette.right, "home.box.info.shipped", summary.shipped)
