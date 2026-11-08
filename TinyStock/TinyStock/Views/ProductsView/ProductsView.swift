@@ -20,8 +20,6 @@ struct ProductsView: View {
     @State private var variantEditProduct: Product?
     @State private var actionProduct: Product?
     @State private var pendingAction: (ProductActionsSheet.Action, Product)?
-    @State private var isPresentingAddSheet = false
-    @State private var pendingAdd: AddAction?
     @State private var isPresentingModeSheet = false
     @State private var pendingDeletion: [Product] = []
     @State private var isConfirmingDelete = false
@@ -45,7 +43,8 @@ struct ProductsView: View {
     var body: some View {
         catalogContent
         .navigationTitle(String(localized: "tab.products", bundle: .tinyStockCore))
-        .toolbar { productToolbar }
+        // A Inicio desenha o proprio cabecalho (loja atual) dentro da lista.
+        .toolbar(.hidden, for: .navigationBar)
         .searchable(text: $searchText, prompt: Text(String(localized: "products.catalog.search", bundle: .tinyStockCore)))
         .sheet(isPresented: $isPresentingForm) { ProductFormView(storeID: storeID) }
         .sheet(isPresented: $isPresentingSale) { SalesOrderFormView(storeID: storeID) }
@@ -56,7 +55,6 @@ struct ProductsView: View {
         .sheet(item: $variantRequest) { NewProductVariantView(storeID: storeID, productID: $0.productID) }
         .sheet(item: $detailProduct) { ProductDetailView(product: $0) }
         .sheet(item: $variantEditProduct) { EditProductVariantView(product: $0) }
-        .sheet(isPresented: $isPresentingAddSheet, onDismiss: runPendingAdd) { addSheet }
         .sheet(isPresented: $isPresentingModeSheet) { modeSheet }
         .sheet(item: $actionProduct, onDismiss: runPendingAction) { product in
             ProductActionsSheet(product: product, quantity: quantity(of: product)) { action in
@@ -90,9 +88,7 @@ struct ProductsView: View {
             isConfirmingDelete = false
             isPresentingForm = false
             isPresentingSale = false
-            isPresentingAddSheet = false
             isPresentingModeSheet = false
-            pendingAdd = nil
             variantEdit = nil
             editMode = .inactive
             searchText = ""
@@ -104,32 +100,50 @@ struct ProductsView: View {
     }
 
     private var catalogContent: some View {
-        Group {
+        List {
+            // Durante a busca a lista mostra so os resultados.
+            if searchText.isEmpty {
+                Section { homeRows }
+            }
             if products.isEmpty {
-                VStack(spacing: 0) {
-                    HomePageButtons()
-                        .padding(.top, 8)
-                    emptyCatalog
-                }
+                Section { emptyCatalog }
             } else if filteredProducts.isEmpty {
-                ContentUnavailableView.search(text: searchText)
-            } else if catalogMode == .variants {
-                variantList
+                Section { ContentUnavailableView.search(text: searchText) }
             } else {
-                List {
-                    navigationButtons
-                    modeSelector
-                    ForEach(filteredProducts) { product in
-                        productRow(product)
-                            .deleteDisabled(!editMode.isEditing)
+                Section { catalogHeader }
+                if catalogMode == .variants {
+                    variantSections
+                } else {
+                    Section {
+                        ForEach(filteredProducts) { product in
+                            productRow(product)
+                                .deleteDisabled(!editMode.isEditing)
+                        }
+                        // O menos nativo so aparece em Editar; a confirmacao usa os objetos da lista filtrada.
+                        .onDelete(perform: requestDeletion)
+                        .onMove(perform: moveAction)
                     }
-                    // O menos nativo so aparece em Editar; a confirmacao usa os objetos da lista filtrada.
-                    .onDelete(perform: requestDeletion)
-                    .onMove(perform: moveAction)
                 }
-                .environment(\.editMode, $editMode)
             }
         }
+        .listSectionSpacing(.compact)
+        .environment(\.editMode, $editMode)
+    }
+
+    /// Topo da Inicio: loja atual, caixa com o resumo, botoes redondos e Adicionar.
+    private var homeRows: some View {
+        Group {
+            StoreSwitcherView()
+                .frame(maxWidth: .infinity)
+            HomeHeroView(storeID: storeID, products: products, variants: variants)
+            HomePageButtons()
+            HomeAddButton(hasProducts: !products.isEmpty, onPick: handleAdd)
+        }
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
+        .moveDisabled(true)
+        .deleteDisabled(true)
     }
 
     private var emptyCatalog: some View {
@@ -137,28 +151,38 @@ struct ProductsView: View {
             Label(String(localized: "products.empty.title", bundle: .tinyStockCore), systemImage: "shippingbox")
         } description: {
             Text(String(localized: "products.empty.message", bundle: .tinyStockCore))
-        } actions: {
-            Button(String(localized: "products.add", bundle: .tinyStockCore)) { isPresentingForm = true }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
         }
+        .listRowBackground(Color.clear)
     }
 
-    /// Botoes redondos da Inicio (Relatorios, Calendario e Ajustes), fora da edicao do catalogo.
-    private var navigationButtons: some View {
-        HomePageButtons()
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
-            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-            .moveDisabled(true)
-            .deleteDisabled(true)
+    /// Acima do catalogo: troca entre produtos e variacoes e, nos produtos, o Editar.
+    private var catalogHeader: some View {
+        HStack(spacing: 12) {
+            TitleSelectorButton(title: catalogMode.title) { isPresentingModeSheet = true }
+            // O EditButton do sistema alterava outro modo de edicao e nao alcancava a lista.
+            if catalogMode == .products {
+                Button(editMode.isEditing
+                       ? String(localized: "common.done", bundle: .tinyStockCore)
+                       : String(localized: "common.edit", bundle: .tinyStockCore)) {
+                    withAnimation { editMode = editMode.isEditing ? .inactive : .active }
+                }
+                .buttonStyle(.borderless)
+                .font(.body.weight(.semibold))
+            }
+        }
+        .listRowBackground(Color.clear)
+        .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 4, trailing: 4))
+        .listRowSeparator(.hidden)
+        .moveDisabled(true)
+        .deleteDisabled(true)
     }
 
-    /// Abaixo do titulo, alterna entre produtos e variacoes agrupadas por produto.
-    private var modeSelector: some View {
-        TitleSelectorButton(title: catalogMode.title) { isPresentingModeSheet = true }
-            .moveDisabled(true)
-            .deleteDisabled(true)
+    private func handleAdd(_ action: HomeAddAction) {
+        switch action {
+        case .product: isPresentingForm = true
+        case .variant: variantRequest = NewVariantRequest(productID: nil)
+        case .sale: isPresentingSale = true
+        }
     }
 
     private var modeSheet: some View {
@@ -174,58 +198,25 @@ struct ProductsView: View {
         }
     }
 
-    private var addSheet: some View {
-        BottomActionSheet {
-            SheetActionButton(title: String(localized: "product.form.title.new", bundle: .tinyStockCore),
-                              systemImage: "shippingbox") { chooseAdd(.product) }
-            SheetActionButton(title: String(localized: "stock.entry.newVariant", bundle: .tinyStockCore),
-                              systemImage: "plus.square.on.square") { chooseAdd(.variant) }
-                .disabled(products.isEmpty)
-            SheetActionButton(title: String(localized: "sale.new.title", bundle: .tinyStockCore),
-                              systemImage: "cart.badge.plus") { chooseAdd(.sale) }
-                .disabled(products.isEmpty)
-        }
-    }
-
-    private func chooseAdd(_ action: AddAction) {
-        pendingAdd = action
-        isPresentingAddSheet = false
-    }
-
-    /// Uma folha so abre depois que a anterior termina de fechar.
-    private func runPendingAdd() {
-        guard let action = pendingAdd else { return }
-        pendingAdd = nil
-        switch action {
-        case .product: isPresentingForm = true
-        case .variant: variantRequest = NewVariantRequest(productID: nil)
-        case .sale: isPresentingSale = true
-        }
-    }
-
-    private var variantList: some View {
-        List {
-            navigationButtons
-            modeSelector
-            ForEach(filteredProducts) { product in
-                Section(product.name) {
-                    ForEach(variants(of: product)) { variant in
-                        Button { variantEdit = VariantEditRequest(product: product, variantID: variant.id) } label: {
-                            HStack(spacing: 12) {
-                                ProductImageView(imageData: variant.imageData, side: 44)
-                                Text(variant.isDefault
-                                     ? String(localized: "products.variants.noVariation", bundle: .tinyStockCore)
-                                     : variant.name)
-                                Spacer(minLength: 8)
-                                Text(variant.quantity, format: .number)
-                                    .monospacedDigit()
-                                    .foregroundStyle(.tint)
-                                chevron
-                            }
-                            .contentShape(Rectangle())
+    private var variantSections: some View {
+        ForEach(filteredProducts) { product in
+            Section(product.name) {
+                ForEach(variants(of: product)) { variant in
+                    Button { variantEdit = VariantEditRequest(product: product, variantID: variant.id) } label: {
+                        HStack(spacing: 12) {
+                            ProductImageView(imageData: variant.imageData, side: 44)
+                            Text(variant.isDefault
+                                 ? String(localized: "products.variants.noVariation", bundle: .tinyStockCore)
+                                 : variant.name)
+                            Spacer(minLength: 8)
+                            Text(variant.quantity, format: .number)
+                                .monospacedDigit()
+                                .foregroundStyle(.tint)
+                            chevron
                         }
-                        .foregroundStyle(.primary)
+                        .contentShape(Rectangle())
                     }
+                    .foregroundStyle(.primary)
                 }
             }
         }
@@ -240,25 +231,6 @@ struct ProductsView: View {
             .font(.footnote.weight(.semibold))
             .foregroundStyle(.tertiary)
             .accessibilityHidden(true)
-    }
-
-    @ToolbarContentBuilder
-    private var productToolbar: some ToolbarContent {
-        ToolbarItem(placement: .topBarLeading) { StoreSwitcherView() }
-        ToolbarItemGroup(placement: .topBarTrailing) {
-            // O EditButton da barra alterava outro modo de edicao e nao alcancava a lista.
-            if catalogMode == .products {
-                Button(editMode.isEditing
-                       ? String(localized: "common.done", bundle: .tinyStockCore)
-                       : String(localized: "common.edit", bundle: .tinyStockCore)) {
-                    withAnimation { editMode = editMode.isEditing ? .inactive : .active }
-                }
-                .disabled(products.isEmpty)
-            }
-            Button { isPresentingAddSheet = true } label: {
-                Label(String(localized: "products.add", bundle: .tinyStockCore), systemImage: "plus")
-            }
-        }
     }
 
     @ViewBuilder
@@ -376,10 +348,6 @@ private enum CatalogMode: String, CaseIterable {
         case .variants: "square.stack.3d.up"
         }
     }
-}
-
-private enum AddAction {
-    case product, variant, sale
 }
 
 private struct VariantEditRequest: Identifiable {

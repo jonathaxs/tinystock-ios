@@ -1,7 +1,7 @@
 // ⌘
 //  TinyStock/Views/Shared/StoreSwitcherView.swift
 //
-//  Propósito: Trocar ou editar rapidamente a loja ativa sem sair da tela atual.
+//  Propósito: Título da Início com a loja ativa; o menu troca de loja ou edita a atual sem sair da tela.
 //
 //  Created by Jonathas Motta (@jonathaxs) on 2026-08-25.
 // ⌘
@@ -48,12 +48,22 @@ struct StoreSwitcherView: View {
                 }
             }
         } label: {
-            Label(
-                selectedStore?.name ?? StoreProfileService.localizedDefaultName,
-                systemImage: "storefront"
-            )
-            .lineLimit(1)
+            // Titulo da Inicio: foto e nome da loja atual, com a seta do menu.
+            HStack(spacing: 10) {
+                StoreImageView(imageData: selectedStore?.imageData, side: 34)
+                Text(selectedStore?.name ?? StoreProfileService.localizedDefaultName)
+                    .font(.title.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                Image(systemName: "chevron.down")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(.tint)
+                    .accessibilityHidden(true)
+            }
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
         .accessibilityLabel(
             String(localized: "store.switcher.accessibility", bundle: .tinyStockCore)
         )

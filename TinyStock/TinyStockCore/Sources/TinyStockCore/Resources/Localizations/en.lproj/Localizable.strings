@@ -29,7 +29,6 @@
 /* MARK: - Products */
 "products.empty.title" = "No products yet";
 "products.empty.message" = "Add your first product to start tracking your stock.";
-"products.add" = "Add product";
 
 
 /* MARK: - Product form */
@@ -490,3 +489,22 @@
 "products.actions" = "Product actions";
 "store.switcher.current" = "Current store";
 "store.switcher.others" = "Switch store";
+
+/* MARK: - Home */
+"home.add" = "Add";
+"home.box.products" = "products";
+"home.box.units" = "in stock";
+"home.box.hint" = "Shows what each number means.";
+"home.box.a11y" = "Store summary: %d products, %d units in stock, %d orders in production, %d ready to ship, %d shipped";
+"home.box.info.title" = "Store summary";
+"home.box.info.products" = "Products";
+"home.box.info.units" = "Units in stock";
+"home.box.info.production" = "Orders in production";
+"home.box.info.ready" = "Ready to ship";
+"home.box.info.shipped" = "Shipped";
+"home.box.info.footer" = "The sides of the box show your catalog; the bars show open orders at each stage.";
+"home.status.empty" = "Add a product to get started";
+"home.status.overdue" = "Overdue orders: %d";
+"home.status.outOfStock" = "Products out of stock: %d";
+"home.status.open" = "Open orders: %d";
+"home.status.allGood" = "All caught up";

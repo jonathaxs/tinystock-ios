@@ -29,7 +29,6 @@
 /* MARK: - Produtos */
 "products.empty.title" = "Nenhum produto ainda";
 "products.empty.message" = "Cadastre seu primeiro produto pra começar a controlar o estoque.";
-"products.add" = "Cadastrar produto";
 
 
 /* MARK: - Formulário do produto */
@@ -490,3 +489,22 @@
 "products.actions" = "Ações do produto";
 "store.switcher.current" = "Loja atual";
 "store.switcher.others" = "Trocar de loja";
+
+/* MARK: - Home */
+"home.add" = "Adicionar";
+"home.box.products" = "produtos";
+"home.box.units" = "em estoque";
+"home.box.hint" = "Mostra o que cada número significa.";
+"home.box.a11y" = "Resumo da loja: %d produtos, %d unidades em estoque, %d pedidos em produção, %d prontos para enviar, %d enviados";
+"home.box.info.title" = "Resumo da loja";
+"home.box.info.products" = "Produtos cadastrados";
+"home.box.info.units" = "Unidades em estoque";
+"home.box.info.production" = "Pedidos em produção";
+"home.box.info.ready" = "Prontos para enviar";
+"home.box.info.shipped" = "Enviados";
+"home.box.info.footer" = "Os lados da caixa mostram o catálogo; as barras mostram os pedidos em aberto de cada etapa.";
+"home.status.empty" = "Cadastre um produto para começar";
+"home.status.overdue" = "Pedidos atrasados: %d";
+"home.status.outOfStock" = "Produtos sem estoque: %d";
+"home.status.open" = "Pedidos em aberto: %d";
+"home.status.allGood" = "Tudo em dia";
