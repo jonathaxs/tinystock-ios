@@ -1,4 +1,4 @@
-// Proposito: Catalogo por loja, por produto ou por variacao, com acoes e modo de edicao.
+// Proposito: Catalogo por loja, por produto ou por variacao, em lista ou grade, com acoes e modo de edicao.
 // Created by Jonathas Motta (@jonathaxs) on 2026-08-07.
 
 import SwiftUI
@@ -28,6 +28,7 @@ struct ProductsView: View {
     @State private var isPresentingSale = false
     @State private var variantEdit: VariantEditRequest?
     @AppStorage("products.catalogMode") private var catalogMode: CatalogMode = .products
+    @AppStorage(CatalogViewMode.storageKey) private var viewMode: CatalogViewMode = .list
 
     init(storeID: UUID) {
         self.storeID = storeID
@@ -97,6 +98,8 @@ struct ProductsView: View {
             if empty { editMode = .inactive }
         }
         .onChange(of: catalogMode) { _, _ in editMode = .inactive }
+        // Editar (apagar e reordenar) so existe na lista.
+        .onChange(of: viewMode) { _, _ in editMode = .inactive }
     }
 
     private var catalogContent: some View {
@@ -111,7 +114,9 @@ struct ProductsView: View {
                 Section { ContentUnavailableView.search(text: searchText) }
             } else {
                 Section { catalogHeader }
-                if catalogMode == .variants {
+                if viewMode == .grid {
+                    gridSections
+                } else if catalogMode == .variants {
                     variantSections
                 } else {
                     Section {
@@ -160,7 +165,7 @@ struct ProductsView: View {
         HStack(spacing: 12) {
             TitleSelectorButton(title: catalogMode.title) { isPresentingModeSheet = true }
             // O EditButton do sistema alterava outro modo de edicao e nao alcancava a lista.
-            if catalogMode == .products {
+            if catalogMode == .products && viewMode == .list {
                 Button(editMode.isEditing
                        ? String(localized: "common.done", bundle: .tinyStockCore)
                        : String(localized: "common.edit", bundle: .tinyStockCore)) {
@@ -194,6 +199,29 @@ struct ProductsView: View {
                     catalogMode = mode
                     isPresentingModeSheet = false
                 }
+            }
+        }
+    }
+
+    /// Grade: fotos lado a lado. Produtos abrem o balao de acoes; variacoes abrem a edicao.
+    @ViewBuilder
+    private var gridSections: some View {
+        if catalogMode == .variants {
+            ForEach(filteredProducts) { product in
+                Section(product.name) {
+                    VariantCatalogGrid(variants: variants(of: product)) { variant in
+                        variantEdit = VariantEditRequest(product: product, variantID: variant.id)
+                    }
+                    .gridRowStyle()
+                }
+            }
+        } else {
+            Section {
+                ProductCatalogGrid(products: filteredProducts, variants: variants) { action, product in
+                    pendingAction = (action, product)
+                    runPendingAction()
+                }
+                .gridRowStyle()
             }
         }
     }
@@ -328,6 +356,17 @@ struct ProductsView: View {
             pendingDeletion = []
             errorMessage = (error as? ProductError)?.localizedMessage ?? error.localizedDescription
         }
+    }
+}
+
+private extension View {
+    /// A grade fica direto no fundo da tela, sem o card da linha da lista.
+    func gridRowStyle() -> some View {
+        listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+            .listRowSeparator(.hidden)
+            .moveDisabled(true)
+            .deleteDisabled(true)
     }
 }
 

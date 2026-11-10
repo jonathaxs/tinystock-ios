@@ -487,6 +487,9 @@
 "products.mode.variants" = "Variações";
 "products.variants.noVariation" = "Sem variação";
 "products.actions" = "Ações do produto";
+"products.viewMode.showGrid" = "Ver em grade";
+"products.viewMode.showList" = "Ver em lista";
+"products.grid.hint" = "Toque para ver as ações.";
 "store.switcher.current" = "Loja atual";
 "store.switcher.others" = "Trocar de loja";
 
