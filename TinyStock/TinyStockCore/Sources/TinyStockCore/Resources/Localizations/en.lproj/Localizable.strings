@@ -417,9 +417,8 @@
 
 /* Settings */
 "settings.section.system" = "System";
-"settings.section.preferences" = "Preferences";
 "settings.section.about" = "About";
-"settings.section.profile" = "Profile";
+"settings.section.appearance" = "Appearance";
 "settings.language" = "Language";
 "settings.language.hint" = "Opens the app settings on this device.";
 "settings.backup.title" = "Backups";
@@ -438,7 +437,6 @@
 "color.pink" = "Pink";
 "settings.about.title" = "About TinyStock";
 "settings.about.description" = "TinyStock helps small sellers organize products, variations, inventory, orders, production and dispatch deadlines.";
-"settings.about.information" = "Information";
 "settings.about.developer" = "Developer";
 "settings.about.feedback" = "Send feedback";
 "settings.about.website" = "Developer website";

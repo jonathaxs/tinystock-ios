@@ -1,4 +1,4 @@
-// Proposito: Apresentar identidade, versao, privacidade e contato do TinyStock.
+// Proposito: Apresentar identidade, versao e contato do TinyStock (a privacidade fica nos Ajustes).
 // Created by Jonathas Motta (@jonathaxs) on 2026-09-08.
 
 import SwiftUI
@@ -29,14 +29,6 @@ struct AboutView: View {
                     .frame(maxWidth: .infinity)
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
-            }
-
-            Section(String(localized: "settings.about.information", bundle: .tinyStockCore)) {
-                NavigationLink {
-                    PrivacyView()
-                } label: {
-                    Label(String(localized: "settings.privacy.title", bundle: .tinyStockCore), systemImage: "hand.raised")
-                }
             }
 
             Section(String(localized: "settings.about.developer", bundle: .tinyStockCore)) {
