@@ -127,6 +127,7 @@
 "reports.operation.openCalendar" = "Abre o Calendário com este filtro.";
 "reports.count.orders.one" = "%d pedido";
 "reports.count.orders.other" = "%d pedidos";
+"reports.count.units.one" = "%@ unidade";
 "reports.count.units" = "%@ unidades";
 "reports.daily.title" = "Por dia";
 "reports.daily.profit" = "Lucro líquido: %@";

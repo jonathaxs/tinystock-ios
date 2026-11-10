@@ -20,14 +20,15 @@ enum AppStyle {
 
 // MARK: - Rótulo de seção
 
-/// Título pequeno acima de um card agrupado.
+/// Título pequeno acima de um card agrupado. `tinted` usa a cor de destaque, como nos Ajustes.
 struct AppSectionLabel: View {
     let text: String
+    var tinted = false
 
     var body: some View {
         Text(text)
             .font(.subheadline.weight(.semibold))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(tinted ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
             .padding(.horizontal, 6)
             .accessibilityAddTraits(.isHeader)
     }

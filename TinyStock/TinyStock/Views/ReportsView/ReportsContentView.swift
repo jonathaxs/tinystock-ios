@@ -26,9 +26,10 @@ struct ReportsContentView: View {
 
                 activitySection
             }
-            .padding()
+            .padding(.horizontal, AppStyle.horizontalPadding)
+            .padding(.top, 8)
+            .padding(.bottom, 24)
         }
-        .background(Color(.systemGroupedBackground))
     }
 
     private func receivedSection(_ totals: SalesOrderReportTotals) -> some View {
@@ -76,21 +77,19 @@ struct ReportsContentView: View {
 
     private var activitySection: some View {
         reportSection(title: String(localized: "reports.activity.title", bundle: .tinyStockCore)) {
-            VStack(spacing: 0) {
+            AppGroupedCard(dividerInset: Self.iconRowInset) {
                 ReportCountRowView(
                     title: String(localized: "reports.activity.dispatched", bundle: .tinyStockCore),
                     count: summary.dispatched.orderCount,
                     symbolName: "paperplane.fill",
                     tint: .blue
                 )
-                rowDivider
                 ReportCountRowView(
                     title: String(localized: "reports.activity.completed", bundle: .tinyStockCore),
                     count: summary.completed.orderCount,
                     symbolName: "checkmark.circle.fill",
                     tint: .green
                 )
-                rowDivider
                 ReportCountRowView(
                     title: String(localized: "reports.activity.cancelled", bundle: .tinyStockCore),
                     count: summary.cancelled.orderCount,
@@ -98,13 +97,12 @@ struct ReportsContentView: View {
                     tint: .red
                 )
             }
-            .groupedReportRows()
         }
     }
 
     private func operationSection(_ operations: SalesOrderOperationalSummary) -> some View {
         reportSection(title: String(localized: "reports.operation.title", bundle: .tinyStockCore)) {
-            VStack(spacing: 0) {
+            AppGroupedCard(dividerInset: Self.iconRowInset) {
                 operationButton(
                     title: String(localized: "reports.operation.toProduce", bundle: .tinyStockCore),
                     queue: operations.toProduce,
@@ -112,7 +110,6 @@ struct ReportsContentView: View {
                     tint: .orange,
                     filter: .production
                 )
-                rowDivider
                 operationButton(
                     title: String(localized: "reports.operation.readyToShip", bundle: .tinyStockCore),
                     queue: operations.readyToShip,
@@ -120,7 +117,6 @@ struct ReportsContentView: View {
                     tint: .blue,
                     filter: .status(.readyToShip)
                 )
-                rowDivider
                 operationButton(
                     title: String(localized: "reports.operation.overdue", bundle: .tinyStockCore),
                     queue: operations.overdue,
@@ -128,7 +124,6 @@ struct ReportsContentView: View {
                     tint: .red,
                     filter: .overdue
                 )
-                rowDivider
                 operationButton(
                     title: String(localized: "reports.operation.shipped", bundle: .tinyStockCore),
                     queue: operations.shipped,
@@ -137,7 +132,6 @@ struct ReportsContentView: View {
                     filter: .status(.shipped)
                 )
             }
-            .groupedReportRows()
         }
     }
 
@@ -160,13 +154,12 @@ struct ReportsContentView: View {
         .buttonStyle(.plain)
     }
 
-    private var rowDivider: some View {
-        Divider().padding(.leading, 52)
-    }
+    /// Recuo do divisor nas linhas com ícone: margem + ícone de 32 + espaço.
+    private static let iconRowInset: CGFloat = 60
 
     private func bestSellersSection(_ rankings: [SalesOrderProductRanking]) -> some View {
         reportSection(title: String(localized: "reports.bestSellers.title", bundle: .tinyStockCore)) {
-            groupedRows(rankings) { index, ranking in
+            groupedRows(rankings, dividerInset: 56) { index, ranking in
                 BestSellingRowView(position: index + 1, ranking: ranking)
             }
         }
@@ -192,25 +185,22 @@ struct ReportsContentView: View {
         title: String,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(title).font(.headline)
+        VStack(alignment: .leading, spacing: 8) {
+            AppSectionLabel(text: title, tinted: true)
             content()
         }
     }
 
     private func groupedRows<Item: Identifiable, Row: View>(
         _ items: [Item],
+        dividerInset: CGFloat = 16,
         @ViewBuilder row: @escaping (Int, Item) -> Row
     ) -> some View {
-        VStack(spacing: 0) {
+        AppGroupedCard(dividerInset: dividerInset) {
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                 row(index, item)
-                if index < items.count - 1 {
-                    Divider().padding(.leading, 16)
-                }
             }
         }
-        .groupedReportRows()
     }
 
     private var metricColumns: [GridItem] {
@@ -229,14 +219,6 @@ struct ReportsContentView: View {
             Text(String(localized: "reports.empty.period.message", bundle: .tinyStockCore))
         }
         .frame(maxWidth: .infinity, minHeight: 220)
-    }
-}
-
-private extension View {
-    func groupedReportRows() -> some View {
-        background(
-            Color(.secondarySystemGroupedBackground),
-            in: RoundedRectangle(cornerRadius: 8)
-        )
+        .appCard()
     }
 }

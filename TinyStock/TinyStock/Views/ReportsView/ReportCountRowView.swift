@@ -26,16 +26,14 @@ struct ReportCountRowView: View {
                 }
             }
         }
-        .padding(16)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .accessibilityElement(children: .combine)
     }
 
     private var rowTitle: some View {
         HStack(spacing: 12) {
-            Image(systemName: symbolName)
-                .foregroundStyle(tint)
-                .frame(width: 24)
-                .accessibilityHidden(true)
+            GlassIcon(systemName: symbolName, color: tint)
             Text(title).font(.headline)
         }
     }

@@ -19,20 +19,16 @@ struct ReportMetricView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             if dynamicTypeSize.isAccessibilitySize {
-                Image(systemName: symbolName)
-                    .foregroundStyle(tint)
-                    .accessibilityHidden(true)
+                GlassIcon(systemName: symbolName, color: tint)
 
                 metricTitle
             } else {
-                HStack {
+                HStack(alignment: .top) {
                     metricTitle
 
                     Spacer(minLength: 8)
 
-                    Image(systemName: symbolName)
-                        .foregroundStyle(tint)
-                        .accessibilityHidden(true)
+                    GlassIcon(systemName: symbolName, color: tint)
                 }
             }
 
@@ -43,7 +39,7 @@ struct ReportMetricView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, minHeight: 104, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+        .appCard()
         .accessibilityElement(children: .combine)
     }
 

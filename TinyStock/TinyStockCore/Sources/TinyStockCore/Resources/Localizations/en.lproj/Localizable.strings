@@ -127,6 +127,7 @@
 "reports.operation.openCalendar" = "Opens the Calendar with this filter.";
 "reports.count.orders.one" = "%d order";
 "reports.count.orders.other" = "%d orders";
+"reports.count.units.one" = "%@ unit";
 "reports.count.units" = "%@ units";
 "reports.daily.title" = "By day";
 "reports.daily.profit" = "Net profit: %@";

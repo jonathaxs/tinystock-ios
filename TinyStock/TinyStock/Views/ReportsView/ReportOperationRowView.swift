@@ -18,7 +18,9 @@ struct ReportOperationRowView: View {
             ? String(format: String(localized: "reports.count.orders.one", bundle: .tinyStockCore), orderCount)
             : String(format: String(localized: "reports.count.orders.other", bundle: .tinyStockCore), orderCount)
         let units = String(
-            format: String(localized: "reports.count.units", bundle: .tinyStockCore),
+            format: unitCount == 1
+                ? String(localized: "reports.count.units.one", bundle: .tinyStockCore)
+                : String(localized: "reports.count.units", bundle: .tinyStockCore),
             unitCount.formatted(.number.precision(.fractionLength(0)))
         )
         return "\(orders) · \(units)"
@@ -56,17 +58,15 @@ struct ReportOperationRowView: View {
                 }
             }
         }
-        .padding(16)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityHint(String(localized: "reports.operation.openCalendar", bundle: .tinyStockCore))
     }
 
     private var icon: some View {
-        Image(systemName: symbolName)
-            .foregroundStyle(tint)
-            .frame(width: 24)
-            .accessibilityHidden(true)
+        GlassIcon(systemName: symbolName, color: tint)
     }
 
     private var chevron: some View {

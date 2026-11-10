@@ -79,6 +79,8 @@ struct ReportsView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.systemGroupedBackground))
     }
 
     private var periodMenu: some View {
@@ -117,6 +119,7 @@ struct ReportsView: View {
                 } else {
                     HStack(spacing: 10) {
                         Image(systemName: "calendar")
+                            .foregroundStyle(.tint)
                             .accessibilityHidden(true)
                         Text(String(localized: "reports.period.label", bundle: .tinyStockCore))
                             .foregroundStyle(.secondary)
@@ -129,12 +132,14 @@ struct ReportsView: View {
                     }
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 6)
             .frame(minHeight: 48)
-            .contentShape(Rectangle())
+            .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
         .buttonStyle(.plain)
-        .padding(.horizontal)
+        .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .padding(.horizontal, AppStyle.horizontalPadding)
         .padding(.vertical, 8)
         .accessibilityLabel(String(localized: "reports.period.label", bundle: .tinyStockCore))
         .accessibilityValue(periodTitle)

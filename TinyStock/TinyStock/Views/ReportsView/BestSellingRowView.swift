@@ -32,9 +32,11 @@ struct BestSellingRowView: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Text(position, format: .number)
-                .font(.headline)
-                .foregroundStyle(.secondary)
-                .frame(minWidth: 24)
+                .font(.subheadline.bold())
+                .monospacedDigit()
+                .foregroundStyle(.tint)
+                .frame(minWidth: 28, minHeight: 28)
+                .background(Circle().fill(.tint.opacity(0.14)))
 
             if dynamicTypeSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 8) {
