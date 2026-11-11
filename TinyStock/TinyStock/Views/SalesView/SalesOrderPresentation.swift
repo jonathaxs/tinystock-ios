@@ -25,7 +25,7 @@ enum SalesOrderPresentation {
             SalesOrderQuickAction(
                 status: .shipped,
                 title: String(localized: "order.action.shipped", bundle: .tinyStockCore),
-                systemImage: "shippingbox.and.arrow.forward",
+                systemImage: "paperplane",
                 tint: .blue
             )
         case .shipped:
@@ -37,6 +37,20 @@ enum SalesOrderPresentation {
             )
         case .new, .completed, .cancelled, .none:
             nil
+        }
+    }
+
+    /// Icone e cor do status, usados no circulo de vidro das linhas do calendario.
+    static func statusSymbol(for status: SalesOrderStatus?) -> (name: String, color: Color) {
+        switch status {
+        case .new: ("sparkles", .purple)
+        case .awaitingProduction: ("clock.fill", .orange)
+        case .inProduction: ("hammer.fill", .orange)
+        case .readyToShip: ("shippingbox.fill", .blue)
+        case .shipped: ("paperplane.fill", .teal)
+        case .completed: ("checkmark.circle.fill", .green)
+        case .cancelled: ("xmark.circle.fill", .red)
+        case .none: ("questionmark", .gray)
         }
     }
 

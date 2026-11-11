@@ -7,7 +7,6 @@ import TinyStockCore
 
 struct ReportsView: View {
     @Environment(\.calendar) private var calendar
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     private let storeID: UUID
     private let openCalendar: (CalendarOrderFilter) -> Void
     @Query private var orders: [SalesOrder]
@@ -84,19 +83,17 @@ struct ReportsView: View {
     }
 
     private var periodMenu: some View {
-        Menu {
-            ForEach(SalesReportPeriod.allCases) { period in
-                Button {
-                    selectedPeriod = period
-                    usesCustomPeriod = false
-                } label: {
-                    if !usesCustomPeriod && selectedPeriod == period {
-                        Label(period.localizedName, systemImage: "checkmark")
-                    } else {
-                        Text(period.localizedName)
-                    }
+        AppMenuRow(
+            systemName: "calendar",
+            title: String(localized: "reports.period.label", bundle: .tinyStockCore),
+            value: periodTitle
+        ) {
+            Picker(String(localized: "reports.period.label", bundle: .tinyStockCore), selection: presetSelection) {
+                ForEach(SalesReportPeriod.allCases) { period in
+                    Text(period.localizedName).tag(Optional(period))
                 }
             }
+            .pickerStyle(.inline)
             Divider()
             Button {
                 showsCustomPeriod = true
@@ -107,42 +104,21 @@ struct ReportsView: View {
                     Text(String(localized: "reports.period.custom", bundle: .tinyStockCore))
                 }
             }
-        } label: {
-            Group {
-                if dynamicTypeSize.isAccessibilitySize {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(String(localized: "reports.period.label", bundle: .tinyStockCore))
-                            .foregroundStyle(.secondary)
-                        Text(periodTitle)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                } else {
-                    HStack(spacing: 10) {
-                        Image(systemName: "calendar")
-                            .foregroundStyle(.tint)
-                            .accessibilityHidden(true)
-                        Text(String(localized: "reports.period.label", bundle: .tinyStockCore))
-                            .foregroundStyle(.secondary)
-                        Spacer(minLength: 12)
-                        Text(periodTitle)
-                        Image(systemName: "chevron.up.chevron.down")
-                            .font(.caption.bold())
-                            .foregroundStyle(.secondary)
-                            .accessibilityHidden(true)
-                    }
-                }
-            }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 6)
-            .frame(minHeight: 48)
-            .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
-        .buttonStyle(.plain)
-        .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .padding(.horizontal, AppStyle.horizontalPadding)
         .padding(.vertical, 8)
-        .accessibilityLabel(String(localized: "reports.period.label", bundle: .tinyStockCore))
-        .accessibilityValue(periodTitle)
+    }
+
+    /// Periodo pronto escolhido no menu; nil quando o periodo personalizado esta ativo.
+    private var presetSelection: Binding<SalesReportPeriod?> {
+        Binding(
+            get: { usesCustomPeriod ? nil : selectedPeriod },
+            set: { period in
+                guard let period else { return }
+                selectedPeriod = period
+                usesCustomPeriod = false
+            }
+        )
     }
 
     private var noDataState: some View {

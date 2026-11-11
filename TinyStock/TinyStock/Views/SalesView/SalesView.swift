@@ -18,7 +18,6 @@ struct SalesView: View {
     @AppStorage("orders.displayMode") private var displayMode: OrderDisplayMode = .day
     @State private var selectedDate = Date()
     @State private var filter: CalendarOrderFilter = .all
-    @State private var isPresentingFilterSheet = false
 
     init(
         storeID: UUID, filterRequest: Binding<CalendarOrderFilter?> = .constant(nil),
@@ -49,7 +48,6 @@ struct SalesView: View {
         .navigationDestination(item: scopedReminderRoute) { route in
             ReminderOrderDestination(route: route)
         }
-        .sheet(isPresented: $isPresentingFilterSheet) { filterSheet }
         .alert(String(localized: "order.cancel.title", bundle: .tinyStockCore), isPresented: Binding(
             get: { pendingCancellation != nil },
             set: { if !$0 { clearCancellation() } }
@@ -68,7 +66,6 @@ struct SalesView: View {
         .onChange(of: storeID) { _, _ in
             clearCancellation()
             errorMessage = nil
-            isPresentingFilterSheet = false
             filter = .all
             selectedDate = Date()
         }
@@ -103,13 +100,16 @@ struct SalesView: View {
         let sections = SalesOrderQueueSection.make(from: visible)
         return List {
             Section {
-                // O filtro ativo fica sob o titulo e abre a folha de troca.
-                TitleSelectorButton(title: filter.title) { isPresentingFilterSheet = true }
+                filterMenu
+                    .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
                 Picker(String(localized: "order.calendar.mode", bundle: .tinyStockCore), selection: $displayMode) {
                     Text(String(localized: "order.calendar.day", bundle: .tinyStockCore)).tag(OrderDisplayMode.day)
                     Text(String(localized: "order.calendar.list", bundle: .tinyStockCore)).tag(OrderDisplayMode.list)
                 }
                 .pickerStyle(.segmented)
+                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
                 if displayMode == .day {
@@ -117,33 +117,36 @@ struct SalesView: View {
                         selectedDate: $selectedDate,
                         countsByDay: SalesOrderSchedule.countsByDay(from: filtered, calendar: calendar)
                     )
-                    .listRowInsets(EdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 8))
+                    .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
                 }
             }
             Section {
                 if visible.isEmpty {
-                    if orders.isEmpty {
-                        emptyState
-                    } else {
-                        ContentUnavailableView(
-                            String(localized: "order.calendar.empty", bundle: .tinyStockCore),
-                            systemImage: "calendar"
-                        )
+                    Group {
+                        if orders.isEmpty {
+                            emptyState
+                        } else {
+                            ContentUnavailableView(
+                                String(localized: "order.calendar.empty", bundle: .tinyStockCore),
+                                systemImage: "calendar"
+                            )
+                        }
                     }
+                    .frame(maxWidth: .infinity, minHeight: 220)
+                    .appCard()
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
                 }
             } header: {
                 if displayMode == .day {
-                    HStack {
-                        Spacer()
-                        Text(selectedDate, format: .dateTime.weekday(.wide).day().month(.wide).year())
-                            .multilineTextAlignment(.center)
-                        Spacer()
-                    }
-                    .font(.subheadline)
+                    AppSectionLabel(
+                        text: selectedDate.formatted(.dateTime.weekday(.wide).day().month(.wide).year())
+                    )
                     .textCase(nil)
                     .fixedSize(horizontal: false, vertical: true)
+                    .listRowInsets(EdgeInsets(top: 12, leading: 0, bottom: 8, trailing: 0))
                 }
             }
             ForEach(sections) { section in
@@ -177,26 +180,35 @@ struct SalesView: View {
                     }
                 } header: {
                     HStack {
-                        Text(section.title)
+                        AppSectionLabel(text: section.title, tinted: true)
                         Spacer()
                         Text(section.orders.count, format: .number)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 6)
                     }
+                    .textCase(nil)
+                    .listRowInsets(EdgeInsets(top: 12, leading: 0, bottom: 8, trailing: 0))
+                    .accessibilityElement(children: .combine)
+                    .accessibilityAddTraits(.isHeader)
                 }
             }
         }
         .listStyle(.insetGrouped)
     }
 
-    private var filterSheet: some View {
-        BottomActionSheet {
-            BottomActionSheetTitle(title: String(localized: "order.calendar.filter", bundle: .tinyStockCore))
-            ForEach(CalendarOrderFilter.allOptions, id: \.self) { option in
-                SheetActionButton(title: option.title, systemImage: option.systemImage,
-                                  isSelected: option == filter) {
-                    filter = option
-                    isPresentingFilterSheet = false
+    private var filterMenu: some View {
+        AppMenuRow(
+            systemName: "line.3.horizontal.decrease",
+            title: String(localized: "order.calendar.filter.label", bundle: .tinyStockCore),
+            value: filter.title
+        ) {
+            Picker(String(localized: "order.calendar.filter", bundle: .tinyStockCore), selection: $filter) {
+                ForEach(CalendarOrderFilter.allOptions, id: \.self) { option in
+                    Label(option.title, systemImage: option.systemImage).tag(option)
                 }
             }
+            .pickerStyle(.inline)
         }
     }
 

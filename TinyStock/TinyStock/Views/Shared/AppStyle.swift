@@ -185,3 +185,60 @@ struct RoundStepButton: View {
         .disabled(!isEnabled)
     }
 }
+
+// MARK: - AppMenuRow
+
+/// Linha de vidro arredondada que abre um menu: ícone, rótulo à esquerda e valor atual à direita.
+/// Usada no período dos Relatórios e no filtro do Calendário.
+struct AppMenuRow<MenuContent: View>: View {
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    let systemName: String
+    let title: String
+    let value: String
+    @ViewBuilder var menuContent: MenuContent
+
+    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 24, style: .continuous) }
+
+    var body: some View {
+        Menu {
+            menuContent
+        } label: {
+            Group {
+                if dynamicTypeSize.isAccessibilitySize {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(title).foregroundStyle(.secondary)
+                        Text(value)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    HStack(spacing: 10) {
+                        Image(systemName: systemName)
+                            .foregroundStyle(.tint)
+                            .accessibilityHidden(true)
+                        Text(title)
+                            .foregroundStyle(.secondary)
+                            .fixedSize()
+                        Spacer(minLength: 12)
+                        Text(value)
+                            .lineLimit(1)
+                            .multilineTextAlignment(.trailing)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.caption.bold())
+                            .foregroundStyle(.secondary)
+                            .accessibilityHidden(true)
+                    }
+                }
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 6)
+            .frame(minHeight: 48)
+            .contentShape(shape)
+        }
+        .buttonStyle(.plain)
+        .glassEffect(.regular.interactive(), in: shape)
+        .accessibilityLabel(title)
+        .accessibilityValue(value)
+    }
+}

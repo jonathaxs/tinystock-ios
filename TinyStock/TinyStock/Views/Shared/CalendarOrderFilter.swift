@@ -39,7 +39,7 @@ enum CalendarOrderFilter: Hashable {
             case .awaitingProduction: "clock"
             case .inProduction: "hammer.circle"
             case .readyToShip: "shippingbox"
-            case .shipped: "shippingbox.and.arrow.forward"
+            case .shipped: "paperplane"
             case .completed: "checkmark.seal"
             case .cancelled: "xmark.circle"
             }

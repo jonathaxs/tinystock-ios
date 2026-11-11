@@ -29,21 +29,24 @@ struct SalesOrderRowView: View {
     }
 
     var body: some View {
-        Group {
+        let symbol = SalesOrderPresentation.statusSymbol(for: order.status)
+        return Group {
             if dynamicTypeSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 8) {
+                    GlassIcon(systemName: symbol.name, color: symbol.color)
                     mainInformation
                     financialInformation
                 }
             } else {
-                HStack(spacing: 12) {
+                HStack(alignment: .top, spacing: 12) {
+                    GlassIcon(systemName: symbol.name, color: symbol.color)
                     mainInformation
                     Spacer(minLength: 8)
                     financialInformation
                 }
             }
         }
-        .padding(.vertical, 3)
+        .padding(.vertical, 4)
         .accessibilityElement(children: .combine)
     }
 
@@ -69,12 +72,12 @@ struct SalesOrderRowView: View {
     }
 
     private func itemMetadata(_ item: SalesOrderItem) -> String {
-        if item.variantName.isEmpty {
-            let format = String(localized: "order.queue.quantityMetadata", bundle: .tinyStockCore)
-            return String(format: format, order.totalQuantity.formatted())
-        }
-        let format = String(localized: "order.queue.itemMetadata", bundle: .tinyStockCore)
-        return String(format: format, item.variantName, order.totalQuantity.formatted())
+        let key = order.totalQuantity == 1 ? "reports.count.units.one" : "reports.count.units"
+        let units = String(
+            format: String(localized: String.LocalizationValue(key), bundle: .tinyStockCore),
+            order.totalQuantity.formatted()
+        )
+        return item.variantName.isEmpty ? units : "\(item.variantName) · \(units)"
     }
 
     private var financialInformation: some View {

@@ -367,6 +367,7 @@
 "order.calendar.nextMonth" = "Next month";
 "order.calendar.dayCount" = "Orders: %@";
 "order.calendar.filter" = "Filter orders";
+"order.calendar.filter.label" = "Show";
 "order.calendar.allStatuses" = "All orders";
 "order.calendar.overdue" = "Overdue";
 "order.calendar.overdueBadge" = "Overdue";

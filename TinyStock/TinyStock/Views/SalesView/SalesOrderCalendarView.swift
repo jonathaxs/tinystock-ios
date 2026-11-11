@@ -53,11 +53,15 @@ struct SalesOrderCalendarView: View {
             Button(String(localized: "order.calendar.today", bundle: .tinyStockCore)) {
                 selectedDate = Date()
             }
-            .frame(minHeight: 44)
-            .buttonStyle(.borderless)
+            .font(.subheadline.weight(.semibold))
+            .buttonStyle(.glass)
+            .tint(accentColor)
+            .padding(.top, 4)
         }
         .frame(maxWidth: 480)
+        .padding(12)
         .frame(maxWidth: .infinity)
+        .appCard()
     }
 
     private func monthButton(offset: Int) -> some View {
@@ -71,10 +75,13 @@ struct SalesOrderCalendarView: View {
             selectedDate = next
         } label: {
             Image(systemName: offset < 0 ? "chevron.left" : "chevron.right")
+                .font(.body.weight(.semibold))
+                .foregroundStyle(accentColor)
                 .frame(width: 44, height: 44)
         }
         .accessibilityLabel(title)
-        .buttonStyle(.borderless)
+        .buttonStyle(.plain)
+        .glassEffect(.regular.interactive(), in: Circle())
         .help(title)
     }
 
@@ -91,16 +98,17 @@ struct SalesOrderCalendarView: View {
                 Text(count == 0 ? " " : (count > 99 ? "99+" : count.formatted()))
                     .font(.caption2.weight(.semibold))
                     .lineLimit(1)
+                    .foregroundStyle(selected ? Color.white : accentColor)
             }
             // Limita apenas o texto da grade para preservar sete colunas legiveis.
             .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
             .frame(maxWidth: .infinity)
             .frame(height: dynamicTypeSize.isAccessibilitySize ? 68 : 52)
             .foregroundStyle(selected ? Color.white : (inMonth ? Color.primary : Color.secondary))
-            .background(selected ? accentColor : .clear, in: RoundedRectangle(cornerRadius: 8))
+            .background(selected ? accentColor : .clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay {
                 if today && !selected {
-                    RoundedRectangle(cornerRadius: 8).strokeBorder(accentColor, lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(accentColor, lineWidth: 1.5)
                 }
             }
             .contentShape(Rectangle())
