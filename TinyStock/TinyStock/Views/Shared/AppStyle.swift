@@ -177,10 +177,16 @@ struct RoundStepButton: View {
             Image(systemName: kind.symbolName)
                 .font(.system(size: size * 0.4, weight: .bold))
                 .foregroundStyle(color)
+                // A cor fixa do simbolo apagaria o visual de desativado do sistema.
+                .opacity(isEnabled ? 1 : 0.35)
                 .frame(width: size, height: size)
+                // Vidro sem .interactive(): o interativo fica com o toque e a acao nao roda dentro de
+                // uma linha de Form.
+                .glassEffect(.regular, in: Circle())
+                .contentShape(Circle())
         }
-        .buttonStyle(.plain)
-        .glassEffect(.regular.interactive(), in: Circle())
+        // Borderless: dentro de uma linha de Form o toque chega a cada botao, e nao a linha inteira.
+        .buttonStyle(.borderless)
         .tint(color)
         .disabled(!isEnabled)
     }

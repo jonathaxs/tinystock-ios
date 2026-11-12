@@ -24,6 +24,8 @@
 "common.delete" = "Delete";
 "common.ok" = "OK";
 "common.close" = "Close";
+"common.decrease" = "Decrease";
+"common.increase" = "Increase";
 
 
 /* MARK: - Products */

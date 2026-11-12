@@ -52,7 +52,7 @@ struct StockEntryView: View {
                 ProductSheetHeader(product: product)
                 // Cada campo tem o proprio cabecalho para deixar claro o que pode ser tocado e alterado.
                 if !usesInternalVariant {
-                    Section(String(localized: "product.form.variant.title", bundle: .tinyStockCore)) {
+                    Section(tinted: String(localized: "product.form.variant.title", bundle: .tinyStockCore)) {
                         Picker(String(localized: "product.form.variant.title", bundle: .tinyStockCore), selection: $selectedVariantID) {
                             ForEach(variants) { variant in
                                 Text(variantLabel(variant)).tag(Optional(variant.id))
@@ -62,19 +62,18 @@ struct StockEntryView: View {
                     }
                 }
                 Section {
-                    StockQuantityPicker(
+                    StockQuantityStepper(
                         title: String(localized: "stock.entry.quantity", bundle: .tinyStockCore),
                         quantity: $quantity,
-                        range: 1...100,
-                        showsTitle: false
+                        range: 1...999_999
                     )
                 } header: {
-                    Text(String(localized: "stock.entry.quantity", bundle: .tinyStockCore))
+                    FormHeader(title: String(localized: "stock.entry.quantity", bundle: .tinyStockCore))
                 } footer: {
                     // Saldos somente informativos, calculados a partir da variacao escolhida.
                     Text(balanceSummary)
                 }
-                Section(String(localized: "stock.entry.note", bundle: .tinyStockCore)) {
+                Section(tinted: String(localized: "stock.entry.note", bundle: .tinyStockCore)) {
                     TextField(String(localized: "stock.entry.notePlaceholder", bundle: .tinyStockCore),
                               text: $note, axis: .vertical)
                 }
@@ -84,10 +83,10 @@ struct StockEntryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
+                    SheetCloseButton(title: String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "common.save", bundle: .tinyStockCore), action: save)
+                    SheetConfirmButton(action: save)
                         .disabled(!canSave)
                 }
             }

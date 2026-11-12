@@ -46,7 +46,7 @@ struct StoreFormView: View {
             Form {
                 imageSection
 
-                Section(String(localized: "store.form.section.identification", bundle: .tinyStockCore)) {
+                Section(tinted: String(localized: "store.form.section.identification", bundle: .tinyStockCore)) {
                     TextField(
                         String(localized: "store.form.name", bundle: .tinyStockCore),
                         text: $name
@@ -59,13 +59,11 @@ struct StoreFormView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "common.cancel", bundle: .tinyStockCore)) {
-                        dismiss()
-                    }
+                    SheetCloseButton(title: String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "common.save", bundle: .tinyStockCore), action: save)
+                    SheetConfirmButton(action: save)
                         .disabled(!canSave)
                 }
             }

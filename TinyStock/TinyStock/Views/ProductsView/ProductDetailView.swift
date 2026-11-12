@@ -55,7 +55,7 @@ struct ProductDetailView: View {
                     }
                     .foregroundStyle(.primary)
                 }
-                Section(String(localized: "product.details.stock", bundle: .tinyStockCore)) {
+                Section(tinted: String(localized: "product.details.stock", bundle: .tinyStockCore)) {
                     // Valores na cor de destaque e seta indicam linhas que abrem uma acao.
                     if !usesInternalVariant {
                         ForEach(variants) { variant in
@@ -77,7 +77,7 @@ struct ProductDetailView: View {
                             .fontWeight(.semibold)
                     }
                 }
-                Section(String(localized: "product.form.section.prices", bundle: .tinyStockCore)) {
+                Section(tinted: String(localized: "product.form.section.prices", bundle: .tinyStockCore)) {
                     priceRow(String(localized: "product.form.salePrice", bundle: .tinyStockCore),
                              value: product.salePrice, field: .sale)
                     priceRow(String(localized: "product.form.costPrice", bundle: .tinyStockCore),
@@ -96,7 +96,7 @@ struct ProductDetailView: View {
                             .foregroundStyle(unitProfit < 0 ? Color.red : Color.primary)
                     }
                 } header: {
-                    Text(String(localized: "product.details.potential", bundle: .tinyStockCore))
+                    FormHeader(title: String(localized: "product.details.potential", bundle: .tinyStockCore))
                 } footer: {
                     Text(String(localized: "product.details.potentialFooter", bundle: .tinyStockCore))
                 }
@@ -104,8 +104,8 @@ struct ProductDetailView: View {
             .navigationTitle(String(localized: "product.details.title", bundle: .tinyStockCore))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "common.ok", bundle: .tinyStockCore)) { dismiss() }
+                ToolbarItem(placement: .cancellationAction) {
+                    SheetCloseButton { dismiss() }
                 }
             }
             .sheet(item: $editingVariant) { EditProductVariantView(product: product, variantID: $0.id) }

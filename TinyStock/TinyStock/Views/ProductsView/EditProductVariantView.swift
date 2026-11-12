@@ -62,7 +62,7 @@ struct EditProductVariantView: View {
                 }
                 // Cada campo tem o proprio cabecalho para deixar claro o que pode ser tocado e alterado.
                 if variants.count > 1 {
-                    Section(String(localized: "product.form.variant.title", bundle: .tinyStockCore)) {
+                    Section(tinted: String(localized: "product.form.variant.title", bundle: .tinyStockCore)) {
                         Picker(String(localized: "product.form.variant.title", bundle: .tinyStockCore),
                                selection: $selectedVariantID) {
                             ForEach(variants) { variant in
@@ -73,19 +73,17 @@ struct EditProductVariantView: View {
                     }
                 }
                 if !usesInternalVariant {
-                    Section(String(localized: "product.variant.edit.name", bundle: .tinyStockCore)) {
+                    Section(tinted: String(localized: "product.variant.edit.name", bundle: .tinyStockCore)) {
                         TextField(String(localized: "product.form.variant.name", bundle: .tinyStockCore), text: $name)
                             .textInputAutocapitalization(.words)
                             .submitLabel(.done)
                     }
                 }
                 // Aceita zero para desfazer uma entrada feita por engano.
-                Section(String(localized: "product.variant.edit.stock", bundle: .tinyStockCore)) {
-                    StockQuantityPicker(
+                Section(tinted: String(localized: "product.variant.edit.stock", bundle: .tinyStockCore)) {
+                    StockQuantityStepper(
                         title: String(localized: "product.variant.edit.stock", bundle: .tinyStockCore),
-                        quantity: $quantity,
-                        range: 0...max(100, selectedVariant?.quantity ?? 0),
-                        showsTitle: false
+                        quantity: $quantity
                     )
                 }
             }
@@ -94,10 +92,10 @@ struct EditProductVariantView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
+                    SheetCloseButton(title: String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "common.save", bundle: .tinyStockCore), action: save)
+                    SheetConfirmButton(action: save)
                         .disabled(!canSave)
                 }
             }

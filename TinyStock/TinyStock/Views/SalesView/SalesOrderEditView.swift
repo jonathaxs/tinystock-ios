@@ -65,10 +65,10 @@ struct SalesOrderEditView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
+                    SheetCloseButton(title: String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "common.save", bundle: .tinyStockCore), action: save)
+                    SheetConfirmButton(action: save)
                         .disabled(!canSave || isSaving)
                 }
             }
@@ -97,14 +97,14 @@ struct SalesOrderEditView: View {
                 }
             }
         } header: {
-            Text(String(localized: "order.detail.items", bundle: .tinyStockCore))
+            FormHeader(title: String(localized: "order.detail.items", bundle: .tinyStockCore))
         } footer: {
             Text(String(localized: "order.edit.items.footer", bundle: .tinyStockCore))
         }
     }
 
     private var customerSection: some View {
-        Section(String(localized: "order.form.section.customer", bundle: .tinyStockCore)) {
+        Section(tinted: String(localized: "order.form.section.customer", bundle: .tinyStockCore)) {
             TextField(String(localized: "order.form.buyer", bundle: .tinyStockCore), text: $buyerName)
             TextField(String(localized: "order.form.reference", bundle: .tinyStockCore), text: $externalReference)
                 .textInputAutocapitalization(.never)
@@ -112,7 +112,7 @@ struct SalesOrderEditView: View {
     }
 
     private var datesSection: some View {
-        Section(String(localized: "order.form.section.dates", bundle: .tinyStockCore)) {
+        Section(tinted: String(localized: "order.form.section.dates", bundle: .tinyStockCore)) {
             DatePicker(String(localized: "order.form.orderedAt", bundle: .tinyStockCore), selection: $orderedAt,
                        in: ...Date(), displayedComponents: .date)
             if fulfillment == .production {
@@ -125,7 +125,7 @@ struct SalesOrderEditView: View {
     }
 
     private var channelSection: some View {
-        Section(String(localized: "order.form.section.channel", bundle: .tinyStockCore)) {
+        Section(tinted: String(localized: "order.form.section.channel", bundle: .tinyStockCore)) {
             Picker(String(localized: "order.form.channel", bundle: .tinyStockCore), selection: $channel) {
                 ForEach(SalesChannel.allCases, id: \.self) { Text($0.localizedName).tag($0) }
             }
@@ -145,7 +145,7 @@ struct SalesOrderEditView: View {
     }
 
     private var logisticsSection: some View {
-        Section(String(localized: "order.detail.additional", bundle: .tinyStockCore)) {
+        Section(tinted: String(localized: "order.detail.additional", bundle: .tinyStockCore)) {
             TextField(String(localized: "order.edit.tracking", bundle: .tinyStockCore), text: $trackingCode)
                 .textInputAutocapitalization(.characters)
             TextField(String(localized: "order.form.note", bundle: .tinyStockCore), text: $note, axis: .vertical)
@@ -154,7 +154,7 @@ struct SalesOrderEditView: View {
     }
 
     private var summarySection: some View {
-        Section(String(localized: "order.form.section.summary", bundle: .tinyStockCore)) {
+        Section(tinted: String(localized: "order.form.section.summary", bundle: .tinyStockCore)) {
             LabeledContent(String(localized: "order.form.total", bundle: .tinyStockCore), value: order.total.currencyText)
             LabeledContent(String(localized: "order.form.fee", bundle: .tinyStockCore), value: previewFee.currencyText)
             LabeledContent(String(localized: "order.form.netProfit", bundle: .tinyStockCore),

@@ -31,14 +31,13 @@ struct ProductVariantFormView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(String(localized: "product.variant.edit.name", bundle: .tinyStockCore)) {
+                Section(tinted: String(localized: "product.variant.edit.name", bundle: .tinyStockCore)) {
                     TextField(String(localized: "product.form.variant.name", bundle: .tinyStockCore), text: $input.name)
                         .submitLabel(.done)
                 }
                 // Em uma variacao existente, o formulario do produto grava a diferenca como ajuste.
-                Section(stockTitle) {
-                    StockQuantityPicker(title: stockTitle, quantity: $input.initialQuantity,
-                                        range: 0...max(100, input.initialQuantity), showsTitle: false)
+                Section(tinted: stockTitle) {
+                    StockQuantityStepper(title: stockTitle, quantity: $input.initialQuantity)
                 }
             }
             .scrollDismissesKeyboard(.interactively)
@@ -46,10 +45,10 @@ struct ProductVariantFormView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
+                    SheetCloseButton(title: String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "common.save", bundle: .tinyStockCore)) {
+                    SheetConfirmButton {
                         input.name = input.name.trimmingCharacters(in: .whitespacesAndNewlines)
                         onSave(input)
                         dismiss()

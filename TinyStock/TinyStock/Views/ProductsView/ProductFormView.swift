@@ -115,10 +115,10 @@ struct ProductFormView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
+                    SheetCloseButton(title: String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "common.save", bundle: .tinyStockCore), action: save)
+                    SheetConfirmButton(action: save)
                         .disabled(!canSave)
                 }
                 // O teclado decimal dos precos nao tem tecla de retorno para ser fechado.
@@ -153,13 +153,13 @@ struct ProductFormView: View {
     // Cada preco tem o proprio cabecalho; o lucro calculado fica no rodape do custo.
     @ViewBuilder
     private var pricesSection: some View {
-        Section(String(localized: "product.form.salePrice", bundle: .tinyStockCore)) {
+        Section(tinted: String(localized: "product.form.salePrice", bundle: .tinyStockCore)) {
             priceField(String(localized: "product.form.salePrice", bundle: .tinyStockCore), text: $salePriceText, field: .sale)
         }
         Section {
             priceField(String(localized: "product.form.costPrice", bundle: .tinyStockCore), text: $costPriceText, field: .cost)
         } header: {
-            Text(String(localized: "product.form.costPrice", bundle: .tinyStockCore))
+            FormHeader(title: String(localized: "product.form.costPrice", bundle: .tinyStockCore))
         } footer: {
             if let sale = price(from: salePriceText), let cost = price(from: costPriceText) {
                 Text(String(format: String(localized: "product.form.unitProfitSummary", bundle: .tinyStockCore),
@@ -187,7 +187,7 @@ struct ProductFormView: View {
     // Cada campo tem o proprio cabecalho para deixar claro o que pode ser tocado e alterado.
     @ViewBuilder
     private var productSection: some View {
-        Section(String(localized: "product.variant.edit.name", bundle: .tinyStockCore)) {
+        Section(tinted: String(localized: "product.variant.edit.name", bundle: .tinyStockCore)) {
             TextField(String(localized: "product.form.name", bundle: .tinyStockCore), text: $name)
                 .textInputAutocapitalization(.words)
         }
@@ -203,13 +203,13 @@ struct ProductFormView: View {
             }
         }
         if usesDirectVariationFields {
-            Section(String(localized: "product.form.variant.title", bundle: .tinyStockCore)) {
+            Section(tinted: String(localized: "product.form.variant.title", bundle: .tinyStockCore)) {
                 TextField(String(localized: "product.form.variant.name", bundle: .tinyStockCore), text: $initialVariationName)
                     .textInputAutocapitalization(.words)
                     .disabled(!hasVariations)
                     .foregroundStyle(hasVariations ? Color.primary : Color.secondary)
             }
-            Section(initialStockTitle) { stockRow }
+            Section(tinted: initialStockTitle) { stockRow }
         } else {
             Section {
                 ForEach(variants) { input in
@@ -230,7 +230,7 @@ struct ProductFormView: View {
                     .accessibilityHint(String(localized: "product.form.variant.edit.hint", bundle: .tinyStockCore))
                 }
             } header: {
-                Text(String(localized: "product.form.variants", bundle: .tinyStockCore))
+                FormHeader(title: String(localized: "product.form.variants", bundle: .tinyStockCore))
             } footer: {
                 Text(String(localized: "product.form.variant.multiple.footer", bundle: .tinyStockCore))
             }
@@ -240,8 +240,7 @@ struct ProductFormView: View {
     @ViewBuilder
     private var stockRow: some View {
         if canEditStock {
-            StockQuantityPicker(title: initialStockTitle, quantity: initialQuantitySelection,
-                                range: 0...max(100, initialQuantity ?? 0), showsTitle: false)
+            StockQuantityStepper(title: initialStockTitle, quantity: initialQuantitySelection)
         } else {
             Text(initialQuantityText)
                 .monospacedDigit()

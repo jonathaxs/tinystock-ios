@@ -105,10 +105,10 @@ struct SalesOrderFormView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
+                    SheetCloseButton(title: String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "order.form.save", bundle: .tinyStockCore), action: save)
+                    SheetConfirmButton(title: String(localized: "order.form.save", bundle: .tinyStockCore), action: save)
                         .disabled(!canSave || isSaving)
                 }
                 // O teclado decimal da taxa nao tem tecla de retorno para ser fechado.
@@ -144,7 +144,7 @@ struct SalesOrderFormView: View {
         if let fixedProduct {
             ProductSheetHeader(product: fixedProduct)
         } else {
-            Section(String(localized: "order.form.section.product", bundle: .tinyStockCore)) {
+            Section(tinted: String(localized: "order.form.section.product", bundle: .tinyStockCore)) {
                 Picker(String(localized: "order.form.section.product", bundle: .tinyStockCore), selection: $productID) {
                     ForEach(products) { product in
                         Text(product.name).tag(Optional(product.id))
@@ -160,7 +160,7 @@ struct SalesOrderFormView: View {
             }
         } else if product != nil {
             if !usesInternalVariant {
-                Section(String(localized: "product.form.variant.title", bundle: .tinyStockCore)) {
+                Section(tinted: String(localized: "product.form.variant.title", bundle: .tinyStockCore)) {
                     Picker(String(localized: "product.form.variant.title", bundle: .tinyStockCore), selection: $selectedVariantID) {
                         ForEach(variants) { variant in
                             Text(variantLabel(variant)).tag(Optional(variant.id))
@@ -170,15 +170,10 @@ struct SalesOrderFormView: View {
                 }
             }
             Section {
-                Stepper(value: $quantity, in: 1...quantityLimit) {
-                    Text(quantity, format: .number)
-                        .monospacedDigit()
-                        .foregroundStyle(.tint)
-                }
-                .accessibilityLabel(String(localized: "order.form.quantity", bundle: .tinyStockCore))
-                .accessibilityValue(Text(quantity, format: .number))
+                StockQuantityStepper(title: String(localized: "order.form.quantity", bundle: .tinyStockCore),
+                                     quantity: $quantity, range: 1...quantityLimit)
             } header: {
-                Text(String(localized: "order.form.quantity", bundle: .tinyStockCore))
+                FormHeader(title: String(localized: "order.form.quantity", bundle: .tinyStockCore))
             } footer: {
                 if let selectedVariant {
                     Text(String(format: String(localized: "products.catalog.quantity", bundle: .tinyStockCore),
@@ -198,7 +193,7 @@ struct SalesOrderFormView: View {
             .pickerStyle(.segmented)
             .labelsHidden()
         } header: {
-            Text(String(localized: "order.form.fulfillment", bundle: .tinyStockCore))
+            FormHeader(title: String(localized: "order.form.fulfillment", bundle: .tinyStockCore))
         } footer: {
             Text(String(localized: fulfillment == .readyStock ? "order.form.fulfillment.ready.footer" : "order.form.fulfillment.production.footer", bundle: .tinyStockCore))
         }
@@ -206,11 +201,11 @@ struct SalesOrderFormView: View {
 
     @ViewBuilder
     private var customerSection: some View {
-        Section(String(localized: "order.form.section.customer", bundle: .tinyStockCore)) {
+        Section(tinted: String(localized: "order.form.section.customer", bundle: .tinyStockCore)) {
             TextField(String(localized: "order.form.buyer", bundle: .tinyStockCore), text: $buyerName)
                 .textInputAutocapitalization(.words)
         }
-        Section(String(localized: "order.form.section.reference", bundle: .tinyStockCore)) {
+        Section(tinted: String(localized: "order.form.section.reference", bundle: .tinyStockCore)) {
             TextField(String(localized: "order.form.optional", bundle: .tinyStockCore), text: $externalReference)
                 .textInputAutocapitalization(.never)
         }
@@ -235,7 +230,7 @@ struct SalesOrderFormView: View {
     }
 
     private func dateSection(_ titleKey: String, @ViewBuilder picker: () -> some View) -> some View {
-        Section(String(localized: String.LocalizationValue(titleKey), bundle: .tinyStockCore)) {
+        Section(tinted: String(localized: String.LocalizationValue(titleKey), bundle: .tinyStockCore)) {
             picker()
                 .labelsHidden()
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -244,7 +239,7 @@ struct SalesOrderFormView: View {
 
     @ViewBuilder
     private var channelSection: some View {
-        Section(String(localized: "order.form.section.channel", bundle: .tinyStockCore)) {
+        Section(tinted: String(localized: "order.form.section.channel", bundle: .tinyStockCore)) {
             Picker(String(localized: "order.form.channel", bundle: .tinyStockCore), selection: $channel) {
                 ForEach(SalesChannel.allCases, id: \.self) { option in
                     Text(option.localizedName).tag(option)
@@ -255,7 +250,7 @@ struct SalesOrderFormView: View {
                 TextField(String(localized: "order.form.customChannel", bundle: .tinyStockCore), text: $customChannelName)
             }
         }
-        Section(String(localized: "order.form.channelFee", bundle: .tinyStockCore)) {
+        Section(tinted: String(localized: "order.form.channelFee", bundle: .tinyStockCore)) {
             HStack(spacing: 4) {
                 TextField("0", text: $channelFeeText)
                     .keyboardType(.decimalPad)
@@ -266,7 +261,7 @@ struct SalesOrderFormView: View {
     }
 
     private var summarySection: some View {
-        Section(String(localized: "order.form.section.summary", bundle: .tinyStockCore)) {
+        Section(tinted: String(localized: "order.form.section.summary", bundle: .tinyStockCore)) {
             LabeledContent(String(localized: "order.form.total", bundle: .tinyStockCore)) { Text(subtotal.currencyText) }
             LabeledContent(String(localized: "order.form.fee", bundle: .tinyStockCore)) { Text(channelFee.currencyText) }
             LabeledContent(String(localized: "order.form.netProfit", bundle: .tinyStockCore)) {
@@ -276,7 +271,7 @@ struct SalesOrderFormView: View {
     }
 
     private var notesSection: some View {
-        Section(String(localized: "order.form.section.notes", bundle: .tinyStockCore)) {
+        Section(tinted: String(localized: "order.form.section.notes", bundle: .tinyStockCore)) {
             TextField(String(localized: "order.form.optional", bundle: .tinyStockCore), text: $note, axis: .vertical)
                 .lineLimit(2...5)
         }

@@ -51,22 +51,21 @@ struct NewProductVariantView: View {
                     }
                     .labelsHidden()
                 } header: {
-                    Text(String(localized: "order.form.section.product", bundle: .tinyStockCore))
+                    FormHeader(title: String(localized: "order.form.section.product", bundle: .tinyStockCore))
                 } footer: {
                     if selectedUsesDefaultVariant {
                         Text(String(localized: "product.variant.new.defaultFooter", bundle: .tinyStockCore))
                     }
                 }
-                Section(String(localized: "product.variant.edit.name", bundle: .tinyStockCore)) {
+                Section(tinted: String(localized: "product.variant.edit.name", bundle: .tinyStockCore)) {
                     TextField(String(localized: "product.form.variant.name", bundle: .tinyStockCore), text: $name)
                         .textInputAutocapitalization(.words)
                         .submitLabel(.done)
                 }
-                Section(String(localized: "product.form.variant.initialStock", bundle: .tinyStockCore)) {
-                    StockQuantityPicker(
+                Section(tinted: String(localized: "product.form.variant.initialStock", bundle: .tinyStockCore)) {
+                    StockQuantityStepper(
                         title: String(localized: "product.form.variant.initialStock", bundle: .tinyStockCore),
-                        quantity: $quantity,
-                        showsTitle: false
+                        quantity: $quantity
                     )
                 }
             }
@@ -75,10 +74,10 @@ struct NewProductVariantView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
+                    SheetCloseButton(title: String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "common.save", bundle: .tinyStockCore), action: save)
+                    SheetConfirmButton(action: save)
                         .disabled(!canSave)
                 }
             }

@@ -46,10 +46,10 @@ struct ReportCustomPeriodView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
+                    SheetCloseButton(title: String(localized: "common.cancel", bundle: .tinyStockCore)) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "common.apply", bundle: .tinyStockCore)) {
+                    SheetConfirmButton(title: String(localized: "common.apply", bundle: .tinyStockCore)) {
                         onApply(start, end)
                         dismiss()
                     }
