@@ -23,6 +23,7 @@ struct MainView: View {
     @Query private var stores: [StoreProfile]
     @State private var router = AppRouter()
     @State private var reminderError: String?
+    @State private var usesVerticalBar = false
 
     private var accentColor: AppAccentColor {
         AppAccentColor(rawValue: accentColorRaw) ?? .defaultColor
@@ -36,12 +37,14 @@ struct MainView: View {
         @Bindable var router = router
         NavigationStack(path: $router.path) {
             ProductsView(storeID: storeSession.selectedStoreID)
+                .environment(\.usesVerticalBar, usesVerticalBar)
                 .navigationDestination(for: AppRoute.self) { route in
                     switch route {
                     case .settings: SettingsView(storeID: storeSession.selectedStoreID)
                     }
                 }
         }
+        .background(VerticalBarReader(isActive: $usesVerticalBar))
         // Relatórios e Calendário: cada sheet tem seu próprio stack (Calendário → pedido).
         .sheet(item: $router.sheet) { sheet in
             NavigationStack {

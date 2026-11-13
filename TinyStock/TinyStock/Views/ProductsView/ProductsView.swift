@@ -1,4 +1,5 @@
-// Proposito: Catalogo por loja, por produto ou por variacao, em lista ou grade, com acoes e modo de edicao.
+// Proposito: Inicio com o catalogo por loja, por produto ou por variacao, em lista ou grade, com acoes e modo de
+// edicao. No layout largo (iPad, Duo aberto) o topo da Inicio vira uma coluna ao lado do catalogo.
 // Created by Jonathas Motta (@jonathaxs) on 2026-08-07.
 
 import SwiftUI
@@ -29,6 +30,13 @@ struct ProductsView: View {
     @State private var variantEdit: VariantEditRequest?
     @AppStorage("products.catalogMode") private var catalogMode: CatalogMode = .products
     @AppStorage(CatalogViewMode.storageKey) private var viewMode: CatalogViewMode = .list
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.usesVerticalBar) private var usesVerticalBar
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Dobra do Duo que o layout mostra; segue a real com animacao (o sistema nao anima a dobra).
+    @State private var displayedFold: HomeFold?
+    /// Layout largo em uso; nele a busca fica no topo do catalogo (a barra do sistema esta escondida).
+    @State private var isWideLayout = false
 
     init(storeID: UUID) {
         self.storeID = storeID
@@ -42,11 +50,49 @@ struct ProductsView: View {
     }
 
     var body: some View {
-        catalogContent
+        GeometryReader { proxy in
+            let isWide = HomeLayout.isWide(width: proxy.size.width, sizeClass: horizontalSizeClass)
+            // iPad deitado (sem a barra vertical do sistema): os botoes vao para a coluna de vidro a direita.
+            let sideRail = isWide && !usesVerticalBar && proxy.size.width > proxy.size.height
+            let fold = isWide ? HomeFold.active(in: proxy) : nil
+            Group {
+                if isWide {
+                    HStack(spacing: 0) {
+                        wideLayout(width: proxy.size.width, buttonsInRail: usesVerticalBar || sideRail,
+                                   fold: displayedFold)
+                        if sideRail {
+                            HomeSideRail()
+                                .padding(.trailing)
+                                .transition(.move(edge: .trailing).combined(with: .opacity))
+                        }
+                    }
+                } else {
+                    catalogContent(showsHome: true)
+                }
+            }
+            .onChange(of: isWide, initial: true) { _, wide in isWideLayout = wide }
+            .onChange(of: fold, initial: true) { oldFold, newFold in
+                guard oldFold != newFold else { displayedFold = newFold; return }
+                withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.55, dampingFraction: 0.85)) {
+                    displayedFold = newFold
+                }
+            }
+        }
+        .background(Color(.systemGroupedBackground))
         .navigationTitle(String(localized: "tab.products", bundle: .tinyStockCore))
-        // A Inicio desenha o proprio cabecalho (loja atual) dentro da lista.
-        .toolbar(.hidden, for: .navigationBar)
-        .searchable(text: $searchText, prompt: Text(String(localized: "products.catalog.search", bundle: .tinyStockCore)))
+        .navigationBarTitleDisplayMode(.inline)
+        // A Inicio desenha o proprio cabecalho (loja atual). Com a barra vertical (Duo dobrado) a barra fica
+        // visivel para os botoes irem para a coluna do sistema.
+        .toolbar(usesVerticalBar ? .automatic : .hidden, for: .navigationBar)
+        .toolbar {
+            if usesVerticalBar {
+                // Um grupo so, para a coluna seguir esta ordem de cima para baixo.
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    ForEach(HomeRailItem.allCases) { HomeRailButton(item: $0) }
+                }
+            }
+        }
+        .modifier(SystemSearch(isEnabled: !isWideLayout, text: $searchText))
         .sheet(isPresented: $isPresentingForm) { ProductFormView(storeID: storeID) }
         .sheet(isPresented: $isPresentingSale) { SalesOrderFormView(storeID: storeID) }
         .sheet(item: $variantEdit) { EditProductVariantView(product: $0.product, variantID: $0.variantID) }
@@ -102,11 +148,99 @@ struct ProductsView: View {
         .onChange(of: viewMode) { _, _ in editMode = .inactive }
     }
 
-    private var catalogContent: some View {
+    // MARK: - Layout largo
+
+    /// Topo da Inicio numa coluna ao lado do catalogo. Com o Duo meio aberto os dois se afastam da dobra: como
+    /// livro o topo fica na metade esquerda; como mesa (ou aberto reto em pe) fica na metade de cima. E o mesmo
+    /// par de views nos casos, entao abrir e fechar a dobra anima em vez de trocar de tela.
+    private func wideLayout(width: CGFloat, buttonsInRail: Bool, fold: HomeFold?) -> some View {
+        let compact = width < HomeLayout.compactWideLimit
+        let layout: AnyLayout
+        var heroWidth: CGFloat? = compact ? HomeLayout.compactHeroWidth : HomeLayout.heroWidth
+        var heroHeight: CGFloat?
+        var stacked = false
+        switch fold {
+        case .book(let band):
+            layout = AnyLayout(HStackLayout(spacing: band.width))
+            heroWidth = max(band.minX, 0)
+        case .tabletop(let band):
+            layout = AnyLayout(VStackLayout(spacing: band.height))
+            heroWidth = nil
+            heroHeight = max(band.minY, 0)
+            stacked = true
+        case .flatPortrait(let splitY):
+            layout = AnyLayout(VStackLayout(spacing: 0))
+            heroWidth = nil
+            heroHeight = splitY
+            stacked = true
+        case nil:
+            layout = AnyLayout(HStackLayout(spacing: 0))
+        }
+        return layout {
+            wideHomeColumn(buttonsInRail: buttonsInRail, stacked: stacked)
+                .frame(width: heroWidth, height: heroHeight)
+                .frame(maxWidth: heroWidth == nil ? .infinity : nil)
+            catalogContent(showsHome: false)
+        }
+    }
+
+    /// Botoes (sem coluna), loja atual, caixa e Adicionar. Empilhado em cima do catalogo (Duo em pe), a caixa
+    /// fica ao lado do resto para caber na metade da tela.
+    private func wideHomeColumn(buttonsInRail: Bool, stacked: Bool) -> some View {
+        let hero = HomeHeroView(storeID: storeID, products: products, variants: variants)
+        let controls = VStack(spacing: 14) {
+            if !buttonsInRail {
+                HomePageButtons()
+            }
+            StoreSwitcherView()
+            HomeAddButton(hasProducts: !products.isEmpty, onPick: handleAdd)
+        }
+        return GeometryReader { proxy in
+            ScrollView {
+                Group {
+                    if stacked {
+                        HStack(spacing: 16) {
+                            hero.frame(maxWidth: 240)
+                            controls.frame(maxWidth: 320)
+                        }
+                    } else {
+                        VStack(spacing: 14) {
+                            if !buttonsInRail {
+                                HomePageButtons()
+                                    .padding(.bottom, 6)
+                            }
+                            StoreSwitcherView()
+                            hero
+                            HomeAddButton(hasProducts: !products.isEmpty, onPick: handleAdd)
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, minHeight: proxy.size.height)
+            }
+            .scrollBounceBehavior(.basedOnSize)
+        }
+    }
+
+    // MARK: - Catalogo
+
+    private func catalogContent(showsHome: Bool) -> some View {
         List {
             // Durante a busca a lista mostra so os resultados.
-            if searchText.isEmpty {
+            if showsHome && searchText.isEmpty {
                 Section { homeRows }
+            }
+            // No layout largo a barra de navegacao fica escondida, e com ela a busca do sistema no iPad.
+            if !showsHome && !products.isEmpty {
+                Section {
+                    CatalogSearchField(text: $searchText)
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                        .listRowSeparator(.hidden)
+                        .moveDisabled(true)
+                        .deleteDisabled(true)
+                }
             }
             if products.isEmpty {
                 Section { emptyCatalog }
@@ -141,7 +275,10 @@ struct ProductsView: View {
             StoreSwitcherView()
                 .frame(maxWidth: .infinity)
             HomeHeroView(storeID: storeID, products: products, variants: variants)
-            HomePageButtons()
+            // Com a barra vertical (Duo dobrado) os botoes vao para a coluna do sistema.
+            if !usesVerticalBar {
+                HomePageButtons()
+            }
             HomeAddButton(hasProducts: !products.isEmpty, onPick: handleAdd)
         }
         .listRowBackground(Color.clear)
@@ -367,6 +504,98 @@ private extension View {
             .listRowSeparator(.hidden)
             .moveDisabled(true)
             .deleteDisabled(true)
+    }
+}
+
+// MARK: - Busca
+
+/// Busca do sistema (na barra de baixo do iPhone); desligada no layout largo, que usa a `CatalogSearchField`.
+private struct SystemSearch: ViewModifier {
+    let isEnabled: Bool
+    @Binding var text: String
+
+    func body(content: Content) -> some View {
+        if isEnabled {
+            content.searchable(text: $text,
+                               prompt: Text(String(localized: "products.catalog.search", bundle: .tinyStockCore)))
+        } else {
+            content
+        }
+    }
+}
+
+/// Campo de busca em capsula de vidro no topo do catalogo do layout largo.
+private struct CatalogSearchField: View {
+    @Binding var text: String
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+            TextField(String(localized: "products.catalog.search", bundle: .tinyStockCore), text: $text)
+                .focused($isFocused)
+                .submitLabel(.search)
+                .autocorrectionDisabled()
+            if !text.isEmpty {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                        .frame(width: 32, height: 32)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel(String(localized: "common.clear", bundle: .tinyStockCore))
+            }
+        }
+        .padding(.leading, 14)
+        .padding(.trailing, 6)
+        .frame(minHeight: 44)
+        .appGlass(in: Capsule())
+        .contentShape(Capsule())
+        .onTapGesture { isFocused = true }
+    }
+}
+
+// MARK: - Layout largo e dobra
+
+/// Medidas do layout largo, as mesmas da Hoje do Nutshell.
+private enum HomeLayout {
+    static let compactWideLimit: CGFloat = 744
+    static let compactHeroWidth: CGFloat = 320
+    static let heroWidth: CGFloat = 360
+
+    /// Largo a partir de 700 pt, ou ja a partir de 560 pt com largura regular (Duo aberto em pe, ~669 pt, fica
+    /// igual ao iPad mini em vez do layout de iPhone esticado). Mesma regra dos Ajustes.
+    static func isWide(width: CGFloat, sizeClass: UserInterfaceSizeClass?) -> Bool {
+        width >= 700 || (sizeClass == .regular && width >= 560)
+    }
+}
+
+/// Postura do iPhone Duo, com a faixa da dobra (margens incluidas) no espaco da Inicio.
+private enum HomeFold: Equatable {
+    /// Meio aberto com a dobra vertical: metades esquerda e direita.
+    case book(CGRect)
+    /// Meio aberto com a dobra horizontal: metade de cima em pe, de baixo apoiada.
+    case tabletop(CGRect)
+    /// Aberto reto em pe: mesmo arranjo da mesa, dividido no meio da tela (y).
+    case flatPortrait(CGFloat)
+
+    /// A faixa ativa (meio aberto) ou, aberto reto em pe, o meio da tela. A regiao inativa existe so no Duo.
+    /// Nil fora do Duo e no Duo aberto reto deitado.
+    static func active(in proxy: GeometryProxy) -> HomeFold? {
+        guard #available(iOS 27.1, *) else { return nil }
+        let regions = proxy.reservedRegions(kind: .division, options: [.includeInactive])
+        if let band = regions.first(where: \.isActive)?.frame {
+            return band.height > band.width ? .book(band) : .tabletop(band)
+        }
+        if !regions.isEmpty && proxy.size.height > proxy.size.width {
+            return .flatPortrait(proxy.size.height / 2)
+        }
+        return nil
     }
 }
 

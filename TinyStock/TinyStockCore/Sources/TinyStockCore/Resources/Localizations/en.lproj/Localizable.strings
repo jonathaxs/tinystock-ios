@@ -26,6 +26,7 @@
 "common.close" = "Close";
 "common.decrease" = "Decrease";
 "common.increase" = "Increase";
+"common.clear" = "Clear";
 
 
 /* MARK: - Products */
