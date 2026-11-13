@@ -3,6 +3,7 @@
 //
 //  Propósito: Apresentação mostrada só na primeira abertura: o que o app faz, o nome da loja (opcional)
 //             e os lembretes. Dona do estado das etapas, dos botões do rodapé e da restauração de backup.
+//             No layout largo (iPad, Duo aberto) o título da etapa e os botões vão para um painel à esquerda.
 //
 //  Created by Jonathas Motta (@jonathaxs) on 2026-11-07.
 // ⌘
@@ -35,6 +36,7 @@ struct WelcomeView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(StoreSession.self) private var storeSession
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @AppStorage(AppAccentColor.storageKey) private var accentColorRaw = AppAccentColor.defaultColor.rawValue
     @Query private var stores: [StoreProfile]
 
@@ -71,10 +73,23 @@ struct WelcomeView: View {
     var body: some View {
         @Bindable var backupCoordinator = backupCoordinator
 
-        stepContent
-            .frame(maxWidth: 600)
-            .frame(maxWidth: .infinity)
-            .background { background }
+        GeometryReader { proxy in
+            if HomeLayout.isWide(width: proxy.size.width, sizeClass: horizontalSizeClass) {
+                HStack(spacing: 0) {
+                    WelcomeContextPanel(currentStep: currentStep, accentColor: accentColor) {
+                        buttonPair
+                    }
+                    .frame(width: proxy.size.width < HomeLayout.compactWideLimit
+                           ? HomeLayout.compactHeroWidth : HomeLayout.heroWidth)
+                    Divider()
+                        .ignoresSafeArea()
+                    stepContent(isWide: true)
+                }
+            } else {
+                stepContent(isWide: false)
+            }
+        }
+        .background { background }
             .onAppear(perform: prefillStoreName)
             .fileImporter(
                 isPresented: $backupCoordinator.isImporting,
@@ -150,7 +165,7 @@ struct WelcomeView: View {
 
     // MARK: - Etapas
 
-    private var stepContent: some View {
+    private func stepContent(isWide: Bool) -> some View {
         VStack(spacing: 0) {
             WelcomeProgressBar(currentStep: currentStep, activeColor: accentColor)
                 .frame(minHeight: 44)
@@ -159,10 +174,11 @@ struct WelcomeView: View {
 
             Group {
                 switch currentStep {
-                case .start: WelcomeStartStep(accentColor: accentColor)
-                case .about: WelcomeAboutStep(accentColor: accentColor)
-                case .store: WelcomeStoreStep(storeName: $storeName, accentColor: accentColor, onSubmit: advance)
-                case .ready: WelcomeReadyStep(accentColor: accentColor)
+                case .start: WelcomeStartStep(accentColor: accentColor, isWide: isWide)
+                case .about: WelcomeAboutStep(accentColor: accentColor, isWide: isWide)
+                case .store: WelcomeStoreStep(storeName: $storeName, accentColor: accentColor, isWide: isWide,
+                                              onSubmit: advance)
+                case .ready: WelcomeReadyStep(accentColor: accentColor, isWide: isWide)
                 }
             }
             .frame(maxHeight: .infinity)
@@ -184,8 +200,13 @@ struct WelcomeView: View {
             .environment(\.welcomeButtonsHeight, buttonsHeight)
             .environment(\.welcomeButtonsSlotReporter, WelcomeButtonsSlotReporter(report: reportSlot))
 
-            footerButtons
+            // No layout largo os botões ficam no painel da esquerda.
+            if !isWide {
+                footerButtons
+            }
         }
+        .frame(maxWidth: 600)
+        .frame(maxWidth: .infinity)
         // Os botões ficam fixos na base com o teclado aberto; o ScrollView de cada etapa se ajusta.
         .ignoresSafeArea(.keyboard)
     }
@@ -196,6 +217,21 @@ struct WelcomeView: View {
     /// (Começar e Restaurar backup); ao avançar descem para o rodapé e viram Continuar e Voltar.
     /// No Tudo pronto sobem para logo abaixo da permissão.
     private var footerButtons: some View {
+        buttonPair
+        .frame(maxWidth: currentStep == .start ? 260 : .infinity)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { buttonsHeight = $0 }
+        .offset(y: buttonsOffset)
+        // Até saber onde fica o espaço do Início, os botões não aparecem (evita o pulo ao abrir).
+        .opacity(didPlaceButtons ? 1 : 0)
+        .padding(.horizontal, AppStyle.horizontalPadding)
+        .padding(.top, 8)
+        .padding(.bottom, 16)
+        // Medido fora do offset: é a posição de repouso no rodapé.
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { footerFrame = $0 }
+    }
+
+    /// Continuar e Voltar (Começar e Restaurar backup no Início), no rodapé ou no painel do layout largo.
+    private var buttonPair: some View {
         VStack(spacing: 10) {
             WelcomeContinueButton(label: continueLabel, color: accentColor, action: advance)
 
@@ -224,16 +260,6 @@ struct WelcomeView: View {
                 }
             }
         }
-        .frame(maxWidth: currentStep == .start ? 260 : .infinity)
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { buttonsHeight = $0 }
-        .offset(y: buttonsOffset)
-        // Até saber onde fica o espaço do Início, os botões não aparecem (evita o pulo ao abrir).
-        .opacity(didPlaceButtons ? 1 : 0)
-        .padding(.horizontal, AppStyle.horizontalPadding)
-        .padding(.top, 8)
-        .padding(.bottom, 16)
-        // Medido fora do offset: é a posição de repouso no rodapé.
-        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { footerFrame = $0 }
     }
 
     private var continueLabel: String {

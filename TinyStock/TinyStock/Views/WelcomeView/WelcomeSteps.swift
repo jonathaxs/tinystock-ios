@@ -13,14 +13,18 @@ import TinyStockCore
 // MARK: - Início
 
 /// Cabeçalho e, logo abaixo, o espaço onde sobem os botões Começar e Restaurar backup.
+/// No layout largo fica só o cabeçalho: os botões estão no painel da esquerda.
 struct WelcomeStartStep: View {
     let accentColor: Color
+    var isWide = false
 
     var body: some View {
         WelcomeStepScroll {
             VStack(spacing: 28) {
                 WelcomeStepHeader(step: .start, accentColor: accentColor)
-                WelcomeButtonsSlot(step: .start)
+                if !isWide {
+                    WelcomeButtonsSlot(step: .start)
+                }
             }
         }
     }
@@ -30,11 +34,15 @@ struct WelcomeStartStep: View {
 
 struct WelcomeAboutStep: View {
     let accentColor: Color
+    var isWide = false
 
     var body: some View {
         WelcomeStepScroll {
             VStack(spacing: 20) {
-                WelcomeStepHeader(step: .about, accentColor: accentColor)
+                // No layout largo o cabeçalho fica no painel da esquerda.
+                if !isWide {
+                    WelcomeStepHeader(step: .about, accentColor: accentColor)
+                }
 
                 AppGroupedCard(dividerInset: 66) {
                     feature("shippingbox.fill", .orange, "welcome.about.products")
@@ -71,6 +79,7 @@ struct WelcomeAboutStep: View {
 struct WelcomeStoreStep: View {
     @Binding var storeName: String
     let accentColor: Color
+    var isWide = false
     let onSubmit: () -> Void
 
     @FocusState private var isFocused: Bool
@@ -78,7 +87,9 @@ struct WelcomeStoreStep: View {
     var body: some View {
         WelcomeStepScroll {
             VStack(spacing: 20) {
-                WelcomeStepHeader(step: .store, accentColor: accentColor)
+                if !isWide {
+                    WelcomeStepHeader(step: .store, accentColor: accentColor)
+                }
 
                 VStack(alignment: .leading, spacing: 6) {
                     AppSectionLabel(text: String(localized: "welcome.store.field", bundle: .tinyStockCore))
@@ -102,6 +113,7 @@ struct WelcomeStoreStep: View {
 /// Pedido opcional de notificações para os lembretes de produção e envio. Recusar não bloqueia nada.
 struct WelcomeReadyStep: View {
     let accentColor: Color
+    var isWide = false
 
     @Environment(OrderReminderCoordinator.self) private var reminders
 
@@ -116,7 +128,9 @@ struct WelcomeReadyStep: View {
     var body: some View {
         WelcomeStepScroll {
             VStack(spacing: 20) {
-                WelcomeStepHeader(step: .ready, accentColor: accentColor)
+                if !isWide {
+                    WelcomeStepHeader(step: .ready, accentColor: accentColor)
+                }
 
                 PermissionCard(
                     icon: "bell.badge.fill",
@@ -130,8 +144,10 @@ struct WelcomeReadyStep: View {
                     Task { await reminders.setEnabled(true) }
                 }
 
-                WelcomeButtonsSlot(step: .ready)
-                    .padding(.top, 8)
+                if !isWide {
+                    WelcomeButtonsSlot(step: .ready)
+                        .padding(.top, 8)
+                }
             }
         }
         .task { await reminders.refresh() }

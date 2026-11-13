@@ -80,6 +80,54 @@ struct WelcomeStepHeader: View {
     }
 }
 
+// MARK: - Painel do layout largo
+
+/// Painel à esquerda no layout largo (iPad, Duo aberto): cabeçalho da etapa atual e os botões no rodapé.
+/// No Início fica só o par de botões, centralizado, porque o "Olá!" já está no conteúdo à direita; ao
+/// avançar os botões descem para o rodapé e o cabeçalho entra.
+struct WelcomeContextPanel<Buttons: View>: View {
+
+    let currentStep: WelcomeStep
+    let accentColor: Color
+    @ViewBuilder var buttons: Buttons
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var isStart: Bool { currentStep == .start }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ZStack {
+                if !isStart {
+                    WelcomeStepHeader(step: currentStep, accentColor: accentColor)
+                        .id(currentStep)
+                        .transition(.opacity)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.horizontal)
+
+            buttons
+                .frame(maxWidth: isStart ? 260 : .infinity)
+                .padding(.horizontal)
+                .padding(.bottom, isStart ? 0 : 24)
+
+            // No Início um espaço igual ao de cima centraliza os botões; ao avançar ele some e os botões
+            // descem para o rodapé.
+            if isStart {
+                Spacer(minLength: 0)
+                    .frame(maxHeight: .infinity)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.secondarySystemGroupedBackground).opacity(0.6).ignoresSafeArea())
+        // Com o teclado aberto (Sua loja) os botões continuam no rodapé do painel.
+        .ignoresSafeArea(.keyboard)
+        .animation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.55, dampingFraction: 0.85),
+                   value: currentStep)
+    }
+}
+
 // MARK: - Barra de progresso
 
 struct WelcomeProgressBar: View {

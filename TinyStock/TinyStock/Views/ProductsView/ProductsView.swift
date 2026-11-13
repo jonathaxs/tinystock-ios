@@ -562,8 +562,8 @@ private struct CatalogSearchField: View {
 
 // MARK: - Layout largo e dobra
 
-/// Medidas do layout largo, as mesmas da Hoje do Nutshell.
-private enum HomeLayout {
+/// Medidas do layout largo, as mesmas da Hoje do Nutshell. A apresentacao inicial usa as mesmas.
+enum HomeLayout {
     static let compactWideLimit: CGFloat = 744
     static let compactHeroWidth: CGFloat = 320
     static let heroWidth: CGFloat = 360
