@@ -193,7 +193,6 @@
 "stores.title" = "Stores";
 "stores.add" = "Add store";
 "stores.section.active" = "Active";
-"stores.section.archived" = "Archived";
 "stores.section.organization" = "Organization";
 "stores.section.footer" = "Each store keeps its products, orders and reports separate.";
 "stores.archived.title" = "Archived Stores";
@@ -241,7 +240,6 @@
 "product.form.variant.edit.hint" = "Opens the variation editor.";
 "products.delete.stock.message" = "The product, its variations and stock movements will be deleted. Recorded sales will be kept. This cannot be undone.";
 "products.error.title" = "Unable to delete product";
-"stock.entry.title" = "Stock entry";
 "stock.entry.navigationTitle" = "Entry";
 "stock.entry.newVariant" = "New variation";
 "stock.entry.new" = "New stock";
@@ -250,7 +248,6 @@
 "product.variant.edit.stock" = "Stock";
 "product.variant.new.defaultFooter" = "This product has no variations yet. Edit the product and turn on Has variations before adding another.";
 "stock.entry.quantity" = "Stock entry";
-"stock.entry.result" = "Stock after entry";
 "stock.entry.note" = "Note";
 "stock.entry.error" = "Unable to register stock entry";
 "order.channel.direct" = "Direct sale";
@@ -327,8 +324,6 @@
 "order.queue.unknown" = "Unknown status";
 "order.queue.untitled" = "Order without items";
 "order.queue.moreItems" = "%1$@ and %2$@ more";
-"order.queue.itemMetadata" = "%1$@ · %2$@ units";
-"order.queue.quantityMetadata" = "%@ units";
 "order.queue.productionDate" = "Produce by %@";
 "order.queue.shippingDate" = "Ship by %@";
 "order.queue.shippedDate" = "Shipped %@";
@@ -446,7 +441,6 @@
 "settings.about.feedback" = "Send feedback";
 "settings.about.website" = "Developer website";
 "settings.about.versionBuild" = "Version %1$@ (%2$@)";
-"settings.about.icon" = "TinyStock app icon";
 "settings.privacy.title" = "Privacy";
 "settings.privacy.local.title" = "Data on this device";
 "settings.privacy.local.message" = "Products, inventory, stores and orders are stored by TinyStock on your device. TinyStock does not require an account and does not send this data to the developer.";

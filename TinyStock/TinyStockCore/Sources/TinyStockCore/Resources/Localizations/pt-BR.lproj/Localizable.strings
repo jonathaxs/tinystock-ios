@@ -193,7 +193,6 @@
 "stores.title" = "Lojas";
 "stores.add" = "Adicionar loja";
 "stores.section.active" = "Ativas";
-"stores.section.archived" = "Arquivadas";
 "stores.section.organization" = "Organização";
 "stores.section.footer" = "Cada loja mantém seus produtos, pedidos e relatórios separados.";
 "stores.archived.title" = "Lojas arquivadas";
@@ -241,7 +240,6 @@
 "product.form.variant.edit.hint" = "Abre o editor da variação.";
 "products.delete.stock.message" = "O produto, suas variações e movimentações de estoque serão excluídos. As vendas registradas serão mantidas. Esta ação não pode ser desfeita.";
 "products.error.title" = "Não foi possível excluir o produto";
-"stock.entry.title" = "Entrada de estoque";
 "stock.entry.navigationTitle" = "Entrada";
 "stock.entry.newVariant" = "Nova variação";
 "stock.entry.new" = "Novo estoque";
@@ -250,7 +248,6 @@
 "product.variant.edit.stock" = "Estoque";
 "product.variant.new.defaultFooter" = "Este produto ainda não tem variações. Edite o produto e ative Possui variações antes de cadastrar outra.";
 "stock.entry.quantity" = "Entrada de estoque";
-"stock.entry.result" = "Estoque após a entrada";
 "stock.entry.note" = "Observação";
 "stock.entry.error" = "Não foi possível registrar a entrada";
 "order.channel.direct" = "Venda direta";
@@ -327,8 +324,6 @@
 "order.queue.unknown" = "Estado desconhecido";
 "order.queue.untitled" = "Pedido sem itens";
 "order.queue.moreItems" = "%1$@ e mais %2$@";
-"order.queue.itemMetadata" = "%1$@ · %2$@ unidades";
-"order.queue.quantityMetadata" = "%@ unidades";
 "order.queue.productionDate" = "Produzir até %@";
 "order.queue.shippingDate" = "Despachar até %@";
 "order.queue.shippedDate" = "Despachado em %@";
@@ -446,7 +441,6 @@
 "settings.about.feedback" = "Enviar feedback";
 "settings.about.website" = "Site do desenvolvedor";
 "settings.about.versionBuild" = "Versão %1$@ (%2$@)";
-"settings.about.icon" = "Ícone do app TinyStock";
 "settings.privacy.title" = "Privacidade";
 "settings.privacy.local.title" = "Dados neste dispositivo";
 "settings.privacy.local.message" = "Produtos, estoque, lojas e pedidos são armazenados pelo TinyStock no dispositivo. O TinyStock não exige uma conta e não envia esses dados ao desenvolvedor.";
