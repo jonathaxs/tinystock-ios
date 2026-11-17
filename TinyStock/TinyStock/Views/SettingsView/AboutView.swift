@@ -32,7 +32,7 @@ struct AboutView: View {
             }
 
             Section(String(localized: "settings.about.developer", bundle: .tinyStockCore)) {
-                Link(destination: URL(string: "mailto:jonathasmrt@me.com")!) {
+                Link(destination: URL(string: "mailto:contato@jonathasmotta.com")!) {
                     Label(String(localized: "settings.about.feedback", bundle: .tinyStockCore), systemImage: "envelope")
                 }
                 Link(destination: URL(string: "https://jonathasmotta.com")!) {
