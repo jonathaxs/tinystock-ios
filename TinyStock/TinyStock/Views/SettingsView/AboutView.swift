@@ -1,4 +1,5 @@
 // Proposito: Apresentar identidade, versao e contato do TinyStock (a privacidade fica nos Ajustes).
+// Cinco toques no icone reabrem as boas-vindas.
 // Created by Jonathas Motta (@jonathaxs) on 2026-09-08.
 
 import SwiftUI
@@ -6,6 +7,25 @@ import TinyStockCore
 import UIKit
 
 struct AboutView: View {
+
+    @AppStorage(AppAccentColor.storageKey) private var accentColorRaw = AppAccentColor.defaultColor.rawValue
+    @AppStorage(WelcomeStorage.didCompleteKey) private var didCompleteWelcome = true
+    @Environment(\.openURL) private var openURL
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    // Toques seguidos no ícone reabrem as boas-vindas.
+    @State private var iconTapCount = 0
+    @State private var lastIconTap: Date?
+    @State private var iconScale: CGFloat = 1
+
+    private static let feedbackURL = URL(string: "mailto:contato@jonathasmotta.com")!
+    private static let iconTapGoal = 5
+    private static let iconTapWindow: TimeInterval = 2
+
+    private var accentColor: Color {
+        (AppAccentColor(rawValue: accentColorRaw) ?? .defaultColor).color
+    }
+
     var body: some View {
         List {
             Section {
@@ -31,15 +51,24 @@ struct AboutView: View {
                     .listRowSeparator(.hidden)
             }
 
-            Section(String(localized: "settings.about.developer", bundle: .tinyStockCore)) {
-                Link(destination: URL(string: "mailto:contato@jonathasmotta.com")!) {
-                    Label(String(localized: "settings.about.feedback", bundle: .tinyStockCore), systemImage: "envelope")
+            Section {
+                HStack {
+                    Spacer()
+                    Button {
+                        openURL(Self.feedbackURL)
+                    } label: {
+                        Label(String(localized: "settings.about.feedback", bundle: .tinyStockCore), systemImage: "envelope")
+                            .font(.headline)
+                            .padding(.vertical, 4)
+                    }
+                    .appSecondaryButton(accentColor)
+                    Spacer()
                 }
-                Link(destination: URL(string: "https://jonathasmotta.com")!) {
-                    Label(String(localized: "settings.about.website", bundle: .tinyStockCore), systemImage: "globe")
-                }
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             }
         }
+        .listSectionSpacing(.compact)
         .navigationTitle(String(localized: "settings.about.title", bundle: .tinyStockCore))
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -53,6 +82,8 @@ struct AboutView: View {
                 .interpolation(.high)
                 .frame(width: size, height: size)
                 .clipShape(RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
+                .scaleEffect(iconScale)
+                .onTapGesture(perform: registerIconTap)
                 .accessibilityHidden(true)
         } else {
             Image(systemName: "shippingbox.fill")
@@ -60,7 +91,40 @@ struct AboutView: View {
                 .frame(width: size, height: size)
                 .background(.tint, in: RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
                 .foregroundStyle(.white)
+                .scaleEffect(iconScale)
+                .onTapGesture(perform: registerIconTap)
                 .accessibilityHidden(true)
+        }
+    }
+
+    // MARK: - Reabrir as boas-vindas
+
+    /// 5 toques seguidos no ícone (no máximo 2 s entre eles) voltam para a WelcomeView.
+    private func registerIconTap() {
+        bounceIcon()
+        let now = Date()
+        if let last = lastIconTap, now.timeIntervalSince(last) > Self.iconTapWindow {
+            iconTapCount = 0
+        }
+        lastIconTap = now
+        iconTapCount += 1
+
+        if iconTapCount >= Self.iconTapGoal {
+            iconTapCount = 0
+            lastIconTap = nil
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            didCompleteWelcome = false
+        } else {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        }
+    }
+
+    /// Cada toque dá um pulinho no ícone.
+    private func bounceIcon() {
+        guard !reduceMotion else { return }
+        withAnimation(.spring(response: 0.18, dampingFraction: 0.6)) { iconScale = 1.18 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.14) {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.55)) { iconScale = 1 }
         }
     }
 
