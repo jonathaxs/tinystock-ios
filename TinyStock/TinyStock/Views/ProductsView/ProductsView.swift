@@ -92,7 +92,7 @@ struct ProductsView: View {
                 }
             }
         }
-        .modifier(SystemSearch(isEnabled: !isWideLayout, text: $searchText))
+        .modifier(SystemSearch(isEnabled: !isWideLayout && SystemSearch.isAvailable, text: $searchText))
         .sheet(isPresented: $isPresentingForm) { ProductFormView(storeID: storeID) }
         .sheet(isPresented: $isPresentingSale) { SalesOrderFormView(storeID: storeID) }
         .sheet(item: $variantEdit) { EditProductVariantView(product: $0.product, variantID: $0.variantID) }
@@ -231,8 +231,9 @@ struct ProductsView: View {
             if showsHome && searchText.isEmpty {
                 Section { homeRows }
             }
-            // No layout largo a barra de navegacao fica escondida, e com ela a busca do sistema no iPad.
-            if !showsHome && !products.isEmpty {
+            // No layout largo a barra de navegacao fica escondida, e com ela a busca do sistema no iPad. Antes do
+            // iOS 26 a busca do sistema tambem fica na barra escondida, entao o iPhone usa este campo.
+            if (!showsHome || !SystemSearch.isAvailable) && !products.isEmpty {
                 Section {
                     CatalogSearchField(text: $searchText)
                         .listRowBackground(Color.clear)
@@ -511,6 +512,11 @@ private extension View {
 
 /// Busca do sistema (na barra de baixo do iPhone); desligada no layout largo, que usa a `CatalogSearchField`.
 private struct SystemSearch: ViewModifier {
+    /// So no iOS 26+ a busca vai para a barra de baixo; antes ela ficaria na barra de navegacao escondida.
+    static var isAvailable: Bool {
+        if #available(iOS 26.0, *) { true } else { false }
+    }
+
     let isEnabled: Bool
     @Binding var text: String
 

@@ -7,7 +7,11 @@ import TinyStockCore
 struct ColorSettingsView: View {
     @AppStorage(AppAccentColor.storageKey) private var selectedRawValue = AppAccentColor.defaultColor.rawValue
 
-    private let columns = Array(repeating: GridItem(.flexible()), count: 4)
+    /// As cores em linhas de 4.
+    private var rows: [[AppAccentColor]] {
+        let all = AppAccentColor.allCases
+        return stride(from: 0, to: all.count, by: 4).map { Array(all[$0..<min($0 + 4, all.count)]) }
+    }
 
     private var selectedColor: AppAccentColor {
         AppAccentColor(rawValue: selectedRawValue) ?? .defaultColor
@@ -16,9 +20,14 @@ struct ColorSettingsView: View {
     var body: some View {
         List {
             Section(String(localized: "settings.color.section", bundle: .tinyStockCore)) {
-                LazyVGrid(columns: columns, spacing: 20) {
-                    ForEach(AppAccentColor.allCases, id: \.self) { color in
-                        colorButton(color)
+                // Grid comum (nao lazy): dentro de uma List do iOS 18, a LazyVGrid trava a tela num loop de layout.
+                Grid(horizontalSpacing: 8, verticalSpacing: 20) {
+                    ForEach(rows, id: \.first) { row in
+                        GridRow {
+                            ForEach(row, id: \.self) { color in
+                                colorButton(color)
+                            }
+                        }
                     }
                 }
                 .padding(.vertical, 10)

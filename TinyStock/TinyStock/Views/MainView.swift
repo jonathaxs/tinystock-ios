@@ -41,6 +41,7 @@ struct MainView: View {
                 .navigationDestination(for: AppRoute.self) { route in
                     switch route {
                     case .settings: SettingsView(storeID: storeSession.selectedStoreID)
+                    case .settingsPage(let page): SettingsPageView(page: page, storeID: storeSession.selectedStoreID)
                     }
                 }
         }
@@ -50,7 +51,7 @@ struct MainView: View {
             NavigationStack {
                 sheetRoot(sheet)
                     // A loja atual fica visível, já que a troca de loja acontece na Início.
-                    .navigationSubtitle(storeName)
+                    .appNavigationSubtitle(storeName)
                     .toolbar {
                         ToolbarItem(placement: .topBarLeading) {
                             SheetCloseButton { router.sheet = nil }

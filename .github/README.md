@@ -12,8 +12,9 @@ Dá para ter mais de uma loja, cada uma com seus produtos, e as notificações a
 
 O app tem o ciclo operacional completo de uma pequena loja: cadastro de produtos com variações, controle de estoque auditável, pedidos de pronta entrega ou sob encomenda, prazos de produção e despacho no calendário e relatórios financeiros por período.
 
-## Funcionalidades
-_(O app está nos testes finais, algumas funcionalidades podem ser removidas ou novas serem adicionadas até a versão final. Qualquer dúvida ou sugestão, entre em [contato comigo](https://jonathasmotta.com).)_
+**Em breve na App Store** para iPhone e iPad. A versão para Android já está disponível em [APK](https://jonathasmotta.com/downloads/TinyStock-1.0-beta.apk).
+
+## Funcionalidades - Versão 1.0
 
 **Lojas**
 - Várias lojas independentes, com troca rápida entre elas.
@@ -41,7 +42,7 @@ _(O app está nos testes finais, algumas funcionalidades podem ser removidas ou 
 
 **Dados e personalização**
 - Sincronização automática e privada pelo iCloud (CloudKit).
-- Backup em JSON para exportar e importar, além de cópia manual no iCloud Drive.
+- Backup em JSON para exportar e importar, compatível com a versão Android, além de cópia manual no iCloud Drive.
 - Cores de destaque configuráveis.
 - Interface em Português do Brasil e English, conforme o idioma do iPhone.
 - Suporte a VoiceOver, Dynamic Type, modo claro e modo escuro.
@@ -69,39 +70,22 @@ flowchart LR
     Services --> Backup["Backup JSON e iCloud Drive"]
 ```
 
-- **SwiftUI** para toda a interface.
+- **SwiftUI** para toda a interface, com **Liquid Glass** no iOS 26 ou superior e o visual padrão do sistema no iOS 18.
+- Uma tela Início com o resumo da loja e o catálogo. Relatórios e Calendário abrem por cima dela, e os Ajustes como página, por um roteador único (`AppRouter`).
+- Layout adaptado ao iPad e ao iPhone dobrável, com a lista ao lado do conteúdo.
 - **SwiftData** para persistência local, com sincronização pelo **CloudKit** em banco privado do usuário.
 - **TinyStockCore**: Swift Package local que concentra models, regras de negócio, serviços, localização e testes. O app fica responsável apenas pela interface e pela integração com o sistema, o que mantém o Core testável e reutilizável em futuras extensões, como widgets.
 - **Decimal** em todos os valores monetários, evitando erros de arredondamento.
 - **Swift Testing** para os testes automatizados do Core.
 - Nenhuma dependência externa: apenas frameworks nativos da Apple.
 
-### Ciclo de um pedido
-
-```mermaid
-stateDiagram-v2
-    [*] --> Novo
-    Novo --> AguardandoProducao: pedido para produção
-    AguardandoProducao --> EmProducao
-    AguardandoProducao --> ProntoParaEnvio: marcado como produzido
-    EmProducao --> ProntoParaEnvio
-    Novo --> ProntoParaEnvio: pronta entrega
-    ProntoParaEnvio --> Enviado
-    Enviado --> Concluido
-    Novo --> Cancelado
-    AguardandoProducao --> Cancelado
-    EmProducao --> Cancelado
-    ProntoParaEnvio --> Cancelado
-    Concluido --> [*]
-    Cancelado --> [*]
-```
-
 ## Estrutura do repositório
 
 ```text
 TinyStock/
 ├── TinyStock/                 App iOS
-│   ├── Views/                 Telas por área: Produtos, Calendário, Relatórios e Ajustes
+│   ├── Navigation/            Roteador: páginas, sheets e pedidos vindos das notificações
+│   ├── Views/                 Telas por área: Início, Produtos, Calendário, Relatórios, Ajustes e boas-vindas
 │   ├── Notifications/         Lembretes locais e navegação a partir das notificações
 │   └── Resources/             Info.plist e textos do sistema localizados
 ├── TinyStockCore/             Swift Package com o domínio do app
@@ -109,6 +93,8 @@ TinyStock/
 │   │   ├── Models/            Lojas, produtos, variações, estoque e pedidos
 │   │   ├── Services/          Regras de estoque, pedidos, relatórios, lembretes e backup
 │   │   ├── Persistence/       Configuração do SwiftData e do CloudKit
+│   │   ├── Formatting/        Formatação de moeda
+│   │   ├── Images/            Tratamento das fotos dos produtos
 │   │   └── Resources/         Localização en e pt-BR
 │   └── Tests/                 Testes automatizados do Core
 └── TinyStock.xcodeproj
@@ -116,7 +102,7 @@ TinyStock/
 
 ## Requisitos
 
-- iOS 26 ou superior.
+- iOS 18 ou superior (o Liquid Glass aparece a partir do iOS 26).
 - Xcode 27 ou superior.
 - Swift 6.
 
@@ -126,6 +112,9 @@ Para executar em um iPhone com sincronização, selecione o seu Team e configure
 
 O TinyStock não exige cadastro e não envia dados ao desenvolvedor. As informações ficam no próprio dispositivo e, quando a sincronização está ativa, na conta privada do iCloud do usuário. Não há servidores próprios, ferramentas de análise ou anúncios.
 
+## Android
+
+Existe também uma versão nativa para Android, feita em Kotlin e Jetpack Compose: [tinystock-android](https://github.com/jonathaxs/tinystock-android).
 
 ## Autor
 
@@ -147,8 +136,9 @@ You can have more than one store, each with its own products, and notifications 
 
 The app covers the full operating cycle of a small store: a product catalog with variants, auditable stock control, ready-to-ship or made-to-order orders, production and shipping deadlines on the calendar and financial reports by period.
 
-## Features
-_(The app is in final testing, so some features may be removed or new ones added before the final version. For questions or suggestions, [get in touch](https://jonathasmotta.com).)_
+**Coming soon to the App Store** for iPhone and iPad. The Android version is already available as an [APK](https://jonathasmotta.com/downloads/TinyStock-1.0-beta.apk).
+
+## Features - Version 1.0
 
 **Stores**
 - Multiple independent stores, with quick switching between them.
@@ -176,7 +166,7 @@ _(The app is in final testing, so some features may be removed or new ones added
 
 **Data and personalization**
 - Automatic, private sync through iCloud (CloudKit).
-- JSON backup to export and import, plus a manual copy to iCloud Drive.
+- JSON backup to export and import, compatible with the Android version, plus a manual copy to iCloud Drive.
 - Configurable accent colors.
 - Interface in Brazilian Portuguese and English, following the iPhone's language.
 - Support for VoiceOver, Dynamic Type, light mode and dark mode.
@@ -204,39 +194,22 @@ flowchart LR
     Services --> Backup["JSON backup and iCloud Drive"]
 ```
 
-- **SwiftUI** for the whole interface.
+- **SwiftUI** for the whole interface, with **Liquid Glass** on iOS 26 or later and the standard system look on iOS 18.
+- A single Home screen with the store summary and the catalog. Reports and Calendar open on top of it, and Settings as a page, through a single router (`AppRouter`).
+- Layout adapted to iPad and to the foldable iPhone, with the list next to the content.
 - **SwiftData** for local persistence, synced through **CloudKit** in the user's private database.
 - **TinyStockCore**: a local Swift Package that holds the models, business rules, services, localization and tests. The app only handles the interface and system integration, which keeps the Core testable and reusable in future extensions, such as widgets.
 - **Decimal** for every money value, avoiding rounding errors.
 - **Swift Testing** for the Core's automated tests.
 - No external dependencies: only Apple's native frameworks.
 
-### Order lifecycle
-
-```mermaid
-stateDiagram-v2
-    [*] --> New
-    New --> WaitingForProduction: made to order
-    WaitingForProduction --> InProduction
-    WaitingForProduction --> ReadyToShip: marked as produced
-    InProduction --> ReadyToShip
-    New --> ReadyToShip: ready to ship
-    ReadyToShip --> Shipped
-    Shipped --> Completed
-    New --> Canceled
-    WaitingForProduction --> Canceled
-    InProduction --> Canceled
-    ReadyToShip --> Canceled
-    Completed --> [*]
-    Canceled --> [*]
-```
-
 ## Repository structure
 
 ```text
 TinyStock/
 ├── TinyStock/                 iOS app
-│   ├── Views/                 Screens by area: Products, Calendar, Reports and Settings
+│   ├── Navigation/            Router: pages, sheets and requests coming from notifications
+│   ├── Views/                 Screens by area: Home, Products, Calendar, Reports, Settings and welcome
 │   ├── Notifications/         Local reminders and navigation from notifications
 │   └── Resources/             Info.plist and localized system strings
 ├── TinyStockCore/             Swift Package with the app's domain
@@ -244,6 +217,8 @@ TinyStock/
 │   │   ├── Models/            Stores, products, variants, stock and orders
 │   │   ├── Services/          Stock, order, report, reminder and backup rules
 │   │   ├── Persistence/       SwiftData and CloudKit setup
+│   │   ├── Formatting/        Currency formatting
+│   │   ├── Images/            Product photo handling
 │   │   └── Resources/         en and pt-BR localization
 │   └── Tests/                 Core automated tests
 └── TinyStock.xcodeproj
@@ -251,7 +226,7 @@ TinyStock/
 
 ## Requirements
 
-- iOS 26 or later.
+- iOS 18 or later (Liquid Glass shows up from iOS 26).
 - Xcode 27 or later.
 - Swift 6.
 
@@ -260,6 +235,10 @@ To run it on an iPhone with sync, select your Team and set up the iCloud contain
 ## Privacy
 
 TinyStock requires no sign-up and sends no data to the developer. Information stays on the device and, when sync is on, in the user's private iCloud account. There are no servers of its own, no analytics and no ads.
+
+## Android
+
+There is also a native Android version, built with Kotlin and Jetpack Compose: [tinystock-android](https://github.com/jonathaxs/tinystock-android).
 
 ## Author
 

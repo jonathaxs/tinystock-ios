@@ -103,6 +103,8 @@ struct SettingsView: View {
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .navigationTitle(String(localized: "tab.settings", bundle: .tinyStockCore))
+        // No iOS 18 o voltar mostraria o titulo escondido da Inicio; assim fica so a seta, como no iOS 26.
+        .toolbarRole(.editor)
     }
 
     // MARK: - Lista
@@ -211,16 +213,25 @@ struct SettingsView: View {
             .listRowBackground(isSelected ? accentColor.opacity(0.18) : Color(.secondarySystemGroupedBackground))
             .accessibilityAddTraits(isSelected ? .isSelected : [])
         } else {
-            NavigationLink {
-                destination(for: page)
-            } label: {
+            // Por valor: a pagina so e montada ao abrir. Com o destino montado junto da lista, o iOS 18
+            // refazia a lista sem parar ao tocar numa linha.
+            NavigationLink(value: AppRoute.settingsPage(page)) {
                 label()
             }
         }
     }
 
-    @ViewBuilder
     private func destination(for page: SettingsPage) -> some View {
+        SettingsPageView(page: page, storeID: storeID)
+    }
+}
+
+/// Uma página dos Ajustes, aberta ao lado da lista (layout largo) ou empilhada no stack raiz (iPhone).
+struct SettingsPageView: View {
+    let page: SettingsPage
+    let storeID: UUID
+
+    var body: some View {
         switch page {
         case .stores:        StoresView()
         case .notifications: NotificationSettingsView()

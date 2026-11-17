@@ -16,6 +16,8 @@ import TinyStockCore
 /// Páginas empilhadas no stack raiz.
 enum AppRoute: Hashable {
     case settings
+    /// Página dos Ajustes no iPhone. O caminho tem um tipo só, então as páginas também passam por aqui.
+    case settingsPage(SettingsPage)
 }
 
 /// Telas que abrem em sheet por cima da Início.

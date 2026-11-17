@@ -16,8 +16,12 @@ struct SalesOrderCalendarView: View {
         (AppAccentColor(rawValue: accentColorRaw) ?? .defaultColor).color
     }
 
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 7)
     private var days: [Date] { SalesOrderSchedule.monthDays(containing: selectedDate, calendar: calendar) }
+    /// Os dias do mes em semanas de 7, uma linha da grade cada.
+    private var weeks: [[Date]] {
+        let days = days
+        return stride(from: 0, to: days.count, by: 7).map { Array(days[$0..<min($0 + 7, days.count)]) }
+    }
     private var weekdaySymbols: [String] {
         var localizedCalendar = calendar
         localizedCalendar.locale = locale
@@ -39,22 +43,30 @@ struct SalesOrderCalendarView: View {
                 monthButton(offset: 1)
             }
 
-            LazyVGrid(columns: columns, spacing: 2) {
-                ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { _, symbol in
-                    Text(symbol)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, minHeight: 24)
-                        .accessibilityHidden(true)
+            // Grid comum (nao lazy): dentro de uma List do iOS 18, a LazyVGrid muda de altura a cada medicao e
+            // trava a tela num loop de layout.
+            Grid(horizontalSpacing: 2, verticalSpacing: 2) {
+                GridRow {
+                    ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { _, symbol in
+                        Text(symbol)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, minHeight: 24)
+                            .accessibilityHidden(true)
+                    }
                 }
-                ForEach(days, id: \.self) { day in dayButton(day) }
+                ForEach(weeks, id: \.first) { week in
+                    GridRow {
+                        ForEach(week, id: \.self) { day in dayButton(day) }
+                    }
+                }
             }
 
             Button(String(localized: "order.calendar.today", bundle: .tinyStockCore)) {
                 selectedDate = Date()
             }
             .font(.subheadline.weight(.semibold))
-            .buttonStyle(.glass)
+            .appGlassButton()
             .tint(accentColor)
             .padding(.top, 4)
         }
@@ -81,7 +93,7 @@ struct SalesOrderCalendarView: View {
         }
         .accessibilityLabel(title)
         .buttonStyle(.plain)
-        .glassEffect(.regular.interactive(), in: Circle())
+        .appGlass(in: Circle(), interactive: true)
         .help(title)
     }
 

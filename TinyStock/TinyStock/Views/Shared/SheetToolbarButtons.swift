@@ -1,8 +1,8 @@
 // ⌘
 //  TinyStock/Views/Shared/SheetToolbarButtons.swift
 //
-//  Propósito: Botões do topo das sheets com o ícone do sistema (X e ✓), que no iPhone Duo dobrado vão
-//             para a barra vertical ao lado da tela.
+//  Propósito: Botões do topo das sheets. iOS 26+: ícone do sistema (X e ✓), que no iPhone Duo dobrado
+//             vai para a barra vertical ao lado da tela. iOS 18: o texto de sempre.
 //
 //  Created by Jonathas Motta (@jonathaxs) on 2026-11-07.
 // ⌘
@@ -17,8 +17,12 @@ struct SheetCloseButton: View {
     let action: () -> Void
 
     var body: some View {
-        Button(role: .close, action: action)
-            .accessibilityLabel(title)
+        if #available(iOS 26.0, *) {
+            Button(role: .close, action: action)
+                .accessibilityLabel(title)
+        } else {
+            Button(title, action: action)
+        }
     }
 }
 
@@ -29,7 +33,12 @@ struct SheetConfirmButton: View {
     let action: () -> Void
 
     var body: some View {
-        Button(role: .confirm, action: action)
-            .accessibilityLabel(title)
+        if #available(iOS 26.0, *) {
+            Button(role: .confirm, action: action)
+                .accessibilityLabel(title)
+        } else {
+            Button(title, action: action)
+                .fontWeight(.semibold)
+        }
     }
 }

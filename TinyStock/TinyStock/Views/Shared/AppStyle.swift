@@ -3,6 +3,7 @@
 //
 //  Propósito: Camada de estilo única do app: medidas, cards sólidos, vidro só nos controles e
 //             componentes reutilizáveis (rótulo de seção, card agrupado, ícones e botões - / +).
+//             Liquid Glass no iOS 26+; material translúcido e botões padrão no iOS 18.
 //
 //  Created by Jonathas Motta (@jonathaxs) on 2026-11-07.
 // ⌘
@@ -80,31 +81,80 @@ extension View {
     }
 
     /// Vidro (Liquid Glass) na forma pedida. Só para controles; conteúdo fica em card sólido.
-    func appGlass<S: Shape>(in shape: S) -> some View {
-        glassEffect(.regular, in: shape)
+    /// Antes do iOS 26, material translúcido. `interactive` reage ao toque (só no vidro).
+    @ViewBuilder
+    func appGlass<S: Shape>(in shape: S, interactive: Bool = false) -> some View {
+        if #available(iOS 26.0, *) {
+            glassEffect(interactive ? .regular.interactive() : .regular, in: shape)
+        } else {
+            background(.ultraThinMaterial, in: shape)
+        }
     }
 
-    /// Botão principal em cápsula de vidro com cor.
+    /// Botão principal em cápsula (vidro com cor no iOS 26+).
+    @ViewBuilder
     func appProminentButton(_ color: Color, size: ControlSize = .large) -> some View {
-        buttonStyle(.glassProminent)
-            .buttonBorderShape(.capsule)
-            .controlSize(size)
-            .tint(color)
+        if #available(iOS 26.0, *) {
+            buttonStyle(.glassProminent)
+                .buttonBorderShape(.capsule)
+                .controlSize(size)
+                .tint(color)
+        } else {
+            buttonStyle(.borderedProminent)
+                .buttonBorderShape(.capsule)
+                .controlSize(size)
+                .tint(color)
+        }
     }
 
-    /// Botão secundário em cápsula de vidro neutro. `circle` deixa redondo (botões só de ícone).
+    /// Botão secundário em cápsula (vidro neutro no iOS 26+). `circle` deixa redondo (botões só de ícone).
+    @ViewBuilder
     func appSecondaryButton(_ color: Color, circle: Bool = false) -> some View {
-        buttonStyle(.glass)
-            .buttonBorderShape(circle ? .circle : .capsule)
-            .controlSize(.large)
-            .tint(color)
+        if #available(iOS 26.0, *) {
+            buttonStyle(.glass)
+                .buttonBorderShape(circle ? .circle : .capsule)
+                .controlSize(.large)
+                .tint(color)
+        } else {
+            buttonStyle(.bordered)
+                .buttonBorderShape(circle ? .circle : .capsule)
+                .controlSize(.large)
+                .tint(color)
+        }
     }
 
-    /// Botão redondo de vidro. O tamanho vem do conteúdo.
+    /// Botão de vidro neutro no tamanho do contexto (iOS 26+); botão padrão no iOS 18.
+    @ViewBuilder
+    func appGlassButton() -> some View {
+        if #available(iOS 26.0, *) {
+            buttonStyle(.glass)
+        } else {
+            buttonStyle(.bordered)
+        }
+    }
+
+    /// Subtítulo da barra de navegação. Só existe a partir do iOS 26; antes, fica só o título.
+    @ViewBuilder
+    func appNavigationSubtitle(_ subtitle: String) -> some View {
+        if #available(iOS 26.0, *) {
+            navigationSubtitle(subtitle)
+        } else {
+            self
+        }
+    }
+
+    /// Botão redondo (vidro no iOS 26+). O tamanho vem do conteúdo.
+    @ViewBuilder
     func appCircleButton() -> some View {
-        buttonStyle(.glass)
-            .buttonBorderShape(.circle)
-            .tint(.primary)
+        if #available(iOS 26.0, *) {
+            buttonStyle(.glass)
+                .buttonBorderShape(.circle)
+                .tint(.primary)
+        } else {
+            buttonStyle(.bordered)
+                .buttonBorderShape(.circle)
+                .tint(.primary)
+        }
     }
 }
 
@@ -182,7 +232,7 @@ struct RoundStepButton: View {
                 .frame(width: size, height: size)
                 // Vidro sem .interactive(): o interativo fica com o toque e a acao nao roda dentro de
                 // uma linha de Form.
-                .glassEffect(.regular, in: Circle())
+                .appGlass(in: Circle())
                 .contentShape(Circle())
         }
         // Borderless: dentro de uma linha de Form o toque chega a cada botao, e nao a linha inteira.
@@ -243,7 +293,7 @@ struct AppMenuRow<MenuContent: View>: View {
             .contentShape(shape)
         }
         .buttonStyle(.plain)
-        .glassEffect(.regular.interactive(), in: shape)
+        .appGlass(in: shape, interactive: true)
         .accessibilityLabel(title)
         .accessibilityValue(value)
     }
