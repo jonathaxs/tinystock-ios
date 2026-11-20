@@ -268,6 +268,10 @@ struct ProductsView: View {
         }
         .listSectionSpacing(.compact)
         .environment(\.editMode, $editMode)
+        // O modo muda pelo @AppStorage de outra tela (fora da transacao do botao), entao a animacao da troca
+        // lista/grade fica aqui.
+        .animation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.5, dampingFraction: 0.82),
+                   value: viewMode)
     }
 
     /// Topo da Inicio: loja atual, caixa com o resumo, botoes redondos e Adicionar.
@@ -412,7 +416,7 @@ struct ProductsView: View {
             HStack(spacing: 4) {
                 ProductRowView(product: product, quantity: quantity(of: product))
                 rowButton("info.circle", "products.details") { detailProduct = product }
-                rowButton("gearshape", "products.actions") { actionProduct = product }
+                rowButton("ellipsis.circle", "products.actions") { actionProduct = product }
             }
         }
     }

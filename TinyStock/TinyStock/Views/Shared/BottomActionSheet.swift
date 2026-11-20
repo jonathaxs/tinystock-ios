@@ -27,6 +27,8 @@ struct BottomActionSheet<Content: View>: View {
         // A altura acompanha o conteudo; com letras maiores a folha pode abrir por inteiro.
         .presentationDetents([.height(contentHeight), .large])
         .presentationDragIndicator(.visible)
+        // Fundo solido: no vidro do iOS 26 os botoes ficavam dificeis de ler sobre o que esta atras.
+        .presentationBackground(Color(.systemGroupedBackground))
     }
 }
 
@@ -70,7 +72,7 @@ struct SheetActionButton: View {
     }
 }
 
-/// Fundo em bloco com cantos arredondados, no padrao das folhas de acao do sistema.
+/// Bloco claro com cantos arredondados sobre o fundo cinza da folha, como as linhas dos Ajustes.
 struct SheetActionButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
 
@@ -79,7 +81,7 @@ struct SheetActionButtonStyle: ButtonStyle {
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
             .foregroundStyle(.tint)
-            .background(.fill.tertiary, in: .rect(cornerRadius: 16))
+            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
             .opacity(configuration.isPressed || !isEnabled ? 0.5 : 1)
             .contentShape(.rect(cornerRadius: 16))
     }
