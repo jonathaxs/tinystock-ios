@@ -55,6 +55,19 @@ struct ProductFormServiceTests {
         #expect(persisted.isDefault)
     }
 
+    @Test func cadastroSemVariacoesGuardaEstoqueInicial() throws {
+        let context = try TestDatabase.makeCleanContext()
+        let product = try ProductFormService.apply(
+            storeID: UUID(), name: "Suporte", costPrice: 4, salePrice: 25, imageData: nil,
+            variants: [ProductVariantInput(initialQuantity: 10)], usesVariants: false, in: context
+        )
+        let variant = try #require(ProductVariantService.variants(for: product, in: context).first)
+
+        #expect(variant.isDefault)
+        #expect(variant.quantity == 10)
+        #expect(try context.fetchCount(FetchDescriptor<StockMovement>()) == 1)
+    }
+
     @Test func cadastroComVariacoesExigePeloMenosUmaVariacao() throws {
         let context = try TestDatabase.makeCleanContext()
         #expect(throws: ProductFormError.missingVariation) {

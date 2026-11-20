@@ -80,7 +80,10 @@ public enum ProductFormService {
         if usesVariants {
             try ProductVariantService.applyEdits(variants, existing: existing, for: savedProduct, in: context)
         } else {
-            try ProductVariantService.applyDefault(existing: existing, for: savedProduct, in: context)
+            // Sem variacao, o estoque inicial do produto novo vai para a variacao interna.
+            try ProductVariantService.applyDefault(existing: existing, for: savedProduct,
+                                                   initialQuantity: variants.first?.initialQuantity ?? 0,
+                                                   in: context)
         }
         return savedProduct
     }

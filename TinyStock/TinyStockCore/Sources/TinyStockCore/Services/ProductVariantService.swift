@@ -181,6 +181,7 @@ public enum ProductVariantService {
     static func applyDefault(
         existing: [ProductVariant],
         for product: Product,
+        initialQuantity: Int = 0,
         in context: ModelContext
     ) throws {
         guard existing.count <= 1 else { throw ProductFormError.cannotDisableMultipleVariations }
@@ -192,7 +193,7 @@ public enum ProductVariantService {
                 variant.updatedAt = Date()
             }
         } else {
-            try create(for: product, name: "", isDefault: true, in: context)
+            try create(for: product, name: "", isDefault: true, initialQuantity: initialQuantity, in: context)
         }
     }
 

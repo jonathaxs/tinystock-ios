@@ -23,6 +23,8 @@
 "common.edit" = "Editar";
 "common.delete" = "Excluir";
 "common.ok" = "OK";
+"keyboard.previous" = "Campo anterior";
+"keyboard.next" = "Próximo campo";
 "common.close" = "Fechar";
 "common.decrease" = "Diminuir";
 "common.increase" = "Aumentar";
@@ -35,7 +37,7 @@
 
 
 /* MARK: - Formulário do produto */
-"product.form.title.new" = "Novo produto";
+"product.form.title.new" = "Adicionar produto";
 "product.form.section.prices" = "Preços";
 "product.form.name" = "Nome ou categoria";
 "product.form.costPrice" = "Custo";
@@ -184,7 +186,7 @@
 "store.error.storeNotInTrash" = "Mova esta loja para a Lixeira antes de excluí-la permanentemente.";
 "store.error.title" = "Não foi possível salvar a loja";
 "store.switcher.accessibility" = "Escolher loja";
-"store.form.title.new" = "Nova loja";
+"store.form.title.new" = "Adicionar loja";
 "store.form.title.edit" = "Editar loja";
 "store.form.section.identification" = "Identificação";
 "store.form.name" = "Nome da loja";
@@ -229,7 +231,7 @@
 "product.form.variant.name" = "Variação ou cor";
 "product.form.variant.initialStock" = "Estoque inicial";
 "product.form.variant.available" = "Estoque atual";
-"product.form.variant.disabled.footer" = "Ative para identificar uma variação e seu estoque inicial.";
+"product.form.variant.disabled.footer" = "Sem variações, o estoque fica no próprio produto.";
 "product.form.variant.multiple.footer" = "Variações existentes devem permanecer ativas para preservar seus estoques e históricos.";
 "product.form.photo.camera" = "Tirar foto";
 "product.form.photo.error" = "Não foi possível ler esta foto. Escolha outra imagem.";
@@ -241,8 +243,8 @@
 "products.delete.stock.message" = "O produto, suas variações e movimentações de estoque serão excluídos. As vendas registradas serão mantidas. Esta ação não pode ser desfeita.";
 "products.error.title" = "Não foi possível excluir o produto";
 "stock.entry.navigationTitle" = "Entrada";
-"stock.entry.newVariant" = "Nova variação";
-"stock.entry.new" = "Novo estoque";
+"stock.entry.newVariant" = "Adicionar variação";
+"stock.entry.new" = "Adicionar estoque";
 "product.variant.edit.title" = "Editar variação";
 "product.variant.edit.name" = "Nome";
 "product.variant.edit.stock" = "Estoque";

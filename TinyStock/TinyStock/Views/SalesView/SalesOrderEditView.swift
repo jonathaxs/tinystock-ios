@@ -22,6 +22,12 @@ struct SalesOrderEditView: View {
     @State private var isSaving = false
     @State private var errorMessage: String?
 
+    /// Campos de texto na ordem da tela, para as setas do teclado.
+    private enum Field: Hashable {
+        case buyer, reference, customChannel, fee, tracking, note
+    }
+    @FocusState private var focusedField: Field?
+
     init(order: SalesOrder) {
         self.order = order
         _channel = State(initialValue: order.channel ?? .direct)
@@ -61,6 +67,8 @@ struct SalesOrderEditView: View {
                 logisticsSection
                 summarySection
             }
+            .scrollDismissesKeyboard(.interactively)
+            .keyboardFieldNavigation(focus: $focusedField, order: fieldOrder)
             .navigationTitle(String(localized: "order.edit.title", bundle: .tinyStockCore))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -106,8 +114,10 @@ struct SalesOrderEditView: View {
     private var customerSection: some View {
         Section(tinted: String(localized: "order.form.section.customer", bundle: .tinyStockCore)) {
             TextField(String(localized: "order.form.buyer", bundle: .tinyStockCore), text: $buyerName)
+                .keyboardNext(.buyer, focus: $focusedField, order: fieldOrder)
             TextField(String(localized: "order.form.reference", bundle: .tinyStockCore), text: $externalReference)
                 .textInputAutocapitalization(.never)
+                .keyboardNext(.reference, focus: $focusedField, order: fieldOrder)
         }
     }
 
@@ -131,11 +141,13 @@ struct SalesOrderEditView: View {
             }
             if channel == .other {
                 TextField(String(localized: "order.form.customChannel", bundle: .tinyStockCore), text: $customChannelName)
+                    .keyboardNext(.customChannel, focus: $focusedField, order: fieldOrder)
             }
             LabeledContent(String(localized: "order.form.channelFee", bundle: .tinyStockCore)) {
                 HStack(spacing: 4) {
                     TextField("0", text: $channelFeeText)
                         .keyboardType(.decimalPad)
+                        .focused($focusedField, equals: .fee)
                         .multilineTextAlignment(.trailing)
                         .frame(minWidth: 72)
                     Text(verbatim: "%").foregroundStyle(.secondary)
@@ -148,9 +160,15 @@ struct SalesOrderEditView: View {
         Section(tinted: String(localized: "order.detail.additional", bundle: .tinyStockCore)) {
             TextField(String(localized: "order.edit.tracking", bundle: .tinyStockCore), text: $trackingCode)
                 .textInputAutocapitalization(.characters)
+                .keyboardNext(.tracking, focus: $focusedField, order: fieldOrder)
             TextField(String(localized: "order.form.note", bundle: .tinyStockCore), text: $note, axis: .vertical)
                 .lineLimit(2...5)
+                .focused($focusedField, equals: .note)
         }
+    }
+
+    private var fieldOrder: [Field] {
+        [.buyer, .reference] + (channel == .other ? [.customChannel] : []) + [.fee, .tracking, .note]
     }
 
     private var summarySection: some View {

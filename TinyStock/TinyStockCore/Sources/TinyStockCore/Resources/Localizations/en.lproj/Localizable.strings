@@ -23,6 +23,8 @@
 "common.edit" = "Edit";
 "common.delete" = "Delete";
 "common.ok" = "OK";
+"keyboard.previous" = "Previous field";
+"keyboard.next" = "Next field";
 "common.close" = "Close";
 "common.decrease" = "Decrease";
 "common.increase" = "Increase";
@@ -35,7 +37,7 @@
 
 
 /* MARK: - Product form */
-"product.form.title.new" = "New Product";
+"product.form.title.new" = "Add Product";
 "product.form.section.prices" = "Prices";
 "product.form.name" = "Name or category";
 "product.form.costPrice" = "Cost";
@@ -184,7 +186,7 @@
 "store.error.storeNotInTrash" = "Move this store to Trash before deleting it permanently.";
 "store.error.title" = "Store could not be saved";
 "store.switcher.accessibility" = "Choose store";
-"store.form.title.new" = "New Store";
+"store.form.title.new" = "Add Store";
 "store.form.title.edit" = "Edit Store";
 "store.form.section.identification" = "Identification";
 "store.form.name" = "Store name";
@@ -229,7 +231,7 @@
 "product.form.variant.name" = "Variation or color";
 "product.form.variant.initialStock" = "Initial stock";
 "product.form.variant.available" = "Current stock";
-"product.form.variant.disabled.footer" = "Turn this on to identify a variation and its initial stock.";
+"product.form.variant.disabled.footer" = "Without variations, the stock stays on the product itself.";
 "product.form.variant.multiple.footer" = "Multiple existing variations must remain enabled to preserve their stock and history.";
 "product.form.photo.camera" = "Take photo";
 "product.form.photo.error" = "Unable to read this photo. Please choose another image.";
@@ -241,8 +243,8 @@
 "products.delete.stock.message" = "The product, its variations and stock movements will be deleted. Recorded sales will be kept. This cannot be undone.";
 "products.error.title" = "Unable to delete product";
 "stock.entry.navigationTitle" = "Entry";
-"stock.entry.newVariant" = "New variation";
-"stock.entry.new" = "New stock";
+"stock.entry.newVariant" = "Add variation";
+"stock.entry.new" = "Add stock";
 "product.variant.edit.title" = "Edit variation";
 "product.variant.edit.name" = "Name";
 "product.variant.edit.stock" = "Stock";

@@ -34,6 +34,12 @@ struct SalesOrderFormView: View {
     @State private var isSaving = false
     @State private var errorMessage: String?
 
+    /// Campos de texto na ordem da tela, para as setas do teclado.
+    private enum Field: Hashable {
+        case buyer, reference, customChannel, fee, tracking, note
+    }
+    @FocusState private var focusedField: Field?
+
     init(storeID: UUID, product: Product? = nil) {
         self.storeID = storeID
         fixedProduct = product
@@ -101,6 +107,7 @@ struct SalesOrderFormView: View {
                 notesSection
             }
             .scrollDismissesKeyboard(.interactively)
+            .keyboardFieldNavigation(focus: $focusedField, order: fieldOrder)
             .navigationTitle(String(localized: "order.form.title", bundle: .tinyStockCore))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -110,14 +117,6 @@ struct SalesOrderFormView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     SheetConfirmButton(title: String(localized: "order.form.save", bundle: .tinyStockCore), action: save)
                         .disabled(!canSave || isSaving)
-                }
-                // O teclado decimal da taxa nao tem tecla de retorno para ser fechado.
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button(String(localized: "common.ok", bundle: .tinyStockCore)) {
-                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
-                                                        to: nil, from: nil, for: nil)
-                    }
                 }
             }
             .alert(String(localized: "order.form.error.title", bundle: .tinyStockCore), isPresented: Binding(
@@ -204,10 +203,12 @@ struct SalesOrderFormView: View {
         Section(tinted: String(localized: "order.form.section.customer", bundle: .tinyStockCore)) {
             TextField(String(localized: "order.form.buyer", bundle: .tinyStockCore), text: $buyerName)
                 .textInputAutocapitalization(.words)
+                .keyboardNext(.buyer, focus: $focusedField, order: fieldOrder)
         }
         Section(tinted: String(localized: "order.form.section.reference", bundle: .tinyStockCore)) {
             TextField(String(localized: "order.form.optional", bundle: .tinyStockCore), text: $externalReference)
                 .textInputAutocapitalization(.never)
+                .keyboardNext(.reference, focus: $focusedField, order: fieldOrder)
         }
     }
 
@@ -248,12 +249,14 @@ struct SalesOrderFormView: View {
             .labelsHidden()
             if channel == .other {
                 TextField(String(localized: "order.form.customChannel", bundle: .tinyStockCore), text: $customChannelName)
+                    .keyboardNext(.customChannel, focus: $focusedField, order: fieldOrder)
             }
         }
         Section(tinted: String(localized: "order.form.channelFee", bundle: .tinyStockCore)) {
             HStack(spacing: 4) {
                 TextField("0", text: $channelFeeText)
                     .keyboardType(.decimalPad)
+                    .focused($focusedField, equals: .fee)
                     .accessibilityLabel(String(localized: "order.form.channelFee", bundle: .tinyStockCore))
                 Text(verbatim: "%").foregroundStyle(.secondary)
             }
@@ -274,7 +277,12 @@ struct SalesOrderFormView: View {
         Section(tinted: String(localized: "order.form.section.notes", bundle: .tinyStockCore)) {
             TextField(String(localized: "order.form.optional", bundle: .tinyStockCore), text: $note, axis: .vertical)
                 .lineLimit(2...5)
+                .focused($focusedField, equals: .note)
         }
+    }
+
+    private var fieldOrder: [Field] {
+        [.buyer, .reference] + (channel == .other ? [.customChannel] : []) + [.fee, .note]
     }
 
     private var startOfOrderDay: Date { Calendar.current.startOfDay(for: orderedAt) }

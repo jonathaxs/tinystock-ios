@@ -15,13 +15,18 @@ struct ProductFormView: View {
         var id: Self { self }
     }
 
+    /// Campos de texto na ordem da tela, para as setas do teclado.
+    enum Field: Hashable {
+        case name, variation, sale, cost
+    }
+
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
     private let editingProduct: Product?
     private let storeID: UUID
     private let initialFocus: PriceField?
-    @FocusState private var focusedPrice: PriceField?
+    @FocusState private var focusedField: Field?
 
     @State private var name: String
     @State private var costPriceText: String
@@ -30,7 +35,6 @@ struct ProductFormView: View {
     @State private var hasVariations: Bool
     @State private var initialVariationName = ""
     @State private var initialQuantityText: String
-    @State private var usesLegacyDefaultVariant = false
     @State private var variants: [ProductVariantInput] = []
     @State private var editingVariant: ProductVariantInput?
     @State private var didLoadVariants = false
@@ -45,7 +49,7 @@ struct ProductFormView: View {
         _costPriceText = State(initialValue: CurrencyFormatter.editableText(from: product?.costPrice ?? 0))
         _salePriceText = State(initialValue: CurrencyFormatter.editableText(from: product?.salePrice ?? 0))
         _imageData = State(initialValue: product?.imageData)
-        // Produto novo sempre nasce com uma variacao nomeada, o que libera o estoque inicial.
+        // Produto novo comeca com variacao ligada; o switch deixa cadastrar sem variacao.
         _hasVariations = State(initialValue: product == nil)
         _initialQuantityText = State(initialValue: product == nil ? "1" : "0")
     }
@@ -58,33 +62,27 @@ struct ProductFormView: View {
         Int(initialQuantityText.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
+    /// Sem variacao, a unica entrada leva so o estoque da variacao interna do produto.
     private var formVariants: [ProductVariantInput] {
-        guard hasVariations, let initialQuantity else { return [] }
-        if editingProduct != nil, variants.count > 1 { return variants }
+        guard let initialQuantity else { return [] }
+        if hasVariations, editingProduct != nil, variants.count > 1 { return variants }
         let existingID = editingProduct == nil ? nil : variants.first?.existingID
-        return [ProductVariantInput(existingID: existingID, name: initialVariationName,
+        return [ProductVariantInput(existingID: existingID, name: hasVariations ? initialVariationName : "",
                                     initialQuantity: initialQuantity)]
+    }
+
+    private var fieldOrder: [Field] {
+        hasVariations && usesDirectVariationFields ? [.name, .variation, .sale, .cost] : [.name, .sale, .cost]
     }
 
     private var usesDirectVariationFields: Bool {
         editingProduct == nil || variants.count <= 1
     }
 
-    private var canDisableVariations: Bool {
-        editingProduct == nil || variants.count <= 1
-    }
-
-    /// Na edicao, o saldo escolhido vira um ajuste de estoque registrado no historico.
-    private var canEditStock: Bool {
-        hasVariations
-    }
-
     private var variationIsValid: Bool {
-        guard hasVariations else { return true }
         guard usesDirectVariationFields else { return !variants.isEmpty }
-        guard let initialQuantity else { return false }
-        return !initialVariationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && initialQuantity >= 0
+        guard let initialQuantity, initialQuantity >= 0 else { return false }
+        return !hasVariations || !initialVariationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     private var canSave: Bool {
@@ -111,6 +109,7 @@ struct ProductFormView: View {
                 pricesSection
             }
             .scrollDismissesKeyboard(.interactively)
+            .keyboardFieldNavigation(focus: $focusedField, order: fieldOrder)
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -120,11 +119,6 @@ struct ProductFormView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     SheetConfirmButton(action: save)
                         .disabled(!canSave)
-                }
-                // O teclado decimal dos precos nao tem tecla de retorno para ser fechado.
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button(String(localized: "common.ok", bundle: .tinyStockCore), action: dismissKeyboard)
                 }
             }
             .alert(String(localized: "product.form.error.title", bundle: .tinyStockCore), isPresented: Binding(
@@ -172,7 +166,7 @@ struct ProductFormView: View {
     private func priceField(_ title: String, text: Binding<String>, field: PriceField) -> some View {
         TextField(Decimal.zero.currencyText, text: text)
             .keyboardType(.decimalPad)
-            .focused($focusedPrice, equals: field)
+            .focused($focusedField, equals: field == .sale ? .sale : .cost)
             .accessibilityLabel(title)
     }
 
@@ -181,7 +175,7 @@ struct ProductFormView: View {
         guard let initialFocus else { return }
         // O foco so e aceito depois que a folha termina de aparecer.
         try? await Task.sleep(for: .milliseconds(600))
-        focusedPrice = initialFocus
+        focusedField = initialFocus == .sale ? .sale : .cost
     }
 
     // Cada campo tem o proprio cabecalho para deixar claro o que pode ser tocado e alterado.
@@ -190,24 +184,25 @@ struct ProductFormView: View {
         Section(tinted: String(localized: "product.variant.edit.name", bundle: .tinyStockCore)) {
             TextField(String(localized: "product.form.name", bundle: .tinyStockCore), text: $name)
                 .textInputAutocapitalization(.words)
+                .keyboardNext(.name, focus: $focusedField, order: fieldOrder)
         }
-        // So produtos antigos, criados sem variacao, ainda precisam ativar a opcao.
-        if usesLegacyDefaultVariant {
+        // Com uma variacao so, o produto pode ficar sem variacao e o estoque fica nele mesmo.
+        if usesDirectVariationFields {
             Section {
-                Toggle(String(localized: "product.form.variant.enabled", bundle: .tinyStockCore), isOn: $hasVariations)
-                    .disabled(!canDisableVariations)
+                Toggle(String(localized: "product.form.variant.enabled", bundle: .tinyStockCore),
+                       isOn: $hasVariations.animation())
+                if hasVariations {
+                    TextField(String(localized: "product.form.variant.name", bundle: .tinyStockCore),
+                              text: $initialVariationName)
+                        .textInputAutocapitalization(.words)
+                        .keyboardNext(.variation, focus: $focusedField, order: fieldOrder)
+                }
+            } header: {
+                FormHeader(title: String(localized: "product.form.variant.title", bundle: .tinyStockCore))
             } footer: {
                 if !hasVariations {
                     Text(String(localized: "product.form.variant.disabled.footer", bundle: .tinyStockCore))
                 }
-            }
-        }
-        if usesDirectVariationFields {
-            Section(tinted: String(localized: "product.form.variant.title", bundle: .tinyStockCore)) {
-                TextField(String(localized: "product.form.variant.name", bundle: .tinyStockCore), text: $initialVariationName)
-                    .textInputAutocapitalization(.words)
-                    .disabled(!hasVariations)
-                    .foregroundStyle(hasVariations ? Color.primary : Color.secondary)
             }
             Section(tinted: initialStockTitle) { stockRow }
         } else {
@@ -237,16 +232,9 @@ struct ProductFormView: View {
         }
     }
 
-    @ViewBuilder
+    /// Na edicao, o saldo escolhido vira um ajuste de estoque registrado no historico.
     private var stockRow: some View {
-        if canEditStock {
-            StockQuantityStepper(title: initialStockTitle, quantity: initialQuantitySelection)
-        } else {
-            Text(initialQuantityText)
-                .monospacedDigit()
-                .foregroundStyle(.secondary)
-                .accessibilityLabel(initialStockTitle)
-        }
+        StockQuantityStepper(title: initialStockTitle, quantity: initialQuantitySelection)
     }
 
     private var initialQuantitySelection: Binding<Int> {
@@ -262,10 +250,6 @@ struct ProductFormView: View {
             try StockService.registerAdjustment(newQuantity: input.initialQuantity, to: variant,
                                                 product: product, in: modelContext)
         }
-    }
-
-    private func dismissKeyboard() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 
     private var initialStockTitle: String {
@@ -285,7 +269,6 @@ struct ProductFormView: View {
                                         initialQuantity: $0.quantity)
                 }
                 hasVariations = !storedVariants.isEmpty && !storedVariants.contains(where: \.isDefault)
-                usesLegacyDefaultVariant = storedVariants.contains(where: \.isDefault)
                 if let onlyVariant = variants.first, variants.count == 1 {
                     initialVariationName = onlyVariant.name
                     initialQuantityText = String(onlyVariant.initialQuantity)
