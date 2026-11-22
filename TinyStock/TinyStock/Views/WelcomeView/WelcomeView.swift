@@ -1,8 +1,8 @@
 // ⌘
 //  TinyStock/Views/WelcomeView/WelcomeView.swift
 //
-//  Propósito: Apresentação mostrada só na primeira abertura: o que o app faz, o nome da loja (opcional)
-//             e os lembretes. Dona do estado das etapas, dos botões do rodapé e da restauração de backup.
+//  Propósito: Apresentação mostrada só na primeira abertura: o nome da loja (opcional), as dicas e o
+//             formulário do primeiro produto, e os lembretes. Dona do estado das etapas, dos botões do rodapé e da restauração de backup.
 //             No layout largo (iPad, Duo aberto) o título da etapa e os botões vão para um painel à esquerda.
 //
 //  Created by Jonathas Motta (@jonathaxs) on 2026-11-07.
@@ -39,11 +39,17 @@ struct WelcomeView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @AppStorage(AppAccentColor.storageKey) private var accentColorRaw = AppAccentColor.defaultColor.rawValue
     @Query private var stores: [StoreProfile]
+    @Query private var products: [Product]
 
+    @State private var steps = WelcomeStep.flow(includesProductTour: true)
     @State private var currentStep: WelcomeStep = .start
     @State private var isGoingForward = true
     @State private var storeName = ""
     @State private var storeError: String?
+
+    // Formulário real do primeiro produto, aberto pela dica de variações.
+    @State private var isPresentingProductForm = false
+    @State private var productCountBeforeForm = 0
 
     // Restaurar backup, no Início.
     @State private var backupCoordinator = DataBackupCoordinator()
@@ -62,6 +68,10 @@ struct WelcomeView: View {
 
     private var currentStore: StoreProfile? {
         stores.first { $0.id == storeSession.selectedStoreID }
+    }
+
+    private var storeProductCount: Int {
+        products.filter { $0.storeID == storeSession.selectedStoreID }.count
     }
 
     private var trimmedStoreName: String {
@@ -90,7 +100,14 @@ struct WelcomeView: View {
             }
         }
         .background { background }
-            .onAppear(perform: prefillStoreName)
+            .onAppear {
+                prefillStoreName()
+                // Reaberta pelo Sobre com produtos na loja: as dicas do primeiro produto ficam de fora.
+                steps = WelcomeStep.flow(includesProductTour: storeProductCount == 0)
+            }
+            .sheet(isPresented: $isPresentingProductForm, onDismiss: productFormDismissed) {
+                ProductFormView(storeID: storeSession.selectedStoreID)
+            }
             .fileImporter(
                 isPresented: $backupCoordinator.isImporting,
                 allowedContentTypes: [.json],
@@ -167,7 +184,7 @@ struct WelcomeView: View {
 
     private func stepContent(isWide: Bool) -> some View {
         VStack(spacing: 0) {
-            WelcomeProgressBar(currentStep: currentStep, activeColor: accentColor)
+            WelcomeProgressBar(steps: steps, currentStep: currentStep, activeColor: accentColor)
                 .frame(minHeight: 44)
                 .padding(.horizontal, AppStyle.horizontalPadding)
                 .padding(.top, 12)
@@ -175,9 +192,10 @@ struct WelcomeView: View {
             Group {
                 switch currentStep {
                 case .start: WelcomeStartStep(accentColor: accentColor, isWide: isWide)
-                case .about: WelcomeAboutStep(accentColor: accentColor, isWide: isWide)
                 case .store: WelcomeStoreStep(storeName: $storeName, accentColor: accentColor, isWide: isWide,
                                               onSubmit: advance)
+                case .product: WelcomeProductStep(accentColor: accentColor, isWide: isWide)
+                case .variants: WelcomeVariantsStep(accentColor: accentColor, isWide: isWide)
                 case .ready: WelcomeReadyStep(accentColor: accentColor, isWide: isWide)
                 }
             }
@@ -231,6 +249,7 @@ struct WelcomeView: View {
     }
 
     /// Continuar e Voltar (Começar e Restaurar backup no Início), no rodapé ou no painel do layout largo.
+    /// Nas dicas do primeiro produto vem ainda o Pular, que vai direto para o fim.
     private var buttonPair: some View {
         VStack(spacing: 10) {
             WelcomeContinueButton(label: continueLabel, color: accentColor, action: advance)
@@ -259,6 +278,14 @@ struct WelcomeView: View {
                     }
                 }
             }
+
+            if currentStep.isProductTour {
+                Button(String(localized: "welcome.button.skip", bundle: .tinyStockCore), action: skipProductTour)
+                    .font(.headline)
+                    .foregroundStyle(accentColor)
+                    .frame(minHeight: 44)
+                    .transition(.opacity)
+            }
         }
     }
 
@@ -266,6 +293,8 @@ struct WelcomeView: View {
         switch currentStep {
         case .start: String(localized: "welcome.button.start", bundle: .tinyStockCore)
         case .store where trimmedStoreName.isEmpty: String(localized: "welcome.button.skip", bundle: .tinyStockCore)
+        case .product: String(localized: "welcome.button.addNow", bundle: .tinyStockCore)
+        case .variants: String(localized: "welcome.button.addProduct", bundle: .tinyStockCore)
         case .ready: String(localized: "welcome.button.finish", bundle: .tinyStockCore)
         default: String(localized: "welcome.button.continue", bundle: .tinyStockCore)
         }
@@ -293,18 +322,36 @@ struct WelcomeView: View {
 
     private func advance() {
         if currentStep == .store, !saveStoreName() { return }
-        guard let next = WelcomeStep(rawValue: currentStep.rawValue + 1) else {
+        if currentStep == .variants {
+            productCountBeforeForm = storeProductCount
+            isPresentingProductForm = true
+            return
+        }
+        guard let index = steps.firstIndex(of: currentStep), index + 1 < steps.count else {
             onComplete()
             return
         }
-        isGoingForward = true
-        withAnimation(.easeInOut(duration: 0.3)) { currentStep = next }
+        go(to: steps[index + 1], forward: true)
     }
 
     private func goBack() {
-        guard let previous = WelcomeStep(rawValue: currentStep.rawValue - 1) else { return }
-        isGoingForward = false
-        withAnimation(.easeInOut(duration: 0.3)) { currentStep = previous }
+        guard let index = steps.firstIndex(of: currentStep), index > 0 else { return }
+        go(to: steps[index - 1], forward: false)
+    }
+
+    private func skipProductTour() {
+        go(to: .ready, forward: true)
+    }
+
+    private func go(to step: WelcomeStep, forward: Bool) {
+        isGoingForward = forward
+        withAnimation(.easeInOut(duration: 0.3)) { currentStep = step }
+    }
+
+    /// Produto salvo segue para o fim; cancelado fica na dica para tentar de novo ou pular.
+    private func productFormDismissed() {
+        guard storeProductCount > productCountBeforeForm else { return }
+        go(to: .ready, forward: true)
     }
 
     // MARK: - Loja

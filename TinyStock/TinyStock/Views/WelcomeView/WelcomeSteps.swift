@@ -1,8 +1,8 @@
 // ⌘
 //  TinyStock/Views/WelcomeView/WelcomeSteps.swift
 //
-//  Propósito: Conteúdo de cada etapa da apresentação: início, o que o app faz, nome da loja (opcional)
-//             e tudo pronto, com o pedido de permissão dos lembretes.
+//  Propósito: Conteúdo de cada etapa da apresentação: início, nome da loja (opcional), dicas do primeiro
+//             produto e das variações, e tudo pronto, com o pedido de permissão dos lembretes.
 //
 //  Created by Jonathas Motta (@jonathaxs) on 2026-11-07.
 // ⌘
@@ -30,9 +30,10 @@ struct WelcomeStartStep: View {
     }
 }
 
-// MARK: - O que dá para fazer
+// MARK: - Primeiro produto
 
-struct WelcomeAboutStep: View {
+/// Dica do que o formulário pede, antes de abrir o de verdade.
+struct WelcomeProductStep: View {
     let accentColor: Color
     var isWide = false
 
@@ -41,35 +42,61 @@ struct WelcomeAboutStep: View {
             VStack(spacing: 20) {
                 // No layout largo o cabeçalho fica no painel da esquerda.
                 if !isWide {
-                    WelcomeStepHeader(step: .about, accentColor: accentColor)
+                    WelcomeStepHeader(step: .product, accentColor: accentColor)
                 }
 
                 AppGroupedCard(dividerInset: 66) {
-                    feature("shippingbox.fill", .orange, "welcome.about.products")
-                    feature("calendar", .blue, "welcome.about.orders")
-                    feature("chart.bar.fill", .green, "welcome.about.reports")
-                    feature("storefront.fill", .purple, "welcome.about.stores")
-                    feature("icloud.fill", .cyan, "welcome.about.icloud")
+                    WelcomeTipRow(icon: "camera.fill", color: .orange, key: "welcome.product.photo")
+                    WelcomeTipRow(icon: "tag.fill", color: .green, key: "welcome.product.price")
+                    WelcomeTipRow(icon: "shippingbox.fill", color: .blue, key: "welcome.product.stock")
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Variações
+
+/// Com ou sem variações, com o exemplo dos tamanhos de uma camiseta.
+struct WelcomeVariantsStep: View {
+    let accentColor: Color
+    var isWide = false
+
+    var body: some View {
+        WelcomeStepScroll {
+            VStack(spacing: 20) {
+                if !isWide {
+                    WelcomeStepHeader(step: .variants, accentColor: accentColor)
+                }
+
+                AppGroupedCard(dividerInset: 66) {
+                    WelcomeTipRow(icon: "square.on.square.fill", color: .purple, key: "welcome.variants.with") {
+                        sizeChips
+                    }
+                    WelcomeTipRow(icon: "square.fill", color: .gray, key: "welcome.variants.without")
                 }
             }
         }
     }
 
-    private func feature(_ icon: String, _ color: Color, _ key: String) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            IconBadge(systemName: icon, color: color, size: 36)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(String(localized: String.LocalizationValue(key + ".title"), bundle: .tinyStockCore))
-                    .font(.headline)
-                Text(String(localized: String.LocalizationValue(key + ".desc"), bundle: .tinyStockCore))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+    private var sizes: [String] {
+        String(localized: "welcome.variants.sizes", bundle: .tinyStockCore).components(separatedBy: ",")
+    }
+
+    /// P, M e G com a quantidade de cada um, só ilustrando.
+    private var sizeChips: some View {
+        HStack(spacing: 6) {
+            ForEach(Array(zip(sizes, [3, 5, 2])), id: \.0) { size, quantity in
+                Text("\(size) · \(quantity)")
+                    .font(.caption.weight(.semibold))
+                    .monospacedDigit()
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(accentColor.opacity(0.15), in: Capsule())
             }
-            Spacer(minLength: 0)
         }
-        .padding(14)
-        .accessibilityElement(children: .combine)
+        .padding(.top, 6)
+        .accessibilityHidden(true)
     }
 }
 

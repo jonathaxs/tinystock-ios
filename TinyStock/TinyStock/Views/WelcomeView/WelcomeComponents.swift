@@ -2,7 +2,7 @@
 //  TinyStock/Views/WelcomeView/WelcomeComponents.swift
 //
 //  Propósito: Peças da apresentação inicial: etapas, cabeçalho com emoji em vidro, barra de progresso,
-//             botão Continuar e o espaço que as etapas reservam para os botões do rodapé subirem.
+//             botão Continuar, linha de dica e o espaço que as etapas reservam para os botões do rodapé.
 //
 //  Created by Jonathas Motta (@jonathaxs) on 2026-11-07.
 // ⌘
@@ -13,13 +13,22 @@ import TinyStockCore
 // MARK: - Etapas
 
 enum WelcomeStep: Int, CaseIterable {
-    case start, about, store, ready
+    case start, store, product, variants, ready
+
+    /// Etapas mostradas. A parte do produto fica de fora quando a loja já tem produtos (reaberta pelo Sobre).
+    static func flow(includesProductTour: Bool) -> [WelcomeStep] {
+        includesProductTour ? allCases : [.start, .store, .ready]
+    }
+
+    /// Dicas do primeiro produto: têm o Pular, que vai direto para o fim.
+    var isProductTour: Bool { self == .product || self == .variants }
 
     var emoji: String {
         switch self {
         case .start: "📦"
-        case .about: "✨"
         case .store: "🛍️"
+        case .product: "🏷️"
+        case .variants: "🎨"
         case .ready: "🚀"
         }
     }
@@ -27,8 +36,9 @@ enum WelcomeStep: Int, CaseIterable {
     var title: String {
         switch self {
         case .start: String(localized: "welcome.step.start.title", bundle: .tinyStockCore)
-        case .about: String(localized: "welcome.step.about.title", bundle: .tinyStockCore)
         case .store: String(localized: "welcome.step.store.title", bundle: .tinyStockCore)
+        case .product: String(localized: "welcome.step.product.title", bundle: .tinyStockCore)
+        case .variants: String(localized: "welcome.step.variants.title", bundle: .tinyStockCore)
         case .ready: String(localized: "welcome.step.ready.title", bundle: .tinyStockCore)
         }
     }
@@ -36,8 +46,9 @@ enum WelcomeStep: Int, CaseIterable {
     var subtitle: String {
         switch self {
         case .start: String(localized: "welcome.step.start.subtitle", bundle: .tinyStockCore)
-        case .about: ""
         case .store: String(localized: "welcome.step.store.subtitle", bundle: .tinyStockCore)
+        case .product: String(localized: "welcome.step.product.subtitle", bundle: .tinyStockCore)
+        case .variants: String(localized: "welcome.step.variants.subtitle", bundle: .tinyStockCore)
         case .ready: String(localized: "welcome.step.ready.subtitle", bundle: .tinyStockCore)
         }
     }
@@ -67,12 +78,12 @@ struct WelcomeStepHeader: View {
                 .multilineTextAlignment(.center)
                 .accessibilityAddTraits(.isHeader)
 
-            if !step.subtitle.isEmpty {
-                Text(step.subtitle)
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
+            Text(step.subtitle)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                // No Início a frase fica estreita, pouco mais larga que o botão Começar.
+                .frame(maxWidth: step == .start ? 300 : nil)
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 8)
@@ -131,11 +142,11 @@ struct WelcomeContextPanel<Buttons: View>: View {
 // MARK: - Barra de progresso
 
 struct WelcomeProgressBar: View {
+    let steps: [WelcomeStep]
     let currentStep: WelcomeStep
     let activeColor: Color
 
     var body: some View {
-        let steps = WelcomeStep.allCases
         let current = (steps.firstIndex(of: currentStep) ?? 0) + 1
 
         HStack(spacing: 6) {
@@ -170,6 +181,40 @@ struct WelcomeContinueButton: View {
                 .padding(.vertical, 4)
         }
         .appProminentButton(color)
+    }
+}
+
+// MARK: - Linha de dica
+
+/// Ícone colorido, título e uma frase curta, como nas apresentações do sistema.
+struct WelcomeTipRow<Accessory: View>: View {
+    let icon: String
+    let color: Color
+    let key: String
+    @ViewBuilder var accessory: Accessory
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 14) {
+            IconBadge(systemName: icon, color: color, size: 36)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(String(localized: String.LocalizationValue(key + ".title"), bundle: .tinyStockCore))
+                    .font(.headline)
+                Text(String(localized: String.LocalizationValue(key + ".desc"), bundle: .tinyStockCore))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                accessory
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+extension WelcomeTipRow where Accessory == EmptyView {
+    init(icon: String, color: Color, key: String) {
+        self.init(icon: icon, color: color, key: key) { EmptyView() }
     }
 }
 
