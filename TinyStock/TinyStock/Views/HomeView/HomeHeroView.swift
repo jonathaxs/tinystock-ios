@@ -59,6 +59,8 @@ struct HomeHeroView: View {
     @Query private var orders: [SalesOrder]
     @State private var growth: CGFloat = 0
     @State private var showsInfo = false
+    /// Sobe a cada toque e dispara a quicada da caixa.
+    @State private var bounceTrigger = 0
 
     init(storeID: UUID, products: [Product], variants: [ProductVariant]) {
         self.products = products
@@ -77,7 +79,10 @@ struct HomeHeroView: View {
 
     private func content(_ summary: HomeSummary) -> some View {
         VStack(spacing: 6) {
-            Button { showsInfo = true } label: {
+            Button {
+                showsInfo = true
+                if !reduceMotion { bounceTrigger += 1 }
+            } label: {
                 StockBoxView(
                     leftValue: summary.products,
                     leftLabel: String(localized: "home.box.products", bundle: .tinyStockCore),
@@ -86,6 +91,13 @@ struct HomeHeroView: View {
                     bars: bars(for: summary),
                     growth: growth
                 )
+                // Quicada ao tocar: encolhe um pouco e volta com mola.
+                .keyframeAnimator(initialValue: 1.0, trigger: bounceTrigger) { box, scale in
+                    box.scaleEffect(scale)
+                } keyframes: { _ in
+                    CubicKeyframe(0.92, duration: 0.09)
+                    SpringKeyframe(1.0, duration: 0.5, spring: .init(response: 0.4, dampingRatio: 0.35))
+                }
             }
             .buttonStyle(.plain)
             .adaptivePopover(isPresented: $showsInfo) {
