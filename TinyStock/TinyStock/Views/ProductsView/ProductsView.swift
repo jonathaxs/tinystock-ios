@@ -37,6 +37,8 @@ struct ProductsView: View {
     @State private var displayedFold: HomeFold?
     /// Layout largo em uso; nele a busca fica no topo do catalogo (a barra do sistema esta escondida).
     @State private var isWideLayout = false
+    /// Foto e nome de cada produto se transformam na troca lista/grade.
+    @Namespace private var catalogNamespace
 
     init(storeID: UUID) {
         self.storeID = storeID
@@ -225,7 +227,52 @@ struct ProductsView: View {
 
     // MARK: - Catalogo
 
+    /// Produtos fora do Editar vao numa ScrollView, como as metas da Hoje do Nutshell: entre linhas do List a
+    /// troca lista/grade sai seca, sem a foto e o nome se transformarem. Variacoes e o Editar (apagar e mover
+    /// nativos) usam o List.
+    @ViewBuilder
     private func catalogContent(showsHome: Bool) -> some View {
+        if catalogMode == .products && !editMode.isEditing {
+            catalogScroll(showsHome: showsHome)
+        } else {
+            catalogList(showsHome: showsHome)
+        }
+    }
+
+    private func catalogScroll(showsHome: Bool) -> some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                if showsHome && searchText.isEmpty {
+                    VStack(spacing: 12) { homeRows }
+                        .padding(.bottom, 33)
+                }
+                if (!showsHome || !SystemSearch.isAvailable) && !products.isEmpty {
+                    CatalogSearchField(text: $searchText)
+                        .padding(.bottom, 20)
+                }
+                if products.isEmpty {
+                    emptyCatalog
+                } else if filteredProducts.isEmpty {
+                    ContentUnavailableView.search(text: searchText)
+                } else {
+                    catalogHeader
+                        .padding(.horizontal, 4)
+                        .padding(.bottom, 29)
+                    productCatalog
+                }
+            }
+            .padding(.horizontal, 16)
+            // Mesma altura do List (Editar e variacoes), para a troca entre os dois nao pular.
+            .padding(.top, 43)
+            .padding(.bottom, 12)
+            // O modo muda pelo @AppStorage de outra tela (fora da transacao do botao), entao a animacao fica aqui.
+            .animation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.5, dampingFraction: 0.82),
+                       value: viewMode)
+        }
+        .scrollDismissesKeyboard(.interactively)
+    }
+
+    private func catalogList(showsHome: Bool) -> some View {
         List {
             // Durante a busca a lista mostra so os resultados.
             if showsHome && searchText.isEmpty {
@@ -343,6 +390,28 @@ struct ProductsView: View {
                 }
             }
         }
+    }
+
+    /// Produtos em lista (card) ou grade. Fora do Editar; nele a lista usa as linhas nativas para apagar e mover.
+    private var productCatalog: some View {
+        Group {
+            if viewMode == .grid {
+                ProductCatalogGrid(products: filteredProducts, variants: variants) { action, product in
+                    pendingAction = (action, product)
+                    runPendingAction()
+                }
+            } else {
+                AppGroupedCard(dividerInset: 84) {
+                    ForEach(filteredProducts) { product in
+                        productRow(product)
+                            // Mesmo respiro das linhas nativas do Editar, para a troca nao pular.
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 15)
+                    }
+                }
+            }
+        }
+        .environment(\.catalogMorphNamespace, catalogNamespace)
     }
 
     /// Grade: fotos lado a lado. Produtos abrem o balao de acoes; variacoes abrem a edicao.

@@ -28,6 +28,45 @@ enum CatalogViewMode: String, CaseIterable {
     var next: CatalogViewMode { self == .list ? .grid : .list }
 }
 
+// MARK: - Transformacao lista <-> grade
+
+extension EnvironmentValues {
+    /// Espaco da troca lista/grade dos produtos; fora do catalogo da Inicio fica nil e nada se transforma.
+    @Entry var catalogMorphNamespace: Namespace.ID? = nil
+}
+
+/// Liga a peca a equivalente do outro modo (foto com foto, nome com nome), para ela se transformar na troca.
+struct CatalogMorph: ViewModifier {
+    @Environment(\.catalogMorphNamespace) private var namespace
+    let id: String?
+    var properties: MatchedGeometryProperties = .frame
+
+    func body(content: Content) -> some View {
+        if let id, let namespace {
+            content.matchedGeometryEffect(id: id, in: namespace, properties: properties)
+        } else {
+            content
+        }
+    }
+}
+
+/// Foto do produto que acompanha o tamanho recebido, para crescer e encolher na troca lista/grade.
+/// Com [side] fica fixa (lista); sem ele ocupa o espaco todo (grade).
+struct CatalogMorphImage: View {
+    let imageData: Data?
+    let morphID: UUID?
+    var side: CGFloat?
+
+    var body: some View {
+        GeometryReader { proxy in
+            ProductImageView(imageData: imageData, side: min(proxy.size.width, proxy.size.height))
+        }
+        .modifier(CatalogMorph(id: morphID.map { "image-\($0)" }))
+        .frame(width: side, height: side)
+        .accessibilityHidden(true)
+    }
+}
+
 /// Colunas da grade: quantas couberem com no mínimo 100 pt cada.
 private let catalogGridColumns = [GridItem(.adaptive(minimum: 100), spacing: 12, alignment: .top)]
 
@@ -61,7 +100,7 @@ struct ProductCatalogGrid: View {
             openProductID = product.id
         } label: {
             CatalogGridTile(imageData: product.imageData, title: product.name,
-                            detail: quantityText(quantity))
+                            detail: quantityText(quantity), morphID: product.id)
         }
         .buttonStyle(.plain)
         .adaptivePopover(isPresented: isOpen) {
@@ -117,21 +156,22 @@ private struct CatalogGridTile: View {
     let imageData: Data?
     let title: String
     let detail: String
+    /// Produto que se transforma na linha da lista na troca de modo (nil nas variacoes).
+    var morphID: UUID?
 
     var body: some View {
         VStack(spacing: 6) {
             Color.clear
                 .aspectRatio(1, contentMode: .fit)
                 .overlay {
-                    GeometryReader { proxy in
-                        ProductImageView(imageData: imageData, side: proxy.size.width)
-                    }
+                    CatalogMorphImage(imageData: imageData, morphID: morphID)
                 }
             Text(title)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.primary)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
+                .modifier(CatalogMorph(id: morphID.map { "name-\($0)" }, properties: .position))
             Text(detail)
                 .font(.caption)
                 .foregroundStyle(.secondary)

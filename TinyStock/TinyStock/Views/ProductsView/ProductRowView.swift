@@ -17,12 +17,12 @@ struct ProductRowView: View {
         Group {
             if dynamicTypeSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 8) {
-                    ProductImageView(imageData: product.imageData)
+                    CatalogMorphImage(imageData: product.imageData, morphID: product.id, side: 52)
                     details
                 }
             } else {
                 HStack(spacing: 12) {
-                    ProductImageView(imageData: product.imageData)
+                    CatalogMorphImage(imageData: product.imageData, morphID: product.id, side: 52)
                     details
                 }
             }
@@ -38,6 +38,7 @@ struct ProductRowView: View {
                 .font(.headline)
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
+                .modifier(CatalogMorph(id: "name-\(product.id)", properties: .position))
             Text(quantityText)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)

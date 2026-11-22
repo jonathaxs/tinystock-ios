@@ -57,7 +57,9 @@ struct HomeHeroView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query private var orders: [SalesOrder]
-    @State private var growth: CGFloat = 0
+    /// As barras crescem so na primeira vez que a caixa aparece; ao entrar e sair do Editar ela e recriada.
+    @MainActor private static var hasGrown = false
+    @State private var growth: CGFloat = HomeHeroView.hasGrown ? 1 : 0
     @State private var showsInfo = false
     /// Sobe a cada toque e dispara a quicada da caixa.
     @State private var bounceTrigger = 0
@@ -114,6 +116,7 @@ struct HomeHeroView: View {
         .frame(maxWidth: .infinity)
         .onAppear {
             guard growth == 0 else { return }
+            Self.hasGrown = true
             if reduceMotion {
                 growth = 1
             } else {
