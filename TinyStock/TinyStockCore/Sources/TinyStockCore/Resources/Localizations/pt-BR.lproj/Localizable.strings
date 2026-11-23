@@ -544,7 +544,11 @@
 "welcome.variants.without.title" = "Sem variações";
 "welcome.variants.without.desc" = "Um produto de um jeito só. No formulário, desligue Possui variações.";
 "welcome.step.ready.title" = "Tudo pronto";
-"welcome.step.ready.subtitle" = "Ative os lembretes para não perder os prazos de produção e envio. Recusar não bloqueia nada.";
+"welcome.step.ready.subtitle" = "Antes de começar, veja onde acompanhar as vendas e os prazos.";
+"welcome.ready.reports.title" = "Relatórios";
+"welcome.ready.reports.desc" = "Vendas, lucro e o que mais sai.";
+"welcome.ready.calendar.title" = "Calendário";
+"welcome.ready.calendar.desc" = "Prazos de produção e envio.";
 "welcome.ready.notifications.title" = "Lembretes de pedidos";
 "welcome.ready.notifications.desc" = "Avisos na véspera, no dia e quando um pedido atrasar.";
 "welcome.ready.allow" = "Permitir";

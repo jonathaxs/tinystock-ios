@@ -544,7 +544,11 @@
 "welcome.variants.without.title" = "Without variations";
 "welcome.variants.without.desc" = "A product that comes one way only. In the form, turn off Has variations.";
 "welcome.step.ready.title" = "All Set";
-"welcome.step.ready.subtitle" = "Turn on reminders so you never miss production and shipping dates. Declining won't block anything.";
+"welcome.step.ready.subtitle" = "Before you start, here's where to follow your sales and deadlines.";
+"welcome.ready.reports.title" = "Reports";
+"welcome.ready.reports.desc" = "Sales, profit and best sellers.";
+"welcome.ready.calendar.title" = "Calendar";
+"welcome.ready.calendar.desc" = "Production and shipping dates.";
 "welcome.ready.notifications.title" = "Order reminders";
 "welcome.ready.notifications.desc" = "Alerts the day before, on the day and when an order is late.";
 "welcome.ready.allow" = "Allow";

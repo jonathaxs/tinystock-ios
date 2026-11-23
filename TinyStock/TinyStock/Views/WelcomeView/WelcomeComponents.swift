@@ -64,9 +64,11 @@ struct WelcomeStepHeader: View {
 
     var body: some View {
         VStack(spacing: 12) {
+            // No Tudo pronto o emoji fica menor, para os cartões e os botões caberem sem rolar.
+            let side: CGFloat = step == .ready ? 64 : 88
             Text(step.emoji)
-                .font(.system(size: 44))
-                .frame(width: 88, height: 88)
+                .font(.system(size: side / 2))
+                .frame(width: side, height: side)
                 .background(Circle().fill(accentColor.opacity(0.15)))
                 .appGlass(in: Circle())
                 // Decorativo: o título logo abaixo já diz a etapa.

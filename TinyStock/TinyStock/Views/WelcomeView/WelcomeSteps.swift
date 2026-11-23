@@ -2,7 +2,8 @@
 //  TinyStock/Views/WelcomeView/WelcomeSteps.swift
 //
 //  Propósito: Conteúdo de cada etapa da apresentação: início, nome da loja (opcional), dicas do primeiro
-//             produto e das variações, e tudo pronto, com o pedido de permissão dos lembretes.
+//             produto e das variações, e tudo pronto, com relatórios, calendário e o pedido
+//             de permissão dos lembretes.
 //
 //  Created by Jonathas Motta (@jonathaxs) on 2026-11-07.
 // ⌘
@@ -137,12 +138,14 @@ struct WelcomeStoreStep: View {
 
 // MARK: - Tudo pronto
 
-/// Pedido opcional de notificações para os lembretes de produção e envio. Recusar não bloqueia nada.
+/// Onde ver relatórios e calendário, e o pedido opcional dos lembretes de produção e envio.
+/// Recusar não bloqueia nada.
 struct WelcomeReadyStep: View {
     let accentColor: Color
     var isWide = false
 
     @Environment(OrderReminderCoordinator.self) private var reminders
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private var notificationState: PermissionCardState {
         switch reminders.authorization {
@@ -158,6 +161,21 @@ struct WelcomeReadyStep: View {
                 if !isWide {
                     WelcomeStepHeader(step: .ready, accentColor: accentColor)
                 }
+
+                // Lado a lado; com letras grandes um embaixo do outro.
+                let layout = dynamicTypeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(spacing: 12))
+                    : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
+                layout {
+                    WelcomeFeatureCard(key: "welcome.ready.reports", accentColor: accentColor) {
+                        WelcomeMiniChart(color: accentColor)
+                    }
+                    WelcomeFeatureCard(key: "welcome.ready.calendar", accentColor: accentColor) {
+                        WelcomeMiniCalendar(color: accentColor)
+                    }
+                }
+                // Os dois com a altura do mais alto, sem esticar até o fim da tela no iPad.
+                .fixedSize(horizontal: false, vertical: true)
 
                 PermissionCard(
                     icon: "bell.badge.fill",
@@ -178,6 +196,99 @@ struct WelcomeReadyStep: View {
             }
         }
         .task { await reminders.refresh() }
+    }
+}
+
+// MARK: - Cartões do Tudo pronto
+
+/// Ilustração num quadro de vidro, título e uma frase curta. A ilustração é só enfeite: o leitor de tela
+/// lê o título e a frase.
+struct WelcomeFeatureCard<Illustration: View>: View {
+    let key: String
+    let accentColor: Color
+    @ViewBuilder var illustration: Illustration
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            illustration
+                .padding(12)
+                .frame(maxWidth: .infinity)
+                .frame(height: 80)
+                .background(accentColor.opacity(0.12),
+                            in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .appGlass(in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(String(localized: String.LocalizationValue(key + ".title"), bundle: .tinyStockCore))
+                    .font(.headline)
+                Text(String(localized: String.LocalizationValue(key + ".desc"), bundle: .tinyStockCore))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, 4)
+            Spacer(minLength: 0)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .appCard()
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// Uma semana de vendas de mentira, em barras.
+struct WelcomeMiniChart: View {
+    let color: Color
+
+    private let values: [Double] = [3, 5, 2, 6, 4, 8, 5]
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 5) {
+            ForEach(values.indices, id: \.self) { index in
+                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                    // A barra mais alta fica em destaque, as outras mais claras.
+                    .fill(color.opacity(values[index] == values.max() ? 1 : 0.45).gradient)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52 * values[index] / (values.max() ?? 1))
+            }
+        }
+        .frame(maxHeight: .infinity, alignment: .bottom)
+    }
+}
+
+/// Duas semanas de um mês, com alguns dias marcados como prazos.
+struct WelcomeMiniCalendar: View {
+    let color: Color
+
+    private let marked: [Int: Color] = [3: .teal, 7: .orange, 9: .teal, 12: .gray]
+
+    var body: some View {
+        // Tamanho fixo de propósito: é um desenho, e precisa caber no cartão estreito do iPhone.
+        Grid(horizontalSpacing: 0, verticalSpacing: 2) {
+            ForEach(0..<2, id: \.self) { week in
+                GridRow {
+                    ForEach(1...7, id: \.self) { weekday in
+                        let day = week * 7 + weekday
+                        VStack(spacing: 3) {
+                            Text("\(day)")
+                                .font(.system(size: 10, weight: day == 7 ? .bold : .medium, design: .rounded))
+                                .foregroundStyle(day == 7 ? Color.white : Color.primary)
+                                .lineLimit(1)
+                                .frame(height: 18)
+                                .background {
+                                    if day == 7 { Circle().fill(color).frame(width: 18, height: 18) }
+                                }
+                            Circle()
+                                .fill(marked[day] ?? .clear)
+                                .frame(width: 5, height: 5)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                }
+            }
+        }
+        .frame(maxHeight: .infinity)
     }
 }
 
